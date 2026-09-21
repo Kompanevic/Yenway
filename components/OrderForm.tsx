@@ -53,7 +53,7 @@ export default function OrderForm({ initialRegion }: { initialRegion: RegionKey 
   }
 
   return (
-    <div className="mt-10">
+    <div>
       <form onSubmit={onSubmit} className="space-y-5">
         <div>
           <label className="block font-display text-xs uppercase tracking-wide text-white/50 mb-2">
