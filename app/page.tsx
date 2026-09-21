@@ -46,10 +46,10 @@ export default function Home() {
         </motion.div>
       </motion.header>
 
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden min-h-[94vh] flex items-center">
         <div className="absolute inset-0 -z-10">
           <motion.video
-            className="w-full h-full object-cover opacity-40"
+            className="w-full h-full object-cover opacity-60"
             initial={{ scale: 1.15 }}
             animate={{ scale: 1 }}
             transition={{ duration: 6, ease: "easeOut" }}
@@ -57,14 +57,14 @@ export default function Home() {
             muted
             loop
             playsInline
-            poster="/logo.jpg"
+            poster="/hero-poster.jpg"
           >
             <source src="/hero-bg.mp4" type="video/mp4" />
           </motion.video>
-          <div className="absolute inset-0 bg-gradient-to-b from-ink/60 via-ink/75 to-ink" />
+          <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-ink/55 to-ink" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 pt-28 pb-16 sm:pt-40 sm:pb-24 text-center">
+        <div className="max-w-7xl mx-auto px-6 py-16 text-center w-full">
           <motion.div initial="hidden" animate="show" variants={stagger}>
             <motion.h1
               variants={fadeUp}
@@ -97,24 +97,24 @@ export default function Home() {
             </motion.div>
           </motion.div>
         </div>
-
-        <div className="border-y border-line overflow-hidden py-4 bg-panel/40">
-          <div className="flex whitespace-nowrap animate-marquee font-display text-sm tracking-[0.3em] text-white/30 uppercase">
-            {Array.from({ length: 2 }).map((_, i) => (
-              <span key={i} className="flex items-center gap-8 pr-8">
-                {["Fashion", "Sneakers", "Accessories", "Japan", "Europe", "USA", "China", "Korea"].map(
-                  (w) => (
-                    <span key={w} className="flex items-center gap-8">
-                      {w}
-                      <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                    </span>
-                  )
-                )}
-              </span>
-            ))}
-          </div>
-        </div>
       </section>
+
+      <div className="border-y border-line overflow-hidden py-4 bg-panel/40">
+        <div className="flex whitespace-nowrap animate-marquee font-display text-sm tracking-[0.3em] text-white/30 uppercase">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <span key={i} className="flex items-center gap-8 pr-8">
+              {["Fashion", "Sneakers", "Accessories", "Japan", "Europe", "USA", "China", "Korea"].map(
+                (w) => (
+                  <span key={w} className="flex items-center gap-8">
+                    {w}
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                  </span>
+                )
+              )}
+            </span>
+          ))}
+        </div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-6">
         <section className="py-24">
