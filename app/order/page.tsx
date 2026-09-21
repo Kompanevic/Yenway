@@ -1,10 +1,16 @@
 import OrderForm from "@/components/OrderForm";
 import { RegionKey, REGIONS, REGION_LIST } from "@/lib/regions";
-import { DELIVERY_FLAT_RUB, SERVICE_FEE_PERCENT, INSURANCE_PERCENT } from "@/lib/pricing";
+import {
+  COMMISSION_RUB,
+  MERCARI_COMMISSION_RUB,
+  INSURANCE_RUB,
+  DELIVERY_PER_KG_RUB,
+  CHINA_DELIVERY_TIERS,
+  isManualRegion
+} from "@/lib/pricing";
 
-const deliveryValues = Object.values(DELIVERY_FLAT_RUB);
-const minDelivery = Math.min(...deliveryValues);
-const maxDelivery = Math.max(...deliveryValues);
+const chinaRates = CHINA_DELIVERY_TIERS.map((t) => t.ratePerKg);
+const chinaDeliveryRange = `${Math.min(...chinaRates)}–${Math.max(...chinaRates)} ₽/кг`;
 
 export default function OrderPage({
   searchParams
@@ -71,23 +77,39 @@ export default function OrderPage({
         <aside className="space-y-8 lg:pt-1">
           <div>
             <h2 className="font-display text-sm uppercase tracking-wide text-white/40 mb-4">
-              Что входит в стоимость
+              Тарифы по регионам
             </h2>
-            <ul className="space-y-3 text-sm">
-              <li className="flex justify-between rounded-xl bg-panel border border-line px-4 py-3">
-                <span className="text-white/60">Комиссия сервиса</span>
-                <span className="font-semibold">{SERVICE_FEE_PERCENT}%</span>
-              </li>
-              <li className="flex justify-between rounded-xl bg-panel border border-line px-4 py-3">
-                <span className="text-white/60">Страховка посылки</span>
-                <span className="font-semibold">{INSURANCE_PERCENT}%</span>
-              </li>
-              <li className="flex justify-between rounded-xl bg-panel border border-line px-4 py-3">
-                <span className="text-white/60">Доставка</span>
-                <span className="font-semibold">
-                  {minDelivery.toLocaleString("ru-RU")}–{maxDelivery.toLocaleString("ru-RU")} ₽
-                </span>
-              </li>
+            <ul className="space-y-2 text-sm">
+              {REGION_LIST.map((r) => {
+                const manual = isManualRegion(r.key);
+                const commission =
+                  r.key === "japan"
+                    ? `${MERCARI_COMMISSION_RUB}–${COMMISSION_RUB.japan} ₽`
+                    : COMMISSION_RUB[r.key] != null
+                      ? `${COMMISSION_RUB[r.key]} ₽`
+                      : null;
+                const insurance = INSURANCE_RUB[r.key];
+                const delivery =
+                  r.key === "china" ? chinaDeliveryRange : DELIVERY_PER_KG_RUB[r.key] != null ? `${DELIVERY_PER_KG_RUB[r.key]} ₽/кг` : null;
+
+                return (
+                  <li key={r.key} className="rounded-xl bg-panel border border-line px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-display font-semibold">
+                        {r.flag} {r.name}
+                      </span>
+                      {manual && <span className="text-xs text-white/40">вручную</span>}
+                    </div>
+                    {!manual && (
+                      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-white/50">
+                        <span>Комиссия: {commission}</span>
+                        <span>Страховка: {insurance} ₽</span>
+                        <span>Доставка: {delivery}</span>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
