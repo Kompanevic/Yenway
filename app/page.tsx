@@ -1,9 +1,17 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { REGION_LIST } from "@/lib/regions";
+
+interface JournalCard {
+  url: string;
+  brand: string | null;
+  title: string | null;
+  image: string | null;
+}
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -16,6 +24,15 @@ const stagger = {
 };
 
 export default function Home() {
+  const [journalPosts, setJournalPosts] = useState<JournalCard[]>([]);
+
+  useEffect(() => {
+    fetch("/api/journal")
+      .then((res) => res.json())
+      .then((data) => setJournalPosts(data.posts ?? []))
+      .catch(() => {});
+  }, []);
+
   return (
     <main>
       <motion.header
@@ -258,9 +275,11 @@ export default function Home() {
                 Rick Owens и им подобные. Никакого масс-маркета.
               </p>
             </div>
-            <span className="font-display text-xs uppercase tracking-wide text-white/40 rounded-full border border-line px-4 py-2 shrink-0">
-              Скоро на сайте
-            </span>
+            {journalPosts.length === 0 && (
+              <span className="font-display text-xs uppercase tracking-wide text-white/40 rounded-full border border-line px-4 py-2 shrink-0">
+                Скоро на сайте
+              </span>
+            )}
           </motion.div>
 
           <motion.div
@@ -270,21 +289,56 @@ export default function Home() {
             variants={stagger}
             className="mt-10 grid sm:grid-cols-3 gap-5"
           >
-            {[
-              ["Vetements", "Деконструкция как манифест"],
-              ["Balenciaga", "Дом, который переписывает правила"],
-              ["Rick Owens", "Готическая эстетика на грани"]
-            ].map(([brand, text]) => (
-              <motion.div
-                key={brand}
-                variants={fadeUp}
-                whileHover={{ y: -6 }}
-                className="rounded-3xl bg-panel border border-line p-7 aspect-[4/5] flex flex-col justify-end"
-              >
-                <div className="font-display text-2xl font-bold">{brand}</div>
-                <p className="mt-2 text-sm text-white/50">{text}</p>
-              </motion.div>
-            ))}
+            {journalPosts.length > 0
+              ? journalPosts.map((post) => (
+                  <motion.a
+                    key={post.url}
+                    href={post.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variants={fadeUp}
+                    whileHover={{ y: -6 }}
+                    className="group rounded-3xl bg-panel border border-line overflow-hidden flex flex-col"
+                  >
+                    <div className="relative aspect-[4/5] bg-white/5">
+                      {post.image && (
+                        <Image
+                          src={post.image}
+                          alt={post.title ?? post.brand ?? "Статья"}
+                          fill
+                          sizes="(min-width: 640px) 33vw, 100vw"
+                          className="object-cover"
+                          unoptimized
+                        />
+                      )}
+                    </div>
+                    <div className="p-5">
+                      {post.brand && (
+                        <div className="font-display text-xs uppercase tracking-wide text-accent">
+                          {post.brand}
+                        </div>
+                      )}
+                      <div className="mt-1.5 font-display font-semibold group-hover:text-accent transition-colors">
+                        {post.title ?? "Читать"}
+                      </div>
+                    </div>
+                  </motion.a>
+                ))
+              : [
+                  ["Vetements", "Деконструкция как манифест"],
+                  ["Balenciaga", "Дом, который переписывает правила"],
+                  ["Rick Owens", "Готическая эстетика на грани"]
+                ].map(([brand, text]) => (
+                  <motion.div
+                    key={brand}
+                    variants={fadeUp}
+                    whileHover={{ y: -6 }}
+                    className="rounded-3xl bg-panel border border-line p-7 aspect-[4/5] flex flex-col justify-end"
+                  >
+                    <div className="font-display text-2xl font-bold">{brand}</div>
+                    <p className="mt-2 text-sm text-white/50">{text}</p>
+                  </motion.div>
+                ))}
           </motion.div>
         </section>
 
