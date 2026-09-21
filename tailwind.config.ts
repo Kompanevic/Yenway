@@ -12,7 +12,8 @@ const config: Config = {
         accent2: "#c9c7c2"
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "system-ui", "sans-serif"]
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        display: ["'Unbounded'", "system-ui", "sans-serif"]
       }
     }
   },

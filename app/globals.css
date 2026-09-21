@@ -10,3 +10,20 @@ body {
   background: radial-gradient(1200px 600px at 50% -10%, #1c1c1e 0%, #0a0a0b 60%);
   min-height: 100vh;
 }
+
+.font-display {
+  letter-spacing: -0.02em;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 22s linear infinite;
+}

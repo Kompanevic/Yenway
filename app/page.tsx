@@ -1,34 +1,58 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { REGION_LIST } from "@/lib/regions";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } }
+};
+
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12 } }
+};
 
 export default function Home() {
   return (
     <main>
-      <header className="max-w-6xl mx-auto px-6 flex items-center justify-between py-6">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.jpg" alt="Yenway" width={40} height={40} className="rounded-full" />
-          <span className="text-xl font-bold tracking-wide">YenWay</span>
+      <motion.header
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="max-w-7xl mx-auto px-6 flex items-center justify-between py-7"
+      >
+        <Link href="/" className="flex items-center gap-3">
+          <Image src="/logo.jpg" alt="YenWay" width={48} height={48} className="rounded-full" />
+          <span className="font-display text-2xl font-bold tracking-tight">YenWay</span>
         </Link>
-        <nav className="hidden sm:flex items-center gap-6 text-sm text-white/60">
+        <nav className="hidden md:flex items-center gap-8 font-display text-sm uppercase tracking-wide text-white/60">
           {REGION_LIST.map((r) => (
-            <Link key={r.key} href={`/order?region=${r.key}`} className="hover:text-white transition-colors">
+            <Link key={r.key} href={`/order?region=${r.key}`} className="relative group py-1">
               {r.name}
+              <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
             </Link>
           ))}
         </nav>
-        <Link
-          href="/order"
-          className="rounded-full bg-accent text-ink px-5 py-2 text-sm font-semibold hover:bg-accent2 transition-colors"
-        >
-          Сделать заказ
-        </Link>
-      </header>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Link
+            href="/order"
+            className="font-display rounded-full bg-accent text-ink px-6 py-2.5 text-sm font-semibold hover:bg-accent2 transition-colors"
+          >
+            Сделать заказ
+          </Link>
+        </motion.div>
+      </motion.header>
 
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <video
+          <motion.video
             className="w-full h-full object-cover opacity-40"
+            initial={{ scale: 1.15 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 6, ease: "easeOut" }}
             autoPlay
             muted
             loop
@@ -36,72 +60,122 @@ export default function Home() {
             poster="/logo.jpg"
           >
             <source src="/hero-bg.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-ink/60 via-ink/70 to-ink" />
+          </motion.video>
+          <div className="absolute inset-0 bg-gradient-to-b from-ink/60 via-ink/75 to-ink" />
         </div>
 
-        <div className="max-w-6xl mx-auto px-6 py-28 text-center">
-          <h1 className="text-4xl sm:text-6xl font-extrabold leading-tight tracking-tight">
-            Оригинальные бренды
-            <br />
-            <span className="text-white/60">со всего мира</span>
-          </h1>
-          <p className="mt-5 text-lg text-white/50 max-w-2xl mx-auto">
-            Вставьте ссылку на товар из Японии, Европы, США, Китая или Кореи — покажем фото,
-            посчитаем стоимость с доставкой и страховкой.
-          </p>
-          <Link
-            href="/order"
-            className="mt-9 inline-block rounded-full bg-accent text-ink px-8 py-3 font-semibold text-lg hover:bg-accent2 transition-colors"
-          >
-            Сделать заказ
-          </Link>
+        <div className="max-w-7xl mx-auto px-6 pt-28 pb-16 sm:pt-40 sm:pb-24 text-center">
+          <motion.div initial="hidden" animate="show" variants={stagger}>
+            <motion.h1
+              variants={fadeUp}
+              className="font-display text-5xl sm:text-7xl lg:text-8xl font-bold leading-[0.95] tracking-tight"
+            >
+              Оригинальные бренды
+              <br />
+              <span className="text-white/50">со всего мира</span>
+            </motion.h1>
+            <motion.p
+              variants={fadeUp}
+              className="mt-8 text-lg sm:text-xl text-white/50 max-w-2xl mx-auto"
+            >
+              Вставьте ссылку на товар из Японии, Европы, США, Китая или Кореи — покажем фото,
+              посчитаем стоимость с доставкой и страховкой.
+            </motion.p>
+            <motion.div variants={fadeUp}>
+              <motion.div
+                className="mt-10 inline-block"
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.94 }}
+              >
+                <Link
+                  href="/order"
+                  className="font-display inline-block rounded-full bg-accent text-ink px-10 py-4 font-semibold text-lg hover:bg-accent2 transition-colors"
+                >
+                  Сделать заказ
+                </Link>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        <div className="border-y border-line overflow-hidden py-4 bg-panel/40">
+          <div className="flex whitespace-nowrap animate-marquee font-display text-sm tracking-[0.3em] text-white/30 uppercase">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <span key={i} className="flex items-center gap-8 pr-8">
+                {["Fashion", "Sneakers", "Accessories", "Japan", "Europe", "USA", "China", "Korea"].map(
+                  (w) => (
+                    <span key={w} className="flex items-center gap-8">
+                      {w}
+                      <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                    </span>
+                  )
+                )}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-6">
-        <section className="py-10">
-          <h2 className="text-2xl font-bold mb-6">Откуда заказываем</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="max-w-7xl mx-auto px-6">
+        <section className="py-24">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.6 }}
+            className="font-display text-3xl sm:text-4xl font-bold mb-10"
+          >
+            Откуда заказываем
+          </motion.h2>
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
             {REGION_LIST.map((r) => (
-              <Link
-                key={r.key}
-                href={`/order?region=${r.key}`}
-                className="group rounded-2xl bg-panel border border-line p-6 hover:border-accent/40 transition-colors"
-              >
-                <div className="text-4xl grayscale">{r.flag}</div>
-                <div className="mt-3 text-xl font-bold group-hover:text-accent transition-colors">
-                  {r.name}
-                </div>
-                <p className="mt-2 text-sm text-white/50">{r.tagline}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {r.platforms.map((p) => (
-                    <span key={p} className="text-xs rounded-full bg-white/5 px-2 py-1 text-white/60">
-                      {p}
-                    </span>
-                  ))}
-                </div>
-              </Link>
+              <motion.div key={r.key} variants={fadeUp} whileHover={{ y: -6 }}>
+                <Link
+                  href={`/order?region=${r.key}`}
+                  className="block h-full rounded-3xl bg-panel border border-line p-7 transition-colors hover:border-accent/50"
+                >
+                  <div className="text-4xl grayscale">{r.flag}</div>
+                  <div className="font-display mt-4 text-2xl font-semibold">{r.name}</div>
+                  <p className="mt-2 text-sm text-white/50">{r.tagline}</p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {r.platforms.map((p) => (
+                      <span key={p} className="text-xs rounded-full bg-white/5 px-3 py-1.5 text-white/60">
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                </Link>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
 
-        <section className="py-16 grid sm:grid-cols-3 gap-8 text-center">
-          <div>
-            <div className="text-3xl font-bold text-accent">1</div>
-            <p className="mt-2 text-white/60">Вставляете ссылку на товар и ник в Telegram</p>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-accent">2</div>
-            <p className="mt-2 text-white/60">Мы считаем стоимость с доставкой и страховкой</p>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-accent">3</div>
-            <p className="mt-2 text-white/60">Пишем вам в Telegram и оформляем заказ</p>
-          </div>
-        </section>
+        <motion.section
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={stagger}
+          className="py-24 grid sm:grid-cols-3 gap-10 text-center"
+        >
+          {[
+            ["01", "Вставляете ссылку на товар и ник в Telegram"],
+            ["02", "Мы считаем стоимость с доставкой и страховкой"],
+            ["03", "Пишем вам в Telegram и оформляем заказ"]
+          ].map(([n, text]) => (
+            <motion.div key={n} variants={fadeUp}>
+              <div className="font-display text-5xl font-bold text-accent">{n}</div>
+              <p className="mt-4 text-white/60 text-lg">{text}</p>
+            </motion.div>
+          ))}
+        </motion.section>
 
-        <footer className="py-10 text-center text-white/30 text-sm">
+        <footer className="py-10 text-center text-white/30 text-sm font-display">
           © {new Date().getFullYear()} YenWay
         </footer>
       </div>
