@@ -185,6 +185,109 @@ export default function Home() {
           ))}
         </motion.section>
 
+        <section className="py-24">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="font-display text-xs uppercase tracking-[0.3em] text-accent">
+              Почему мы
+            </div>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold mt-3 max-w-xl">
+              Мы несём ответственность за каждый заказ
+            </h2>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+            className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5"
+          >
+            {[
+              [
+                "Полная ответственность",
+                "Ведём заказ лично от ссылки до посылки в ваших руках — и отвечаем за результат на каждом шаге."
+              ],
+              [
+                "Год подготовки",
+                "Прежде чем запуститься, мы месяцами выстраивали тарифы, склады и связи с площадками — чтобы у вас не было сюрпризов."
+              ],
+              [
+                "Прямая связь",
+                "Никаких ботов и очередей — вы напрямую на связи с человеком в Telegram."
+              ],
+              [
+                "Страховка включена",
+                "Каждая посылка застрахована уже в расчёте — риски на нас, а не на вас."
+              ]
+            ].map(([title, text]) => (
+              <motion.div
+                key={title}
+                variants={fadeUp}
+                whileHover={{ y: -6 }}
+                className="rounded-3xl bg-panel border border-line p-6"
+              >
+                <div className="font-display text-lg font-semibold">{title}</div>
+                <p className="mt-2.5 text-sm text-white/50">{text}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </section>
+
+        <section className="py-24">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.6 }}
+            className="flex items-end justify-between gap-6 flex-wrap"
+          >
+            <div>
+              <div className="font-display text-xs uppercase tracking-[0.3em] text-accent">
+                YenWay Journal
+              </div>
+              <h2 className="font-display text-3xl sm:text-4xl font-bold mt-3 max-w-xl">
+                Следим за модой каждый день
+              </h2>
+              <p className="mt-3 text-white/50 max-w-xl">
+                Показы, дропы и новости — но только те дома, что задают тон: Vetements, Balenciaga,
+                Rick Owens и им подобные. Никакого масс-маркета.
+              </p>
+            </div>
+            <span className="font-display text-xs uppercase tracking-wide text-white/40 rounded-full border border-line px-4 py-2 shrink-0">
+              Скоро на сайте
+            </span>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+            className="mt-10 grid sm:grid-cols-3 gap-5"
+          >
+            {[
+              ["Vetements", "Деконструкция как манифест"],
+              ["Balenciaga", "Дом, который переписывает правила"],
+              ["Rick Owens", "Готическая эстетика на грани"]
+            ].map(([brand, text]) => (
+              <motion.div
+                key={brand}
+                variants={fadeUp}
+                whileHover={{ y: -6 }}
+                className="rounded-3xl bg-panel border border-line p-7 aspect-[4/5] flex flex-col justify-end"
+              >
+                <div className="font-display text-2xl font-bold">{brand}</div>
+                <p className="mt-2 text-sm text-white/50">{text}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </section>
+
         <footer className="py-10 text-center text-white/30 text-sm font-display">
           © {new Date().getFullYear()} YenWay
         </footer>
