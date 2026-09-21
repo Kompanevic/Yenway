@@ -301,7 +301,7 @@ export default function Home() {
                     className="group rounded-3xl bg-panel border border-line overflow-hidden flex flex-col"
                   >
                     <div className="relative aspect-[4/5] bg-white/5">
-                      {post.image && (
+                      {post.image ? (
                         <Image
                           src={post.image}
                           alt={post.title ?? post.brand ?? "Статья"}
@@ -310,6 +310,12 @@ export default function Home() {
                           className="object-cover"
                           unoptimized
                         />
+                      ) : (
+                        <div className="absolute inset-0 flex items-end p-6">
+                          <span className="font-display text-2xl font-bold text-white/20">
+                            {post.brand}
+                          </span>
+                        </div>
                       )}
                     </div>
                     <div className="p-5">
