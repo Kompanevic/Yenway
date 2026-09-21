@@ -135,22 +135,32 @@ export default function Home() {
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {REGION_LIST.map((r) => (
-              <motion.div key={r.key} variants={fadeUp} whileHover={{ y: -6 }}>
-                <Link
-                  href={`/order?region=${r.key}`}
-                  className="block h-full rounded-3xl bg-panel border border-line p-7 transition-colors hover:border-accent/50"
-                >
+              <motion.div
+                key={r.key}
+                variants={fadeUp}
+                whileHover={{ y: -6 }}
+                className="h-full rounded-3xl bg-panel border border-line p-7 transition-colors hover:border-accent/50"
+              >
+                <Link href={`/order?region=${r.key}`} className="block group">
                   <div className="text-4xl grayscale">{r.flag}</div>
-                  <div className="font-display mt-4 text-2xl font-semibold">{r.name}</div>
-                  <p className="mt-2 text-sm text-white/50">{r.tagline}</p>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {r.platforms.map((p) => (
-                      <span key={p} className="text-xs rounded-full bg-white/5 px-3 py-1.5 text-white/60">
-                        {p}
-                      </span>
-                    ))}
+                  <div className="font-display mt-4 text-2xl font-semibold group-hover:text-accent transition-colors">
+                    {r.name}
                   </div>
+                  <p className="mt-2 text-sm text-white/50">{r.tagline}</p>
                 </Link>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {r.platforms.map((p) => (
+                    <a
+                      key={p.name}
+                      href={p.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs rounded-full bg-white/5 px-3 py-1.5 text-white/60 hover:bg-accent hover:text-ink transition-colors"
+                    >
+                      {p.name}
+                    </a>
+                  ))}
+                </div>
               </motion.div>
             ))}
           </motion.div>

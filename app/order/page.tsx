@@ -117,9 +117,15 @@ export default function OrderPage({
             </h2>
             <div className="flex flex-wrap gap-2">
               {REGION_LIST.flatMap((r) => r.platforms.slice(0, 2)).map((p, i) => (
-                <span key={p + i} className="text-xs rounded-full bg-panel border border-line px-3 py-1.5 text-white/50">
-                  {p}
-                </span>
+                <a
+                  key={p.name + i}
+                  href={p.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs rounded-full bg-panel border border-line px-3 py-1.5 text-white/50 hover:bg-accent hover:text-ink hover:border-accent transition-colors"
+                >
+                  {p.name}
+                </a>
               ))}
             </div>
           </div>
