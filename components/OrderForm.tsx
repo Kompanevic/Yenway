@@ -104,7 +104,7 @@ export default function OrderForm({ initialRegion }: { initialRegion: RegionKey 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-accent py-3 font-semibold hover:bg-accent2 transition-colors disabled:opacity-50"
+          className="w-full rounded-xl bg-accent text-ink py-3 font-semibold hover:bg-accent2 transition-colors disabled:opacity-50"
         >
           {loading ? "Считаем..." : "Рассчитать и отправить заявку"}
         </button>

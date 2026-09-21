@@ -5,10 +5,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#0b0e14",
-        panel: "#131826",
-        accent: "#ff5a36",
-        accent2: "#ffb020"
+        ink: "#0a0a0b",
+        panel: "#161617",
+        line: "#2a2a2c",
+        accent: "#e7e5e1",
+        accent2: "#c9c7c2"
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"]
