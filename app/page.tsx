@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { REGION_LIST } from "@/lib/regions";
+import { REVIEWS, averageRating } from "@/lib/reviews";
 
 interface JournalCard {
   url: string;
@@ -55,6 +56,10 @@ export default function Home() {
           ))}
           <Link href="/wardrobe" className="relative group py-1 text-accent">
             Гардероб
+            <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
+          </Link>
+          <Link href="/reviews" className="relative group py-1">
+            Отзывы
             <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
           </Link>
         </nav>
@@ -115,6 +120,13 @@ export default function Home() {
                 className="py-3 border-b border-line/60 text-accent"
               >
                 Гардероб
+              </Link>
+              <Link
+                href="/reviews"
+                onClick={() => setMenuOpen(false)}
+                className="py-3 border-b border-line/60 text-white/80"
+              >
+                Отзывы
               </Link>
               <Link
                 href="/order"
@@ -317,6 +329,45 @@ export default function Home() {
                 <p className="mt-2.5 text-sm text-white/50">{text}</p>
               </motion.div>
             ))}
+          </motion.div>
+        </section>
+
+        <section className="py-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.6 }}
+          >
+            <Link
+              href="/reviews"
+              className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-accent text-ink px-7 py-5 hover:bg-accent2 transition-colors"
+            >
+              {REVIEWS.length > 0 ? (
+                <div className="flex items-center gap-4">
+                  <span className="font-display text-3xl font-bold">
+                    {averageRating(REVIEWS).toFixed(1)}
+                  </span>
+                  <div>
+                    <div className="leading-none">
+                      {"★".repeat(Math.round(averageRating(REVIEWS)))}
+                      <span className="opacity-30">
+                        {"★".repeat(5 - Math.round(averageRating(REVIEWS)))}
+                      </span>
+                    </div>
+                    <div className="text-xs opacity-60 mt-1">
+                      {REVIEWS.length} {REVIEWS.length === 1 ? "отзыв" : "отзывов"} от покупателей
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="font-display font-bold">★★★★★ Оставьте первый отзыв</div>
+                  <div className="text-xs opacity-60 mt-1">Расскажите, как прошёл заказ</div>
+                </div>
+              )}
+              <span className="font-display text-sm font-semibold shrink-0">Смотреть отзывы →</span>
+            </Link>
           </motion.div>
         </section>
 
