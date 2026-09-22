@@ -13,10 +13,11 @@ import {
 } from "@/lib/wardrobe";
 
 const PKG_VERSION = "1.7.0";
-// Папка с моделью (WASM/ONNX) для этой же версии пакета — передаём явно,
-// чтобы библиотека не пыталась угадывать свой путь сама (через +esm-обёртку
-// jsDelivr автоопределение пути ломается, и она молча не находит модель).
-const ASSETS_PATH = `https://cdn.jsdelivr.net/npm/@imgly/background-removal@${PKG_VERSION}/dist/`;
+// Официальный путь библиотеки к своим файлам моделей (это её собственный
+// дефолт из документации: https://staticimgly.com/@imgly/background-removal-data/<версия>/dist/).
+// Модели лежат в ОТДЕЛЬНОМ пакете -data, а не в самом background-removal —
+// предыдущая версия указывала на dist/ основного пакета, поэтому 404-илось.
+const ASSETS_PATH = `https://staticimgly.com/@imgly/background-removal-data/${PKG_VERSION}/dist/`;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
   return Promise.race([
