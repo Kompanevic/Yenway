@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { REGION_LIST } from "@/lib/regions";
 
 interface JournalCard {
@@ -25,6 +25,7 @@ const stagger = {
 
 export default function Home() {
   const [journalPosts, setJournalPosts] = useState<JournalCard[]>([]);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/journal")
@@ -57,7 +58,7 @@ export default function Home() {
             <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
           </Link>
         </nav>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="hidden md:block">
           <Link
             href="/order"
             className="font-display rounded-full bg-accent text-ink px-6 py-2.5 text-sm font-semibold hover:bg-accent2 transition-colors"
@@ -65,7 +66,67 @@ export default function Home() {
             Сделать заказ
           </Link>
         </motion.div>
+
+        <button
+          type="button"
+          aria-label="Меню"
+          onClick={() => setMenuOpen((v) => !v)}
+          className="md:hidden flex flex-col justify-center gap-1.5 w-10 h-10 shrink-0"
+        >
+          <motion.span
+            animate={menuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
+            className="block h-0.5 w-6 bg-white rounded-full"
+          />
+          <motion.span
+            animate={menuOpen ? { opacity: 0 } : { opacity: 1 }}
+            className="block h-0.5 w-6 bg-white rounded-full"
+          />
+          <motion.span
+            animate={menuOpen ? { rotate: -45, y: -6 } : { rotate: 0, y: 0 }}
+            className="block h-0.5 w-6 bg-white rounded-full"
+          />
+        </button>
       </motion.header>
+
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="md:hidden overflow-hidden border-t border-line bg-panel"
+          >
+            <nav className="max-w-7xl mx-auto px-6 py-6 flex flex-col gap-1 font-display text-lg">
+              {REGION_LIST.map((r) => (
+                <Link
+                  key={r.key}
+                  href={`/order?region=${r.key}`}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-3 py-3 border-b border-line/60 text-white/80"
+                >
+                  <span className="text-xl">{r.flag}</span>
+                  {r.name}
+                </Link>
+              ))}
+              <Link
+                href="/wardrobe"
+                onClick={() => setMenuOpen(false)}
+                className="py-3 border-b border-line/60 text-accent"
+              >
+                Гардероб
+              </Link>
+              <Link
+                href="/order"
+                onClick={() => setMenuOpen(false)}
+                className="mt-4 rounded-full bg-accent text-ink text-center py-3 font-semibold"
+              >
+                Сделать заказ
+              </Link>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <section className="relative overflow-hidden min-h-[94vh] flex items-center">
         <div className="absolute inset-0 -z-10">
