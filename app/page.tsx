@@ -477,6 +477,9 @@ export default function Home() {
               @{MANAGER_TELEGRAM}
             </a>
           </div>
+          <div className="text-xs text-white/20">
+            CEO — David K. · Deputy CEO — Kirill K. · Head of Procurement — Michael Benz
+          </div>
           <div>© {new Date().getFullYear()} YenWay</div>
         </footer>
       </div>
