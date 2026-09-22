@@ -60,17 +60,27 @@ async function cutoutToDataUrl(file: File): Promise<{ dataUrl: string; color: st
     }
   }
   if (!blob) throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
-  const dataUrl = await new Promise<string>((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.readAsDataURL(blob);
-  });
+  const dataUrl = await withTimeout(
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("Не удалось прочитать результат вырезки фона"));
+      reader.readAsDataURL(blob);
+    }),
+    10000,
+    "Чтение результата вырезки фона зависло"
+  );
 
-  const img = await new Promise<HTMLImageElement>((resolve) => {
-    const el = new Image();
-    el.onload = () => resolve(el);
-    el.src = dataUrl;
-  });
+  const img = await withTimeout(
+    new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("Не удалось загрузить вырезанное изображение"));
+      el.src = dataUrl;
+    }),
+    10000,
+    "Загрузка вырезанного изображения зависла"
+  );
   const canvas = document.createElement("canvas");
   canvas.width = img.width;
   canvas.height = img.height;
@@ -180,6 +190,7 @@ export default function WardrobeStudio() {
         )}
         <span className="text-sm text-white/40">
           Фото обрабатываются прямо в браузере — никуда не отправляются.
+          {processing && " Первое фото может занять до минуты — грузится модель."}
         </span>
       </div>
 
