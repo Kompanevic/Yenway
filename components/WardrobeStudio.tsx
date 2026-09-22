@@ -132,7 +132,7 @@ export default function WardrobeStudio() {
           <h2 className="font-display text-xs uppercase tracking-wide text-white/40 mb-4">
             Ваш гардероб
           </h2>
-          <motion.div layout className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+          <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {items.map((item) => (
               <motion.div
                 layout
