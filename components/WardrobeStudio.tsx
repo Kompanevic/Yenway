@@ -26,6 +26,12 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
   ]);
 }
 
+// У IMG.LY на их CDN не всегда опубликованы все варианты модели для
+// текущей версии пакета (известный баг с их стороны — конкретный вариант
+// может отсутствовать в resources.json). Перебираем варианты по очереди,
+// вместо того чтобы полагаться на один дефолтный isnet_fp16.
+const MODEL_VARIANTS = ["isnet_fp16", "isnet_quint8", "isnet"];
+
 async function cutoutToDataUrl(file: File): Promise<{ dataUrl: string; color: string }> {
   // Библиотека тяжёлая (WASM/ONNX) и нужна только в браузере — грузим её как
   // настоящий ESM-модуль с CDN в рантайме, а не через сборку Next.js/webpack.
@@ -38,11 +44,22 @@ async function cutoutToDataUrl(file: File): Promise<{ dataUrl: string; color: st
   )) as {
     removeBackground: (file: File, config?: Record<string, unknown>) => Promise<Blob>;
   };
-  const blob = await withTimeout(
-    mod.removeBackground(file, { publicPath: ASSETS_PATH }),
-    45000,
-    "Модель вырезки фона не ответила за 45 секунд"
-  );
+
+  let blob: Blob | null = null;
+  let lastErr: unknown = null;
+  for (const model of MODEL_VARIANTS) {
+    try {
+      blob = await withTimeout(
+        mod.removeBackground(file, { publicPath: ASSETS_PATH, model }),
+        45000,
+        "Модель вырезки фона не ответила за 45 секунд"
+      );
+      break;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  if (!blob) throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
   const dataUrl = await new Promise<string>((resolve) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
