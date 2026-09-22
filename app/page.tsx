@@ -52,6 +52,10 @@ export default function Home() {
               <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
             </Link>
           ))}
+          <Link href="/wardrobe" className="relative group py-1 text-accent">
+            Гардероб
+            <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
+          </Link>
         </nav>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Link
