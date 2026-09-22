@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { REGION_LIST } from "@/lib/regions";
 import { REVIEWS, averageRating } from "@/lib/reviews";
+import { MANAGER_TELEGRAM } from "@/lib/pricing";
 
 interface JournalCard {
   url: string;
@@ -464,8 +465,19 @@ export default function Home() {
           </motion.div>
         </section>
 
-        <footer className="py-10 text-center text-white/30 text-sm font-display">
-          © {new Date().getFullYear()} YenWay
+        <footer className="py-10 text-center text-white/30 text-sm font-display space-y-2">
+          <div>
+            Связь:{" "}
+            <a
+              href={`https://t.me/${MANAGER_TELEGRAM}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/50 hover:text-accent transition-colors"
+            >
+              @{MANAGER_TELEGRAM}
+            </a>
+          </div>
+          <div>© {new Date().getFullYear()} YenWay</div>
         </footer>
       </div>
     </main>
