@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { REGION_LIST } from "@/lib/regions";
-import { REVIEWS, averageRating } from "@/lib/reviews";
 import { MANAGER_TELEGRAM } from "@/lib/pricing";
 
 const JOURNAL_BANNERS = [
@@ -79,6 +78,14 @@ const stagger = {
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [reviews, setReviews] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
+
+  useEffect(() => {
+    fetch("/api/reviews")
+      .then((res) => res.json())
+      .then((data) => setReviews({ average: data.average ?? 0, count: data.count ?? 0 }))
+      .catch(() => {});
+  }, []);
 
   return (
     <main>
@@ -388,20 +395,18 @@ export default function Home() {
               href="/reviews"
               className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-accent text-ink px-7 py-5 hover:bg-accent2 transition-colors"
             >
-              {REVIEWS.length > 0 ? (
+              {reviews.count > 0 ? (
                 <div className="flex items-center gap-4">
-                  <span className="font-display text-3xl font-bold">
-                    {averageRating(REVIEWS).toFixed(1)}
-                  </span>
+                  <span className="font-display text-3xl font-bold">{reviews.average.toFixed(1)}</span>
                   <div>
                     <div className="leading-none">
-                      {"★".repeat(Math.round(averageRating(REVIEWS)))}
+                      {"★".repeat(Math.round(reviews.average))}
                       <span className="opacity-30">
-                        {"★".repeat(5 - Math.round(averageRating(REVIEWS)))}
+                        {"★".repeat(5 - Math.round(reviews.average))}
                       </span>
                     </div>
                     <div className="text-xs opacity-60 mt-1">
-                      {REVIEWS.length} {REVIEWS.length === 1 ? "отзыв" : "отзывов"} от покупателей
+                      {reviews.count} {reviews.count === 1 ? "отзыв" : "отзывов"} от покупателей
                     </div>
                   </div>
                 </div>

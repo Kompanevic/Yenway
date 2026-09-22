@@ -1,6 +1,8 @@
 import ReviewForm from "@/components/ReviewForm";
 import GlassIcons from "@/components/GlassIcons";
-import { REVIEWS, averageRating } from "@/lib/reviews";
+import { getPublished, averageRating } from "@/lib/reviews-store";
+
+export const dynamic = "force-dynamic";
 
 function Stars({ rating }: { rating: number }) {
   return (
@@ -11,7 +13,8 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-export default function ReviewsPage() {
+export default async function ReviewsPage() {
+  const REVIEWS = await getPublished();
   const avg = averageRating(REVIEWS);
 
   return (
@@ -48,8 +51,8 @@ export default function ReviewsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {REVIEWS.map((r, i) => (
-                  <div key={i} className="rounded-2xl bg-panel/80 backdrop-blur-sm border border-line p-5">
+                {REVIEWS.map((r) => (
+                  <div key={r.id} className="rounded-2xl bg-panel/80 backdrop-blur-sm border border-line p-5">
                     <div className="flex items-center justify-between">
                       <span className="font-display font-semibold">@{r.username}</span>
                       <Stars rating={r.rating} />

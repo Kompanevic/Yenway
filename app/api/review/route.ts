@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { addPending } from "@/lib/reviews-store";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -37,7 +38,10 @@ export async function POST(req: NextRequest) {
     `Опубликовать вручную после проверки.`
   ].join("\n");
 
-  const sent = await sendTelegramMessage(lines);
+  const [sent] = await Promise.all([
+    sendTelegramMessage(lines),
+    addPending({ username, rating, text }).catch(() => null)
+  ]);
 
   return NextResponse.json({ notified: sent });
 }
