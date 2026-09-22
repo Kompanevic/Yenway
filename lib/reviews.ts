@@ -9,7 +9,9 @@ export interface Review {
  * Отзывы публикуются вручную после модерации в Telegram — просто
  * добавляй сюда новые объекты, когда решишь опубликовать отзыв.
  */
-export const REVIEWS: Review[] = [];
+export const REVIEWS: Review[] = [
+  { username: "plug2004", rating: 5, text: "Добро пожаловать!", date: "2026-09" }
+];
 
 export function averageRating(reviews: Review[]): number {
   if (reviews.length === 0) return 0;
