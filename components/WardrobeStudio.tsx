@@ -12,15 +12,36 @@ import {
   Outfit
 } from "@/lib/wardrobe";
 
+const PKG_VERSION = "1.7.0";
+// Папка с моделью (WASM/ONNX) для этой же версии пакета — передаём явно,
+// чтобы библиотека не пыталась угадывать свой путь сама (через +esm-обёртку
+// jsDelivr автоопределение пути ломается, и она молча не находит модель).
+const ASSETS_PATH = `https://cdn.jsdelivr.net/npm/@imgly/background-removal@${PKG_VERSION}/dist/`;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(message)), ms))
+  ]);
+}
+
 async function cutoutToDataUrl(file: File): Promise<{ dataUrl: string; color: string }> {
   // Библиотека тяжёлая (WASM/ONNX) и нужна только в браузере — грузим её как
   // настоящий ESM-модуль с CDN в рантайме, а не через сборку Next.js/webpack.
-  const cdnUrl = "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm";
+  const cdnUrl = `https://cdn.jsdelivr.net/npm/@imgly/background-removal@${PKG_VERSION}/+esm`;
   // @ts-ignore — динамический импорт по URL, TypeScript не резолвит типы CDN-модуля
-  const mod = (await import(/* webpackIgnore: true */ cdnUrl)) as {
-    removeBackground: (file: File) => Promise<Blob>;
+  const mod = (await withTimeout(
+    import(/* webpackIgnore: true */ cdnUrl),
+    20000,
+    "Не удалось загрузить модуль вырезки фона (проверьте интернет)"
+  )) as {
+    removeBackground: (file: File, config?: Record<string, unknown>) => Promise<Blob>;
   };
-  const blob = await mod.removeBackground(file);
+  const blob = await withTimeout(
+    mod.removeBackground(file, { publicPath: ASSETS_PATH }),
+    45000,
+    "Модель вырезки фона не ответила за 45 секунд"
+  );
   const dataUrl = await new Promise<string>((resolve) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
@@ -45,6 +66,8 @@ async function cutoutToDataUrl(file: File): Promise<{ dataUrl: string; color: st
 export default function WardrobeStudio() {
   const [items, setItems] = useState<WardrobeItem[]>([]);
   const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [outfit, setOutfit] = useState<Outfit | null>(null);
   const [noMatch, setNoMatch] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -54,9 +77,14 @@ export default function WardrobeStudio() {
     setProcessing(true);
     setOutfit(null);
     setNoMatch(false);
-    for (const file of Array.from(files)) {
+    setError(null);
+    const list = Array.from(files);
+    let failed = 0;
+    let lastErrorMessage = "";
+    for (let i = 0; i < list.length; i++) {
+      setProgress({ done: i, total: list.length });
       try {
-        const { dataUrl, color } = await cutoutToDataUrl(file);
+        const { dataUrl, color } = await cutoutToDataUrl(list[i]);
         const family = nearestColorFamily(color);
         setItems((prev) => [
           ...prev,
@@ -68,10 +96,18 @@ export default function WardrobeStudio() {
             colorFamily: family.name
           }
         ]);
-      } catch {
-        // одно фото не обработалось — пропускаем, остальные продолжаем
+      } catch (e) {
+        failed++;
+        lastErrorMessage = e instanceof Error ? e.message : String(e);
+        console.error("Не удалось обработать фото:", e);
       }
     }
+    if (failed > 0) {
+      setError(
+        `Не удалось обработать ${failed} из ${list.length} фото. Причина: ${lastErrorMessage || "неизвестная ошибка"}`
+      );
+    }
+    setProgress(null);
     setProcessing(false);
   }
 
@@ -101,7 +137,9 @@ export default function WardrobeStudio() {
           disabled={processing}
           className="font-display rounded-2xl bg-accent text-ink px-6 py-3 font-semibold hover:bg-accent2 transition-colors disabled:opacity-50"
         >
-          {processing ? "Обрабатываем..." : "Добавить вещи"}
+          {processing
+            ? `Обрабатываем${progress ? ` ${progress.done + 1}/${progress.total}` : "..."}`
+            : "Добавить вещи"}
         </motion.button>
         <input
           ref={inputRef}
@@ -126,6 +164,12 @@ export default function WardrobeStudio() {
           Фото обрабатываются прямо в браузере — никуда не отправляются.
         </span>
       </div>
+
+      {error && (
+        <p className="mt-3 text-sm text-red-400 max-w-xl">
+          {error} — если повторяется, пришлите этот текст мне, посмотрю точнее.
+        </p>
+      )}
 
       {items.length > 0 && (
         <div className="mt-10">
