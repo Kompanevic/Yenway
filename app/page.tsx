@@ -478,7 +478,7 @@ export default function Home() {
             </a>
           </div>
           <div className="text-xs text-white/20">
-            CEO — David K. · Deputy CEO — Kirill K. · Head of Procurement — Michael Benz
+            CEO — David K. · Deputy CEO — Kirill K. · Head of Procurement — MK
           </div>
           <div>© {new Date().getFullYear()} YenWay</div>
         </footer>
