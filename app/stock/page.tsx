@@ -53,6 +53,7 @@ export default async function StockPage() {
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-white mx-2 align-middle" />
                 <span className="text-white/70 whitespace-nowrap">{l.size}</span>
               </div>
+              <div className="mt-1 font-display text-sm font-semibold">{l.price.toLocaleString("ru-RU")} ₽</div>
             </Link>
           ))}
         </div>
