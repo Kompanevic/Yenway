@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { addPending } from "@/lib/reviews-store";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const allowed = await checkRateLimit(req, "review", 5, 600);
+  if (!allowed) {
+    return NextResponse.json({ error: "Слишком много отзывов. Попробуйте через несколько минут." }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
 
   const usernameRaw: string | undefined = body?.username;

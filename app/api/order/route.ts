@@ -3,8 +3,14 @@ import { fetchLinkPreview } from "@/lib/og";
 import { calculatePrice, isManualRegion, MANAGER_TELEGRAM, CUSTOMS_NOTE } from "@/lib/pricing";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { REGIONS, RegionKey } from "@/lib/regions";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const allowed = await checkRateLimit(req, "order", 8, 600);
+  if (!allowed) {
+    return NextResponse.json({ error: "Слишком много заявок. Попробуйте через несколько минут." }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
 
   const link: string | undefined = body?.link;
