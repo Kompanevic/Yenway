@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAuthed } from "@/lib/admin-auth";
 import { fetchItemInfo } from "@/lib/item-info";
 
+// Страница + запасной запрос к API площадки могут не уложиться в дефолтные 10 с.
+export const maxDuration = 30;
+
 export async function POST(req: NextRequest) {
   if (!isAuthed(req)) return NextResponse.json({ error: "Не авторизовано" }, { status: 401 });
 

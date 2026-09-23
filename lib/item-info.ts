@@ -8,6 +8,7 @@ export interface ItemInfo {
   currency: Currency | null;
   condition: string | null;
   size: string | null;
+  fetchError?: string | null;
 }
 
 const EMPTY: ItemInfo = {
@@ -108,6 +109,16 @@ const JP_CONDITIONS: [string, string][] = [
   ["傷や汚れあり", "Есть следы носки"]
 ];
 
+// Состояния англоязычных площадок (Grailed: is_new / is_gently_used / is_used / is_worn).
+function enCondition(v: string): string {
+  const s = v.toLowerCase().replace(/^is_/, "").replace(/_/g, " ");
+  if (/new|never worn|deadstock/.test(s)) return "Новое";
+  if (/gently/.test(s)) return "Бережно ношенное";
+  if (/very worn|heavily/.test(s)) return "Сильно ношенное";
+  if (/used|worn/.test(s)) return "Б/у";
+  return v;
+}
+
 function detectCondition(text: string): string | null {
   const labelled = text.match(/(?:商品の状態|状態|Condition|Состояние)\s*[:：]?\s*([^\n]{0,60})/i)?.[1] ?? "";
   for (const [jp, ru] of JP_CONDITIONS) if (labelled.includes(jp)) return ru;
@@ -122,8 +133,8 @@ function detectCondition(text: string): string | null {
     }
   }
   if (found.size === 1) return [...found][0];
-  const en = labelled.match(/^(new with tags|new|gently used|used|worn)/i)?.[1];
-  return en ?? null;
+  const en = labelled.match(/^(new with tags|new|gently used|very worn|used|worn)/i)?.[1];
+  return en ? enCondition(en) : null;
 }
 
 function detectSize(text: string): string | null {
@@ -151,6 +162,66 @@ function parsePrice(v: string | null): number | null {
   if (!v) return null;
   const n = parseFloat(v.replace(/[^\d.]/g, ""));
   return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+// Объявление внутри JSON (Next.js __NEXT_DATA__ или API площадки): ищем
+// ближайший к корню объект, похожий на лот — с названием, ценой и фото/размером.
+function findListing(root: unknown): Json | null {
+  const queue: unknown[] = [root];
+  for (let seen = 0; queue.length && seen < 20000; seen++) {
+    const node = queue.shift();
+    if (!node || typeof node !== "object") continue;
+    if (Array.isArray(node)) {
+      queue.push(...node);
+      continue;
+    }
+    const o = node as Json;
+    if (
+      typeof o.title === "string" &&
+      (typeof o.price === "number" || typeof o.price === "string") &&
+      (Array.isArray(o.photos) || Array.isArray(o.designers) || "size" in o)
+    ) {
+      return o;
+    }
+    queue.push(...Object.values(o));
+  }
+  return null;
+}
+
+function listingInfo(o: Json, pageUrl: string): Partial<ItemInfo> {
+  const designers = Array.isArray(o.designers)
+    ? o.designers.map((d) => str((d as Json)?.name)).filter(Boolean).join(" × ")
+    : "";
+  const title = str(o.title);
+  let image = firstImage(Array.isArray(o.photos) ? o.photos[0] : null) ?? firstImage(o.cover_photo);
+  try {
+    image = image ? new URL(image, pageUrl).toString() : null;
+  } catch {
+    image = null;
+  }
+  const condition = str(o.condition);
+  return {
+    title: title && designers && !title.toLowerCase().includes(designers.toLowerCase()) ? `${designers} ${title}` : title,
+    image,
+    description: str(o.description),
+    price: parsePrice(str(o.price)),
+    size: str(o.size),
+    condition: condition ? enCondition(condition) : null
+  };
+}
+
+// Структурированные размер/состояние/название из лота надёжнее догадок по тексту;
+// цену, фото и описание оставляем из JSON-LD/метатегов, если они уже есть.
+function mergeListing(base: ItemInfo, l: Partial<ItemInfo>): ItemInfo {
+  return {
+    ...base,
+    title: l.title ?? base.title,
+    size: l.size ?? base.size,
+    condition: l.condition ?? base.condition,
+    image: base.image ?? l.image ?? null,
+    price: base.price ?? l.price ?? null,
+    description: base.description ?? l.description ?? null
+  };
 }
 
 export function parseItemHtml(html: string, pageUrl: string): ItemInfo {
@@ -193,7 +264,7 @@ export function parseItemHtml(html: string, pageUrl: string): ItemInfo {
     detectCondition(`${description ?? ""}\n${pageText}`) ?? SCHEMA_CONDITION[schemaCondition] ?? null;
   const size = detectSize(description ?? "") ?? detectSize(pageText);
 
-  return {
+  const info: ItemInfo = {
     title: titleRaw ? cleanTitle(decodeEntities(titleRaw.trim())) : null,
     image,
     description,
@@ -202,26 +273,54 @@ export function parseItemHtml(html: string, pageUrl: string): ItemInfo {
     condition,
     size
   };
+
+  const nextData = html.match(/<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i)?.[1];
+  if (nextData) {
+    try {
+      const listing = findListing(JSON.parse(nextData));
+      if (listing) return mergeListing(info, listingInfo(listing, pageUrl));
+    } catch {
+      // битый JSON — остаёмся с тем, что нашли в метатегах
+    }
+  }
+  return info;
+}
+
+const BROWSER_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+  "Accept-Language": "ja,en-US;q=0.9,en;q=0.8,ru;q=0.7",
+  "Upgrade-Insecure-Requests": "1",
+  "Sec-Fetch-Dest": "document",
+  "Sec-Fetch-Mode": "navigate",
+  "Sec-Fetch-Site": "none"
+};
+
+function get(url: string, accept: string, ms: number): Promise<Response> {
+  return fetch(url, { signal: AbortSignal.timeout(ms), headers: { ...BROWSER_HEADERS, Accept: accept } });
 }
 
 export async function fetchItemInfo(url: string): Promise<ItemInfo> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const u = new URL(url);
+  let info: ItemInfo = { ...EMPTY, currency: currencyFromHost(u.hostname), fetchError: null };
   try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": "ja,en;q=0.8,ru;q=0.6"
-      }
-    });
-    if (!res.ok) return { ...EMPTY, currency: currencyFromHost(new URL(url).hostname) };
-    return parseItemHtml(await res.text(), res.url || url);
-  } catch {
-    return { ...EMPTY, currency: currencyFromHost(new URL(url).hostname) };
-  } finally {
-    clearTimeout(timeout);
+    const res = await get(url, "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", 8000);
+    if (res.ok) info = { ...parseItemHtml(await res.text(), res.url || url), fetchError: null };
+    else info.fetchError = `ошибка ${res.status}`;
+  } catch (e) {
+    info.fetchError = e instanceof Error && e.name === "TimeoutError" ? "сайт не ответил за 8 секунд" : "сайт недоступен";
   }
+
+  // Grailed часто не отдаёт страницу серверу — у него есть JSON по номеру лота.
+  const listingId = u.pathname.match(/\/listings\/(\d+)/)?.[1];
+  if (listingId && (!info.title || !info.image || !info.size)) {
+    try {
+      const res = await get(`${u.origin}/api/listings/${listingId}`, "application/json", 6000);
+      const listing = res.ok ? findListing(await res.json()) : null;
+      if (listing) info = { ...mergeListing(info, listingInfo(listing, url)), fetchError: null };
+    } catch {
+      // оставляем то, что есть, вместе с причиной ошибки страницы
+    }
+  }
+  return info;
 }

@@ -115,7 +115,9 @@ export default function ItemCardTool() {
       setPrice(data.price != null ? String(data.price) : "");
       if (data.currency) setCurrency(data.currency);
       if (!data.title && !data.image) {
-        setNote("Площадка не отдала данные — заполните поля и загрузите фото вручную.");
+        setNote(
+          `Площадка не отдала данные${data.fetchError ? ` (${data.fetchError})` : ""} — заполните поля и загрузите фото вручную.`
+        );
       }
       if (data.image) {
         const img = await fetch(`/api/admin/image-proxy?url=${encodeURIComponent(data.image)}`);
