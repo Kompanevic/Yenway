@@ -51,18 +51,18 @@ export default function OrderPage({
         </div>
       </div>
 
-      <div className="relative w-full h-[30vh] min-h-[200px] max-h-[340px] mt-14 overflow-hidden">
-        <video
-          className="absolute inset-0 w-full h-full object-cover opacity-70"
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster="/hero-poster.jpg"
-        >
-          <source src="/hero-bg.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/10 to-ink" />
+      <div className="relative w-full h-[30vh] min-h-[200px] max-h-[340px] mt-14 overflow-hidden bg-ink">
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(120deg, #161617 0%, #1d1d1f 35%, #2a2a2e 50%, #1d1d1f 65%, #161617 100%)"
+          }}
+        />
+        <div
+          className="absolute inset-y-0 left-1/3 w-1/3 blur-3xl"
+          style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent)" }}
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-transparent to-ink/40" />
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="font-display text-xs sm:text-sm tracking-[0.4em] uppercase text-white/80 bg-ink/30 px-5 py-2.5 backdrop-blur-sm rounded-full border border-white/10">
