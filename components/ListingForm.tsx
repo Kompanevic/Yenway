@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { downscaleImage } from "@/lib/image";
 import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS } from "@/lib/listing-constants";
+import { MANAGER_TELEGRAM } from "@/lib/pricing";
 
 const field = "w-full rounded-2xl bg-ink border border-line px-4 py-3 outline-none focus:border-accent transition-colors";
 const label = "block font-display text-xs uppercase tracking-wide text-white/50 mb-2";
@@ -147,6 +148,22 @@ export default function ListingForm({ own = false, onDone }: { own?: boolean; on
         <div>
           <label className={label}>Ваш ник в Telegram</label>
           <input required value={seller} onChange={(e) => setSeller(e.target.value)} placeholder="ivan_petrov" className={field} />
+        </div>
+      )}
+
+      {!own && (
+        <div className="rounded-2xl border border-amber-300/40 bg-amber-300/10 p-4 text-sm text-amber-100/90 leading-relaxed">
+          <span className="font-display font-semibold text-amber-200">Внимание!</span> Фото вещи обязательно
+          должны быть на вырезанном чёрном фоне. Если такой возможности нет — напишите{" "}
+          <a
+            href={`https://t.me/${MANAGER_TELEGRAM}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 text-amber-200"
+          >
+            @{MANAGER_TELEGRAM}
+          </a>
+          : мы вырежем фон за вас, после чего выложите объявление заново.
         </div>
       )}
 
