@@ -24,3 +24,30 @@ export async function sendTelegramMessage(text: string): Promise<boolean> {
     return false;
   }
 }
+
+export async function sendTelegramPhoto(photo: Blob, filename: string, caption: string): Promise<boolean> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!token || !chatId) {
+    console.error("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID не заданы в .env");
+    return false;
+  }
+
+  try {
+    const form = new FormData();
+    form.append("chat_id", chatId);
+    form.append("caption", caption);
+    form.append("parse_mode", "HTML");
+    form.append("photo", photo, filename);
+
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+      method: "POST",
+      body: form
+    });
+    return res.ok;
+  } catch (e) {
+    console.error("Ошибка отправки фото в Telegram:", e);
+    return false;
+  }
+}

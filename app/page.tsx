@@ -110,6 +110,10 @@ export default function Home() {
             Гардероб
             <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
           </Link>
+          <Link href="/search" className="relative group py-1">
+            Найти вещь
+            <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
+          </Link>
           <Link href="/reviews" className="relative group py-1">
             Отзывы
             <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
@@ -172,6 +176,13 @@ export default function Home() {
                 className="py-3 border-b border-line/60 text-accent"
               >
                 Гардероб
+              </Link>
+              <Link
+                href="/search"
+                onClick={() => setMenuOpen(false)}
+                className="py-3 border-b border-line/60 text-white/80"
+              >
+                Найти вещь
               </Link>
               <Link
                 href="/reviews"
