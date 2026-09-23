@@ -40,16 +40,18 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
   return { ok: true, value: { title, size, price, condition, description, seller, own }, photos, blobs };
 }
 
-// Готовый пост для канала: без ника продавца, со ссылкой на страницу вещи.
+// Готовый пост для канала: каждая строка жирная со значком, без ника продавца.
 export function listingPost(l: ListingInput & { id: string }, origin: string): string {
   const desc = l.description.length > 500 ? l.description.slice(0, 500) + "…" : l.description;
+  const line = (text: string) => `<b>✦ ${text}</b>`;
   return [
-    `<b>${escapeHtml(l.title)}</b>`,
+    line(escapeHtml(l.title)),
+    line(`Размер: ${escapeHtml(l.size)}`),
+    desc ? line(escapeHtml(desc)) : null,
+    line(`Состояние: ${escapeHtml(l.condition)}`),
     ``,
-    `Размер: ${escapeHtml(l.size)}`,
-    `Состояние: ${escapeHtml(l.condition)}`,
-    `Цена: <b>${l.price.toLocaleString("ru-RU")} ₽</b>`,
-    desc ? `\n${escapeHtml(desc)}` : null,
+    ``,
+    line(`Цена: ${l.price.toLocaleString("ru-RU")} ₽`),
     ``,
     `Купить: ${origin}/stock/${l.id}`
   ]
