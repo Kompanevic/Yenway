@@ -63,6 +63,126 @@ const JOURNAL_BANNERS = [
         <div className="absolute inset-y-0 left-1/2 w-px bg-white/30" />
       </div>
     )
+  },
+  {
+    brand: "Maison Margiela",
+    text: "Анонимность как стиль",
+    render: (
+      <div className="absolute inset-0" style={{ background: "#19191a" }}>
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(100deg, transparent 42%, rgba(255,255,255,0.35) 42%, rgba(255,255,255,0.35) 43%, transparent 43%)"
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(80deg, transparent 60%, rgba(255,255,255,0.35) 60%, rgba(255,255,255,0.35) 61%, transparent 61%)"
+          }}
+        />
+        <div
+          className="absolute bottom-6 left-6 w-16 h-16 rounded-full blur-2xl"
+          style={{ background: "#e8e6df", opacity: 0.12 }}
+        />
+      </div>
+    )
+  },
+  {
+    brand: "Comme des Garçons",
+    text: "Красота в асимметрии",
+    render: (
+      <div className="absolute inset-0 bg-black">
+        <div
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 w-28 h-28 rounded-full blur-xl"
+          style={{ background: "radial-gradient(circle, #c94b4b, transparent 70%)", opacity: 0.85 }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(200deg, transparent 55%, rgba(255,255,255,0.07) 55%, rgba(255,255,255,0.07) 56.5%, transparent 56.5%)"
+          }}
+        />
+      </div>
+    )
+  },
+  {
+    brand: "Yohji Yamamoto",
+    text: "Чёрный — это тоже цвет",
+    render: (
+      <div className="absolute inset-0" style={{ background: "#0d0d0e" }}>
+        <div
+          className="absolute inset-y-0 left-1/4 w-1/4 blur-2xl"
+          style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.14), transparent)" }}
+        />
+        <div
+          className="absolute inset-y-0 right-1/4 w-1/3 blur-3xl"
+          style={{ background: "linear-gradient(to bottom, transparent, rgba(255,255,255,0.09), transparent)" }}
+        />
+      </div>
+    )
+  },
+  {
+    brand: "Alexander McQueen",
+    text: "Драма на грани искусства",
+    render: (
+      <div className="absolute inset-0 bg-black">
+        <div
+          className="absolute inset-0"
+          style={{ background: "radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.2), transparent 55%)" }}
+        />
+        <div
+          className="absolute top-0 right-0 w-1/2 h-full"
+          style={{
+            background: "linear-gradient(160deg, transparent 48%, rgba(255,255,255,0.1) 49%, transparent 50%)"
+          }}
+        />
+        <div
+          className="absolute bottom-8 right-8 w-20 h-20 rounded-full blur-2xl"
+          style={{ background: "#7c8a99", opacity: 0.35 }}
+        />
+      </div>
+    )
+  },
+  {
+    brand: "Junya Watanabe",
+    text: "Конструктор из ткани",
+    render: (
+      <div className="absolute inset-0 bg-panel">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
+            backgroundSize: "18px 18px"
+          }}
+        />
+        <div
+          className="absolute top-6 right-6 w-20 h-20"
+          style={{ background: "#f3f0b8", opacity: 0.45, clipPath: "polygon(0 0, 100% 0, 100% 100%)" }}
+        />
+        <div
+          className="absolute bottom-10 left-8 w-16 h-16 rounded-full blur-xl"
+          style={{ background: "#bfe3e0", opacity: 0.4 }}
+        />
+      </div>
+    )
+  },
+  {
+    brand: "Ann Demeulemeester",
+    text: "Тихий бунт в чёрном",
+    render: (
+      <div className="absolute inset-0 bg-black">
+        <div
+          className="absolute top-1/4 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full blur-3xl"
+          style={{ background: "rgba(255,255,255,0.1)" }}
+        />
+        <div className="absolute inset-y-0 left-1/2 w-px bg-white/25" />
+      </div>
+    )
   }
 ];
 
@@ -459,19 +579,21 @@ export default function Home() {
             whileInView="show"
             viewport={{ once: true, margin: "-80px" }}
             variants={stagger}
-            className="mt-10 grid sm:grid-cols-3 gap-5"
+            className="mt-10 grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5"
           >
             {JOURNAL_BANNERS.map((banner) => (
               <motion.div
                 key={banner.brand}
                 variants={fadeUp}
                 whileHover={{ y: -6 }}
-                className="relative rounded-3xl border border-line overflow-hidden aspect-[4/5] flex flex-col justify-end"
+                className="relative rounded-2xl sm:rounded-3xl border border-line overflow-hidden aspect-square flex flex-col justify-end"
               >
                 {banner.render}
-                <div className="relative p-7">
-                  <div className="font-display text-2xl font-bold">{banner.brand}</div>
-                  <p className="mt-2 text-sm text-white/50">{banner.text}</p>
+                <div className="relative p-4 sm:p-5">
+                  <div className="font-display text-base sm:text-lg font-bold leading-tight">
+                    {banner.brand}
+                  </div>
+                  <p className="mt-1 text-xs text-white/50 leading-snug">{banner.text}</p>
                 </div>
               </motion.div>
             ))}
