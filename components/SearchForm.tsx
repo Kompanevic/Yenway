@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { downscaleImage } from "@/lib/image";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 
@@ -15,9 +16,10 @@ export default function SearchForm() {
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
-  function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
+  async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = e.target.files?.[0] ?? null;
     setError(null);
+    const file = picked ? await downscaleImage(picked, 1600) : null;
     if (file && file.size > MAX_PHOTO_BYTES) {
       setError("Фото слишком большое (макс. 4 МБ)");
       setPhoto(null);

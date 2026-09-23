@@ -343,7 +343,7 @@ export default function Home() {
             playsInline
             poster="/hero-poster.jpg"
           >
-            <source src="/hero-bg.mp4" type="video/mp4" />
+            <source src="/hero-bg-v2.mp4" type="video/mp4" />
           </motion.video>
           <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-ink/55 to-ink" />
         </div>
@@ -407,7 +407,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.6 }}
-            className="font-display text-3xl sm:text-4xl font-bold mb-10"
+            className="font-display text-2xl sm:text-4xl font-bold break-words mb-10"
           >
             Откуда заказываем
           </motion.h2>
@@ -479,7 +479,7 @@ export default function Home() {
             <div className="font-display text-xs uppercase tracking-[0.3em] text-accent">
               Почему мы
             </div>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold mt-3 max-w-xl">
+            <h2 className="font-display text-2xl sm:text-4xl font-bold break-words mt-3 max-w-xl">
               Мы несём ответственность за каждый заказ
             </h2>
           </motion.div>
@@ -571,7 +571,7 @@ export default function Home() {
               <div className="font-display text-xs uppercase tracking-[0.3em] text-accent">
                 YenWay Journal
               </div>
-              <h2 className="font-display text-3xl sm:text-4xl font-bold mt-3 max-w-xl">
+              <h2 className="font-display text-2xl sm:text-4xl font-bold break-words mt-3 max-w-xl">
                 Следим за модой каждый день
               </h2>
               <p className="mt-3 text-white/50 max-w-xl">

@@ -11,6 +11,7 @@ import {
   nearestColorFamily,
   Outfit
 } from "@/lib/wardrobe";
+import { downscaleImage } from "@/lib/image";
 
 const PKG_VERSION = "1.7.0";
 // Официальный путь библиотеки к своим файлам моделей (это её собственный
@@ -30,30 +31,54 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
 // текущей версии пакета (известный баг с их стороны — конкретный вариант
 // может отсутствовать в resources.json). Перебираем варианты по очереди,
 // вместо того чтобы полагаться на один дефолтный isnet_fp16.
-const MODEL_VARIANTS = ["isnet_fp16", "isnet_quint8", "isnet"];
+// quint8 — самая лёгкая (~вдвое меньше fp16) и быстрая на CPU; после первого
+// успеха рабочая модель встаёт в начало списка.
+const MODEL_VARIANTS = ["isnet_quint8", "isnet_fp16", "isnet"];
 
-async function cutoutToDataUrl(file: File): Promise<{ dataUrl: string; color: string }> {
+type BgModule = {
+  removeBackground: (file: Blob, config?: Record<string, unknown>) => Promise<Blob>;
+  preload?: (config?: Record<string, unknown>) => Promise<void>;
+};
+
+let modulePromise: Promise<BgModule> | null = null;
+
+function loadModule(): Promise<BgModule> {
   // Библиотека тяжёлая (WASM/ONNX) и нужна только в браузере — грузим её как
   // настоящий ESM-модуль с CDN в рантайме, а не через сборку Next.js/webpack.
   const cdnUrl = `https://cdn.jsdelivr.net/npm/@imgly/background-removal@${PKG_VERSION}/+esm`;
-  // @ts-ignore — динамический импорт по URL, TypeScript не резолвит типы CDN-модуля
-  const mod = (await withTimeout(
-    import(/* webpackIgnore: true */ cdnUrl),
+  modulePromise ??= withTimeout(
+    // @ts-ignore — динамический импорт по URL, TypeScript не резолвит типы CDN-модуля
+    import(/* webpackIgnore: true */ cdnUrl) as Promise<BgModule>,
     20000,
     "Не удалось загрузить модуль вырезки фона (проверьте интернет)"
-  )) as {
-    removeBackground: (file: File, config?: Record<string, unknown>) => Promise<Blob>;
-  };
+  ).catch((e) => {
+    modulePromise = null;
+    throw e;
+  });
+  return modulePromise;
+}
+
+// Начинаем качать модель, пока пользователь выбирает фото в галерее.
+function warmUp() {
+  loadModule()
+    .then((mod) => mod.preload?.({ publicPath: ASSETS_PATH, model: MODEL_VARIANTS[0] }))
+    .catch(() => {});
+}
+
+async function cutoutToDataUrl(original: File): Promise<{ dataUrl: string; color: string }> {
+  const [mod, file] = await Promise.all([loadModule(), downscaleImage(original, 1024, 0.9)]);
 
   let blob: Blob | null = null;
   let lastErr: unknown = null;
-  for (const model of MODEL_VARIANTS) {
+  for (const model of [...MODEL_VARIANTS]) {
     try {
       blob = await withTimeout(
         mod.removeBackground(file, { publicPath: ASSETS_PATH, model }),
-        45000,
-        "Модель вырезки фона не ответила за 45 секунд"
+        60000,
+        "Модель вырезки фона не ответила за 60 секунд"
       );
+      MODEL_VARIANTS.splice(MODEL_VARIANTS.indexOf(model), 1);
+      MODEL_VARIANTS.unshift(model);
       break;
     } catch (e) {
       lastErr = e;
@@ -161,7 +186,10 @@ export default function WardrobeStudio() {
           type="button"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => inputRef.current?.click()}
+          onClick={() => {
+            warmUp();
+            inputRef.current?.click();
+          }}
           disabled={processing}
           className="font-display rounded-2xl bg-accent text-ink px-6 py-3 font-semibold hover:bg-accent2 transition-colors disabled:opacity-50"
         >

@@ -77,7 +77,7 @@ export default function OrderForm({ initialRegion }: { initialRegion: RegionKey 
           <label className="block font-display text-xs uppercase tracking-wide text-white/50 mb-2">
             Регион
           </label>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {REGION_LIST.map((r) => (
               <motion.button
                 type="button"
