@@ -225,7 +225,7 @@ export default function Home() {
           <motion.div initial="hidden" animate="show" variants={stagger}>
             <motion.h1
               variants={fadeUp}
-              className="font-display text-5xl sm:text-7xl lg:text-8xl font-bold leading-[0.95] tracking-tight"
+              className="font-display text-4xl sm:text-7xl lg:text-8xl font-bold leading-[0.95] tracking-tight break-words"
             >
               Оригинальные бренды
               <br />
