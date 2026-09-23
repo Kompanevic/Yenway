@@ -215,10 +215,17 @@ export default function Home() {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="max-w-7xl mx-auto px-6 flex items-center justify-between py-7"
       >
-        <Link href="/" className="flex items-center gap-3">
+        <motion.a
+          href="https://t.me/yenwayjapan"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
           <Image src="/logo.jpg" alt="YenWay" width={48} height={48} className="rounded-full" />
           <span className="font-display text-2xl font-bold tracking-tight">YenWay</span>
-        </Link>
+        </motion.a>
         <nav className="hidden md:flex items-center gap-8 font-display text-sm uppercase tracking-wide text-white/60">
           {REGION_LIST.map((r) => (
             <Link key={r.key} href={`/order?region=${r.key}`} className="relative group py-1">
