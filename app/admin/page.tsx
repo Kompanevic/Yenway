@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { downscaleImage } from "@/lib/image";
 import ItemCardTool from "@/components/ItemCardTool";
+import AdminStock from "@/components/AdminStock";
 
 interface StoredReview {
   id: string;
@@ -37,6 +38,7 @@ export default function AdminPage() {
   const [newPhoto, setNewPhoto] = useState<File | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"cards" | "stock" | "reviews">("cards");
 
   async function load() {
     setLoading(true);
@@ -163,10 +165,32 @@ export default function AdminPage() {
         </button>
       </div>
 
+      <div className="mt-8 flex gap-2 overflow-x-auto">
+        {(
+          [
+            ["cards", "Карточки"],
+            ["stock", "В наличии"],
+            ["reviews", "Отзывы"]
+          ] as const
+        ).map(([key, name]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`font-display text-sm rounded-full px-4 py-2 border shrink-0 ${
+              tab === key ? "bg-accent text-ink border-accent font-semibold" : "border-line text-white/60 hover:text-white"
+            }`}
+          >
+            {name}
+          </button>
+        ))}
+      </div>
+
+      {tab === "cards" && <ItemCardTool />}
+      {tab === "stock" && <AdminStock />}
+      {tab === "reviews" && (
+        <>
       {loading && <p className="mt-4 text-white/40 text-sm">Обновляем...</p>}
       {actionError && <p className="mt-4 text-red-400 text-sm">{actionError}</p>}
-
-      <ItemCardTool />
 
       <section className="mt-10 rounded-3xl bg-panel border border-line p-6">
         <h2 className="font-display font-semibold mb-4">Опубликовать отзыв напрямую</h2>
@@ -298,6 +322,8 @@ export default function AdminPage() {
           </div>
         )}
       </section>
+        </>
+      )}
     </main>
   );
 }

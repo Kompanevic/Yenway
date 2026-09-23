@@ -77,3 +77,32 @@ export async function sendTelegramPhoto(
     return false;
   }
 }
+
+// Отдельный бот для объявлений «В наличии»: присылает готовый пост для канала.
+export const LISTING_BOT: BotConfig = {
+  token: process.env.LISTING_BOT_TOKEN,
+  chatId: process.env.LISTING_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID
+};
+
+// Альбом (до 10 фото) с подписью на первом фото; одно фото — обычный sendPhoto.
+export async function sendTelegramAlbum(photos: Blob[], caption: string, bot: BotConfig): Promise<boolean> {
+  if (photos.length === 1) return sendTelegramPhoto(photos[0], "photo.jpg", caption, bot);
+  if (!bot.token || !bot.chatId) {
+    console.error("Токен или chat_id Telegram-бота не заданы в переменных окружения");
+    return false;
+  }
+  try {
+    const form = new FormData();
+    form.append("chat_id", bot.chatId);
+    const media = photos.slice(0, 10).map((p, i) => {
+      form.append(`p${i}`, p, `p${i}.jpg`);
+      return { type: "photo", media: `attach://p${i}`, ...(i === 0 ? { caption, parse_mode: "HTML" } : {}) };
+    });
+    form.append("media", JSON.stringify(media));
+    const res = await fetch(`https://api.telegram.org/bot${bot.token}/sendMediaGroup`, { method: "POST", body: form });
+    return res.ok;
+  } catch (e) {
+    console.error("Ошибка отправки альбома в Telegram:", e);
+    return false;
+  }
+}

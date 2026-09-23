@@ -213,7 +213,7 @@ export default function Home() {
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="max-w-7xl mx-auto px-6 flex items-center justify-between py-7"
+        className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-6 py-7"
       >
         <motion.a
           href="https://t.me/yenwayjapan"
@@ -226,7 +226,7 @@ export default function Home() {
           <Image src="/logo.jpg" alt="YenWay" width={48} height={48} className="rounded-full" />
           <span className="font-display text-2xl font-bold tracking-tight">YenWay</span>
         </motion.a>
-        <nav className="hidden md:flex items-center gap-8 font-display text-sm uppercase tracking-wide text-white/60">
+        <nav className="hidden xl:flex items-center gap-4 2xl:gap-6 font-display text-sm uppercase tracking-wide text-white/60 whitespace-nowrap">
           {REGION_LIST.map((r) => (
             <Link key={r.key} href={`/order?region=${r.key}`} className="relative group py-1">
               {r.name}
@@ -241,12 +241,16 @@ export default function Home() {
             Найти вещь
             <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
           </Link>
+          <Link href="/stock" className="relative group py-1">
+            В наличии
+            <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
+          </Link>
           <Link href="/reviews" className="relative group py-1">
             Отзывы
             <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
           </Link>
         </nav>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="hidden md:block">
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="hidden xl:block shrink-0">
           <Link
             href="/order"
             className="font-display rounded-full bg-accent text-ink px-6 py-2.5 text-sm font-semibold hover:bg-accent2 transition-colors"
@@ -259,7 +263,7 @@ export default function Home() {
           type="button"
           aria-label="Меню"
           onClick={() => setMenuOpen((v) => !v)}
-          className="md:hidden flex flex-col justify-center gap-1.5 w-10 h-10 shrink-0"
+          className="xl:hidden flex flex-col justify-center gap-1.5 w-10 h-10 shrink-0"
         >
           <motion.span
             animate={menuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
@@ -283,7 +287,7 @@ export default function Home() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="md:hidden overflow-hidden border-t border-line bg-panel"
+            className="xl:hidden overflow-hidden border-t border-line bg-panel"
           >
             <nav className="max-w-7xl mx-auto px-6 py-6 flex flex-col gap-1 font-display text-lg">
               {REGION_LIST.map((r) => (
@@ -310,6 +314,13 @@ export default function Home() {
                 className="py-3 border-b border-line/60 text-white/80"
               >
                 Найти вещь
+              </Link>
+              <Link
+                href="/stock"
+                onClick={() => setMenuOpen(false)}
+                className="py-3 border-b border-line/60 text-white/80"
+              >
+                В наличии
               </Link>
               <Link
                 href="/reviews"
