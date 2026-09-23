@@ -47,8 +47,8 @@ export function listingPost(l: ListingInput & { id: string }, origin: string): s
   return [
     line(escapeHtml(l.title)),
     line(`Размер: ${escapeHtml(l.size)}`),
-    desc ? line(escapeHtml(desc)) : null,
     line(`Состояние: ${escapeHtml(l.condition)}`),
+    desc ? line(escapeHtml(desc)) : null,
     ``,
     ``,
     line(`Цена: ${l.price.toLocaleString("ru-RU")} ₽`),
