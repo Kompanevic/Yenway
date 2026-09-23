@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendTelegramPhoto, sendTelegramMessage } from "@/lib/telegram";
+import { sendTelegramPhoto, sendTelegramMessage, escapeHtml } from "@/lib/telegram";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
   const lines = [
     `🔍 <b>Заявка на поиск/выкуп — YenWay</b>`,
     ``,
-    `Вещь: ${itemName}`,
-    description ? `Описание/размер: ${description}` : null,
+    `Вещь: ${escapeHtml(itemName)}`,
+    description ? `Описание/размер: ${escapeHtml(description)}` : null,
     `Покупатель: @${username}`,
     ``,
     `Услуга поиска платная — ${SEARCH_FEE_RUB} ₽ (обсудить с клиентом).`

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchLinkPreview } from "@/lib/og";
 import { calculatePrice, isManualRegion, MANAGER_TELEGRAM, CUSTOMS_NOTE } from "@/lib/pricing";
-import { sendTelegramMessage } from "@/lib/telegram";
+import { sendTelegramMessage, escapeHtml } from "@/lib/telegram";
 import { REGIONS, RegionKey } from "@/lib/regions";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -66,8 +66,8 @@ export async function POST(req: NextRequest) {
     ``,
     `Регион: ${regionInfo.flag} ${regionInfo.name}`,
     `Покупатель: @${username}`,
-    `Ссылка: ${url.toString()}`,
-    preview.title ? `Товар: ${preview.title}` : null,
+    `Ссылка: ${escapeHtml(url.toString())}`,
+    preview.title ? `Товар: ${escapeHtml(preview.title)}` : null,
     weightKg != null ? `Вес: ${weightKg} кг` : null,
     ``,
     ...priceLines

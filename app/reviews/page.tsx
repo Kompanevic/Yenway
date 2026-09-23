@@ -58,6 +58,15 @@ export default async function ReviewsPage() {
                       <Stars rating={r.rating} />
                     </div>
                     <p className="mt-3 text-sm text-white/60">{r.text}</p>
+                    {r.hasPhoto && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={`/api/review-photo/${r.id}`}
+                        alt={`Фото от @${r.username}`}
+                        loading="lazy"
+                        className="mt-3 max-h-80 w-auto rounded-xl border border-line object-cover"
+                      />
+                    )}
                     <div className="mt-3 text-xs text-white/30">{r.date}</div>
                   </div>
                 ))}

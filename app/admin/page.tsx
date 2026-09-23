@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { downscaleImage } from "@/lib/image";
 
 interface StoredReview {
   id: string;
@@ -10,6 +11,7 @@ interface StoredReview {
   text: string;
   date: string;
   status: "pending" | "published";
+  hasPhoto?: boolean;
 }
 
 function Stars({ rating }: { rating: number }) {
@@ -31,6 +33,7 @@ export default function AdminPage() {
   const [newUsername, setNewUsername] = useState("");
   const [newRating, setNewRating] = useState(5);
   const [newText, setNewText] = useState("");
+  const [newPhoto, setNewPhoto] = useState<File | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -100,11 +103,12 @@ export default function AdminPage() {
   async function publishNew(e: React.FormEvent) {
     e.preventDefault();
     setPublishError(null);
-    const res = await fetch("/api/admin/reviews", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: newUsername, rating: newRating, text: newText })
-    });
+    const body = new FormData();
+    body.append("username", newUsername);
+    body.append("rating", String(newRating));
+    body.append("text", newText);
+    if (newPhoto) body.append("photo", newPhoto);
+    const res = await fetch("/api/admin/reviews", { method: "POST", body });
     const data = await res.json();
     if (!res.ok) {
       setPublishError(data.error ?? "Ошибка");
@@ -113,6 +117,7 @@ export default function AdminPage() {
     setNewUsername("");
     setNewRating(5);
     setNewText("");
+    setNewPhoto(null);
     load();
   }
 
@@ -190,6 +195,26 @@ export default function AdminPage() {
             placeholder="текст отзыва"
             className="w-full rounded-xl bg-ink border border-line px-4 py-2.5 outline-none focus:border-accent resize-none"
           />
+          <label className="flex items-center gap-3 text-sm text-white/50 cursor-pointer">
+            <span className="rounded-xl border border-line px-3 py-2 hover:border-accent">
+              {newPhoto ? "Фото выбрано ✓" : "Прикрепить фото (по желанию)"}
+            </span>
+            {newPhoto && (
+              <button type="button" onClick={() => setNewPhoto(null)} className="hover:text-red-400">
+                убрать
+              </button>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                e.target.value = "";
+                if (f) setNewPhoto(await downscaleImage(f, 1200, 0.8));
+              }}
+            />
+          </label>
           {publishError && <p className="text-red-400 text-sm">{publishError}</p>}
           <motion.button
             whileTap={{ scale: 0.97 }}
@@ -215,6 +240,10 @@ export default function AdminPage() {
                     <Stars rating={r.rating} />
                   </div>
                   <p className="mt-1.5 text-sm text-white/60">{r.text}</p>
+                  {r.hasPhoto && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`/api/review-photo/${r.id}`} alt="" className="mt-2 h-24 rounded-lg object-cover" />
+                  )}
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <button
@@ -250,6 +279,10 @@ export default function AdminPage() {
                     <Stars rating={r.rating} />
                   </div>
                   <p className="mt-1.5 text-sm text-white/60">{r.text}</p>
+                  {r.hasPhoto && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`/api/review-photo/${r.id}`} alt="" className="mt-2 h-24 rounded-lg object-cover" />
+                  )}
                 </div>
                 <button
                   onClick={() => remove(r.id)}

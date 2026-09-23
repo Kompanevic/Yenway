@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendTelegramMessage } from "@/lib/telegram";
+import { sendTelegramMessage, sendTelegramPhoto, escapeHtml } from "@/lib/telegram";
 import { addPending } from "@/lib/reviews-store";
+import { parseReviewForm } from "@/lib/review-input";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
@@ -9,45 +10,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Слишком много отзывов. Попробуйте через несколько минут." }, { status: 429 });
   }
 
-  const body = await req.json().catch(() => null);
+  const form = await req.formData().catch(() => null);
+  if (!form) return NextResponse.json({ error: "Некорректные данные формы" }, { status: 400 });
 
-  const usernameRaw: string | undefined = body?.username;
-  const rating: number | undefined = body?.rating;
-  const textRaw: string | undefined = body?.text;
-
-  if (!usernameRaw || !rating || !textRaw) {
-    return NextResponse.json({ error: "Заполните ник, оценку и текст отзыва" }, { status: 400 });
-  }
-
-  const username = usernameRaw.trim().replace(/^@/, "");
-  if (!/^[a-zA-Z0-9_]{4,32}$/.test(username)) {
-    return NextResponse.json({ error: "Некорректный ник в Telegram (например: ivan_petrov)" }, { status: 400 });
-  }
-
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    return NextResponse.json({ error: "Оценка должна быть от 1 до 5" }, { status: 400 });
-  }
-
-  const text = textRaw.trim().slice(0, 1000);
-  if (text.length < 5) {
-    return NextResponse.json({ error: "Текст отзыва слишком короткий" }, { status: 400 });
-  }
+  const parsed = await parseReviewForm(form, 5);
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const { username, rating, text } = parsed.value;
 
   const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
+  // Подпись к фото в Telegram ограничена 1024 символами.
+  const shownText = parsed.photoBlob && text.length > 700 ? text.slice(0, 700) + "…" : text;
   const lines = [
     `⭐ <b>Новый отзыв — YenWay (на модерации)</b>`,
     ``,
     `Оценка: ${stars} (${rating}/5)`,
     `Автор: @${username}`,
-    `Текст: ${text}`,
+    `Текст: ${escapeHtml(shownText)}`,
     ``,
-    `Опубликовать вручную после проверки.`
+    `Опубликовать можно в /admin.`
   ].join("\n");
 
-  const [sent] = await Promise.all([
-    sendTelegramMessage(lines),
-    addPending({ username, rating, text }).catch(() => null)
-  ]);
+  const notify = async () =>
+    (parsed.photoBlob && (await sendTelegramPhoto(parsed.photoBlob, "review.jpg", lines))) ||
+    sendTelegramMessage(lines);
+
+  const [sent] = await Promise.all([notify(), addPending(parsed.value).catch(() => null)]);
 
   return NextResponse.json({ notified: sent });
 }
