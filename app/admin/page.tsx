@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { downscaleImage } from "@/lib/image";
+import ItemCardTool from "@/components/ItemCardTool";
 
 interface StoredReview {
   id: string;
@@ -156,7 +157,7 @@ export default function AdminPage() {
   return (
     <main className="max-w-4xl mx-auto px-6 py-16">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl font-bold">Отзывы — админка</h1>
+        <h1 className="font-display text-3xl font-bold">Админка</h1>
         <button onClick={logout} className="text-sm text-white/40 hover:text-white/70">
           Выйти
         </button>
@@ -165,8 +166,10 @@ export default function AdminPage() {
       {loading && <p className="mt-4 text-white/40 text-sm">Обновляем...</p>}
       {actionError && <p className="mt-4 text-red-400 text-sm">{actionError}</p>}
 
+      <ItemCardTool />
+
       <section className="mt-10 rounded-3xl bg-panel border border-line p-6">
-        <h2 className="font-display font-semibold mb-4">Опубликовать напрямую</h2>
+        <h2 className="font-display font-semibold mb-4">Опубликовать отзыв напрямую</h2>
         <form onSubmit={publishNew} className="space-y-3">
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((n) => (

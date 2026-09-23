@@ -22,6 +22,23 @@ export const EXCHANGE_RATES: Record<RegionKey, number | null> = {
   europe: null
 };
 
+export const CURRENCIES = ["JPY", "CNY", "KRW", "USD", "EUR"] as const;
+export type Currency = (typeof CURRENCIES)[number];
+
+const CURRENCY_REGION: Record<Currency, RegionKey> = {
+  JPY: "japan",
+  CNY: "china",
+  KRW: "korea",
+  USD: "usa",
+  EUR: "europe"
+};
+
+// Только по курсу, без доставки и комиссий. null — курс для валюты не задан.
+export function convertToRub(amount: number, currency: Currency): number | null {
+  const rate = EXCHANGE_RATES[CURRENCY_REGION[currency]];
+  return rate == null ? null : Math.round(amount * rate);
+}
+
 // Комиссия сервиса, ₽ — фиксированная сумма (не %)
 export const COMMISSION_RUB: Record<RegionKey, number | null> = {
   japan: 600, // любая японская площадка кроме Mercari
