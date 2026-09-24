@@ -15,7 +15,13 @@ export async function checkRateLimit(
   if (!redis) return true;
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const redisKey = `yenway:ratelimit:${key}:${ip}`;
-  const count = await redis.incr(redisKey);
-  if (count === 1) await redis.expire(redisKey, windowSeconds);
-  return count <= limit;
+  try {
+    const count = await redis.incr(redisKey);
+    if (count === 1) await redis.expire(redisKey, windowSeconds);
+    return count <= limit;
+  } catch (e) {
+    // Сбой/лимит Upstash не должен ломать заказы — пропускаем без ограничения.
+    console.error("rate-limit: Redis недоступен", e);
+    return true;
+  }
 }

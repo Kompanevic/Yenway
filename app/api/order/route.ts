@@ -20,15 +20,20 @@ export async function POST(req: NextRequest) {
     typeof body?.weightKg === "number" && !Number.isNaN(body.weightKg) ? body.weightKg : null;
   const chinaTier: string | undefined = body?.chinaTier;
 
-  if (!link || !usernameRaw || !region || !REGIONS[region]) {
+  if (!link || !usernameRaw || !region || !Object.prototype.hasOwnProperty.call(REGIONS, region)) {
     return NextResponse.json({ error: "Заполните ссылку, ник в Telegram и регион" }, { status: 400 });
   }
 
   let url: URL;
   try {
     url = new URL(link);
+    if (!/^https?:$/.test(url.protocol)) throw new Error();
   } catch {
     return NextResponse.json({ error: "Некорректная ссылка" }, { status: 400 });
+  }
+
+  if (weightKg != null && (weightKg <= 0 || weightKg > 100)) {
+    return NextResponse.json({ error: "Укажите вес от 0.1 до 100 кг" }, { status: 400 });
   }
 
   const username = usernameRaw.trim().replace(/^@/, "");

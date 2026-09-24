@@ -93,6 +93,7 @@ export default function AdminPage() {
   }
 
   async function remove(id: string) {
+    if (!confirm("Удалить отзыв?")) return;
     const res = await fetch(`/api/admin/reviews/${id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json().catch(() => null);

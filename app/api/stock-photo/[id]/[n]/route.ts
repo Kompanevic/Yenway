@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
   return new NextResponse(Buffer.from(photo.data, "base64"), {
     headers: {
       "Content-Type": photo.type,
-      "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, no-store"
+      "Cache-Control": isPublic ? "public, max-age=31536000, s-maxage=31536000, immutable" : "private, no-store"
     }
   });
 }

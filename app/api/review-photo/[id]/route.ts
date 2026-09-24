@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     headers: {
       "Content-Type": photo.type,
       "Cache-Control":
-        review.status === "published" ? "public, max-age=31536000, immutable" : "private, no-store"
+        review.status === "published" ? "public, max-age=31536000, s-maxage=31536000, immutable" : "private, no-store"
     }
   });
 }

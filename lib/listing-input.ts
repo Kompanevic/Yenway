@@ -13,7 +13,7 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
   const text = (k: string, max: number) => String(form.get(k) ?? "").trim().slice(0, max);
   const title = text("title", 120);
   const size = text("size", 20);
-  const price = Math.round(Number(text("price", 12).replace(/[^\d.]/g, "")));
+  const price = Number(text("price", 12).replace(/\D/g, ""));
   const condition = text("condition", 40);
   const description = text("description", 800);
   const seller = own ? "" : text("seller", 40).replace(/^@/, "");

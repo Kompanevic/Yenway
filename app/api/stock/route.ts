@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { addListing } from "@/lib/listings-store";
 import { notifyListing, parseListingForm } from "@/lib/listing-input";
+import { SITE_URL } from "@/lib/site";
 
 export async function POST(req: NextRequest) {
   const allowed = await checkRateLimit(req, "listing", 3, 600);
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const listing = await addListing(parsed.value, parsed.photos, "pending");
-    await notifyListing(listing, parsed.blobs, req.nextUrl.origin);
+    await notifyListing(listing, parsed.blobs, SITE_URL);
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Ошибка хранилища" }, { status: 500 });

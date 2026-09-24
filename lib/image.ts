@@ -12,7 +12,7 @@ export async function downscaleImage(file: Blob, maxSide: number, quality = 0.85
     const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
     const name = file instanceof File ? file.name.replace(/\.\w+$/, "") : "image";
     const original = file instanceof File ? file : new File([file], name, { type: file.type });
-    if (scale === 1 && file.size < 1024 * 1024) return original;
+    if (scale === 1 && file.size < 400 * 1024) return original;
 
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(img.naturalWidth * scale);

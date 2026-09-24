@@ -62,5 +62,11 @@ export async function POST(req: NextRequest) {
     sent = await sendTelegramMessage(`${lines}\n\n⚠️ Фото отправить не удалось.`);
   }
 
-  return NextResponse.json({ notified: sent, fee: SEARCH_FEE_RUB });
+  if (!sent) {
+    return NextResponse.json(
+      { error: "Не удалось отправить заявку. Напишите нам напрямую в Telegram: @yenwayceo" },
+      { status: 502 }
+    );
+  }
+  return NextResponse.json({ notified: true, fee: SEARCH_FEE_RUB });
 }

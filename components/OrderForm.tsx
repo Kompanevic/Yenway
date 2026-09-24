@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { REGIONS, REGION_LIST, RegionKey } from "@/lib/regions";
 import { CHINA_DELIVERY_TIERS, isManualRegion } from "@/lib/pricing";
@@ -28,7 +27,7 @@ interface Result {
 }
 
 function regionFromParam(v: string | null): RegionKey {
-  return v && v in REGIONS ? (v as RegionKey) : "japan";
+  return v && Object.prototype.hasOwnProperty.call(REGIONS, v) ? (v as RegionKey) : "japan";
 }
 
 // Регион читается из ссылки в браузере — так страница заказа статическая
@@ -208,13 +207,11 @@ export default function OrderForm() {
             <div className="flex gap-4">
               {result.preview.image && (
                 <div className="relative w-24 h-24 shrink-0 rounded-2xl overflow-hidden bg-white/5">
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={result.preview.image}
                     alt={result.preview.title ?? "Товар"}
-                    fill
-                    sizes="96px"
-                    className="object-cover"
-                    unoptimized
+                    className="absolute inset-0 w-full h-full object-cover"
                   />
                 </div>
               )}
@@ -283,7 +280,7 @@ export default function OrderForm() {
             <p className="mt-6 text-sm text-white/50">
               {result.notified
                 ? "Заявка отправлена! Мы напишем вам в Telegram в ближайшее время."
-                : "Заявка принята, но уведомление не отправилось — мы всё равно скоро свяжемся."}
+                : `Не удалось передать заявку менеджеру — напишите, пожалуйста, @${result.managerTelegram} и пришлите ссылку на товар.`}
             </p>
           </motion.div>
         )}

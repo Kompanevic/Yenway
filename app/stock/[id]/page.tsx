@@ -6,7 +6,7 @@ import BuyButton from "@/components/BuyButton";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
-  const l = await getListing(params.id);
+  const l = await getListing(params.id).catch(() => undefined);
   if (!l || l.status === "pending") return {};
   return {
     title: `${l.title} • ${l.size} — YenWay`,
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 }
 
 export default async function ListingPage({ params }: { params: { id: string } }) {
-  const l = await getListing(params.id);
+  const l = await getListing(params.id).catch(() => undefined);
   if (!l || l.status === "pending") notFound();
   const sold = l.status === "sold";
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAuthed } from "@/lib/admin-auth";
 import { addListing, getListings } from "@/lib/listings-store";
 import { notifyListing, parseListingForm } from "@/lib/listing-input";
+import { SITE_URL } from "@/lib/site";
 
 export async function GET(req: NextRequest) {
   if (!isAuthed(req)) return NextResponse.json({ error: "Не авторизовано" }, { status: 401 });
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const listing = await addListing(parsed.value, parsed.photos, "published");
-    const notified = await notifyListing(listing, parsed.blobs, req.nextUrl.origin);
+    const notified = await notifyListing(listing, parsed.blobs, SITE_URL);
     return NextResponse.json({ listing, notified });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Ошибка хранилища" }, { status: 500 });

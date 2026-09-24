@@ -9,7 +9,7 @@ export const metadata = {
 };
 
 export default async function StockPage() {
-  const items = (await getListings()).filter((l) => l.status === "published");
+  const items = (await getListings().catch(() => [])).filter((l) => l.status === "published");
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-16">

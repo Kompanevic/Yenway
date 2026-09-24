@@ -1,6 +1,7 @@
 import ReviewForm from "@/components/ReviewForm";
 import GlassIcons from "@/components/GlassIcons";
 import { getPublished, averageRating } from "@/lib/reviews-store";
+import { plural } from "@/lib/plural";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ function Stars({ rating }: { rating: number }) {
 }
 
 export default async function ReviewsPage() {
-  const REVIEWS = await getPublished();
+  const REVIEWS = await getPublished().catch(() => []);
   const avg = averageRating(REVIEWS);
 
   return (
@@ -36,7 +37,7 @@ export default async function ReviewsPage() {
             <span className="font-display text-3xl font-bold">{avg.toFixed(1)}</span>
             <Stars rating={Math.round(avg)} />
             <span className="text-white/40 text-sm">
-              · {REVIEWS.length} {REVIEWS.length === 1 ? "отзыв" : "отзывов"}
+              · {REVIEWS.length} {plural(REVIEWS.length, ["отзыв", "отзыва", "отзывов"])}
             </span>
           </div>
         )}

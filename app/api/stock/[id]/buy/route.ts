@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getListing } from "@/lib/listings-store";
 import { escapeHtml, sendTelegramMessage } from "@/lib/telegram";
+import { SITE_URL } from "@/lib/site";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const allowed = await checkRateLimit(req, "buy", 8, 600);
@@ -29,11 +30,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       `Покупатель: @${username}`,
       `Продавец: ${listing.own ? "YenWay (ваша вещь)" : `@${listing.seller}`}`,
       ``,
-      `${req.nextUrl.origin}/stock/${listing.id}`
+      `${SITE_URL}/stock/${listing.id}`
     ].join("\n"),
     undefined,
     true
   );
 
-  return NextResponse.json({ notified: sent });
+  if (!sent) {
+    return NextResponse.json(
+      { error: "Не удалось отправить заявку. Напишите нам напрямую в Telegram: @yenwayceo" },
+      { status: 502 }
+    );
+  }
+  return NextResponse.json({ notified: true });
 }

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { REGION_LIST } from "@/lib/regions";
 import { MANAGER_TELEGRAM } from "@/lib/pricing";
 import RegionGlobe from "@/components/RegionGlobe";
+import { plural } from "@/lib/plural";
 
 const JOURNAL_BANNERS = [
   {
@@ -551,7 +552,7 @@ export default function Home() {
                       </span>
                     </div>
                     <div className="text-xs opacity-60 mt-1">
-                      {reviews.count} {reviews.count === 1 ? "отзыв" : "отзывов"} от покупателей
+                      {reviews.count} {plural(reviews.count, ["отзыв", "отзыва", "отзывов"])} от покупателей
                     </div>
                   </div>
                 </div>
