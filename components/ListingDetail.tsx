@@ -72,6 +72,11 @@ export default async function ListingDetail({ id, kind }: { id: string; kind: Li
             </div>
           </div>
           <div className="mt-6 font-display text-3xl font-bold">{l.price.toLocaleString("ru-RU")} ₽</div>
+          {kind === "preorder" && (
+            <p className="mt-1 text-xs text-white/40">
+              Цена под ключ: товар, комиссия, страховка и доставка. Возможна таможенная пошлина.
+            </p>
+          )}
           {l.description && <p className="mt-6 text-white/60 whitespace-pre-line">{l.description}</p>}
           <div className="mt-8">
             {unavailable ? (
