@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function BuyButton({ id }: { id: string }) {
+export default function BuyButton({ id, label = "Хочу купить" }: { id: string; label?: string }) {
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,7 +40,7 @@ export default function BuyButton({ id }: { id: string }) {
         onClick={() => setOpen(true)}
         className="font-display w-full rounded-2xl bg-accent text-ink py-4 font-semibold text-lg hover:bg-accent2 transition-colors"
       >
-        Хочу купить
+        {label}
       </button>
     );
   }

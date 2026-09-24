@@ -2,13 +2,22 @@
 
 import { useState } from "react";
 import { downscaleImage } from "@/lib/image";
-import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS } from "@/lib/listing-constants";
+import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS, type ListingKind } from "@/lib/listing-constants";
 import { MANAGER_TELEGRAM } from "@/lib/pricing";
 
 const field = "w-full rounded-2xl bg-ink border border-line px-4 py-3 outline-none focus:border-accent transition-colors";
 const label = "block font-display text-xs uppercase tracking-wide text-white/50 mb-2";
 
-export default function ListingForm({ own = false, onDone }: { own?: boolean; onDone?: () => void }) {
+export default function ListingForm({
+  own = false,
+  kind = "stock",
+  onDone
+}: {
+  own?: boolean;
+  kind?: ListingKind;
+  onDone?: () => void;
+}) {
+  const [sourceUrl, setSourceUrl] = useState("");
   const [photos, setPhotos] = useState<{ file: File; url: string }[]>([]);
   const [title, setTitle] = useState("");
   const [size, setSize] = useState("");
@@ -54,6 +63,8 @@ export default function ListingForm({ own = false, onDone }: { own?: boolean; on
       body.append("condition", condition);
       body.append("description", description);
       if (!own) body.append("seller", seller);
+      body.append("kind", kind);
+      if (kind === "preorder") body.append("sourceUrl", sourceUrl);
       const res = await fetch(own ? "/api/admin/stock" : "/api/stock", { method: "POST", body });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Не удалось отправить");
@@ -63,6 +74,7 @@ export default function ListingForm({ own = false, onDone }: { own?: boolean; on
       setSize("");
       setPrice("");
       setDescription("");
+      setSourceUrl("");
       onDone?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
@@ -143,6 +155,22 @@ export default function ListingForm({ own = false, onDone }: { own?: boolean; on
         <label className={label}>Описание <span className="normal-case tracking-normal text-white/30">(по желанию)</span></label>
         <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Сезон, замеры, комплект..." className={`${field} resize-none`} />
       </div>
+
+      {kind === "preorder" && (
+        <div>
+          <label className={label}>
+            Ссылка на товар <span className="normal-case tracking-normal text-white/30">(видите только вы)</span>
+          </label>
+          <input
+            required
+            type="url"
+            value={sourceUrl}
+            onChange={(e) => setSourceUrl(e.target.value)}
+            placeholder="https://jp.mercari.com/item/..."
+            className={field}
+          />
+        </div>
+      )}
 
       {!own && (
         <div>

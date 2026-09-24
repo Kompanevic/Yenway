@@ -3,6 +3,8 @@ import { createHashStore, requireRedis } from "./hash-store";
 import type { ReviewPhoto } from "./reviews-store";
 
 export type ListingStatus = "pending" | "published" | "sold";
+import type { ListingKind } from "./listing-constants";
+export { kindOf, LISTING_PATH, type ListingKind } from "./listing-constants";
 
 export interface Listing {
   id: string;
@@ -16,6 +18,9 @@ export interface Listing {
   photoCount: number;
   status: ListingStatus;
   createdAt: string;
+  kind?: ListingKind;
+  // Ссылка на товар для «под заказ» — только для админа, на сайт не выводится.
+  sourceUrl?: string;
 }
 
 export type ListingInput = Omit<Listing, "id" | "photoCount" | "status" | "createdAt">;

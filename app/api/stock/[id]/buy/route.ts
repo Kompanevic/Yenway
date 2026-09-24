@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { getListing } from "@/lib/listings-store";
+import { getListing, kindOf, LISTING_PATH } from "@/lib/listings-store";
 import { escapeHtml, sendTelegramMessage } from "@/lib/telegram";
 import { SITE_URL } from "@/lib/site";
 
@@ -18,20 +18,24 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const listing = await getListing(params.id);
   if (!listing || listing.status !== "published") {
-    return NextResponse.json({ error: "Вещь уже продана или снята с продажи" }, { status: 404 });
+    return NextResponse.json({ error: "Вещь уже недоступна" }, { status: 404 });
   }
 
+  const preorder = kindOf(listing) === "preorder";
   const sent = await sendTelegramMessage(
     [
-      `🛍 <b>Хочу купить — В наличии</b>`,
+      preorder ? `🛍 <b>Хочу заказать — Под заказ</b>` : `🛍 <b>Хочу купить — В наличии</b>`,
       ``,
       `Вещь: ${escapeHtml(listing.title)} • ${escapeHtml(listing.size)}`,
       `Цена: ${listing.price.toLocaleString("ru-RU")} ₽`,
       `Покупатель: @${username}`,
-      `Продавец: ${listing.own ? "YenWay (ваша вещь)" : `@${listing.seller}`}`,
+      preorder ? null : `Продавец: ${listing.own ? "YenWay (ваша вещь)" : `@${listing.seller}`}`,
+      listing.sourceUrl ? `Ссылка на товар: ${escapeHtml(listing.sourceUrl)}` : null,
       ``,
-      `${SITE_URL}/stock/${listing.id}`
-    ].join("\n"),
+      `${SITE_URL}${LISTING_PATH[kindOf(listing)]}/${listing.id}`
+    ]
+      .filter((x) => x !== null)
+      .join("\n"),
     undefined,
     true
   );

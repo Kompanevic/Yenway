@@ -1,4 +1,4 @@
-import type { Listing, ListingInput } from "./listings-store";
+import { LISTING_PATH, type Listing, type ListingInput, type ListingKind } from "./listings-store";
 import type { ReviewPhoto } from "./reviews-store";
 import { LISTING_BOT, escapeHtml, sendTelegramAlbum, sendTelegramMessage } from "./telegram";
 import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS } from "./listing-constants";
@@ -9,6 +9,7 @@ export type ParsedListing =
   | { ok: true; value: ListingInput; photos: ReviewPhoto[]; blobs: Blob[] }
   | { ok: false; error: string };
 
+// Пользователи выкладывают только «в наличии»; «под заказ» — только админ.
 export async function parseListingForm(form: FormData, own: boolean): Promise<ParsedListing> {
   const text = (k: string, max: number) => String(form.get(k) ?? "").trim().slice(0, max);
   const title = text("title", 120);
@@ -17,11 +18,16 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
   const condition = text("condition", 40);
   const description = text("description", 800);
   const seller = own ? "" : text("seller", 40).replace(/^@/, "");
+  const kind: ListingKind = own && text("kind", 10) === "preorder" ? "preorder" : "stock";
+  const sourceUrl = kind === "preorder" ? text("sourceUrl", 1000) : "";
 
   if (title.length < 2) return { ok: false, error: "Укажите название модели" };
   if (!size) return { ok: false, error: "Укажите размер" };
   if (!Number.isFinite(price) || price < 1) return { ok: false, error: "Укажите цену в рублях" };
   if (!LISTING_CONDITIONS.includes(condition)) return { ok: false, error: "Выберите состояние" };
+  if (kind === "preorder" && !/^https?:\/\/\S+$/.test(sourceUrl)) {
+    return { ok: false, error: "Укажите ссылку на товар (https://...)" };
+  }
   if (!own && !/^[a-zA-Z0-9_]{4,32}$/.test(seller)) {
     return { ok: false, error: "Некорректный ник в Telegram (например: ivan_petrov)" };
   }
@@ -37,7 +43,12 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
     blobs.map(async (b) => ({ type: b.type, data: Buffer.from(await b.arrayBuffer()).toString("base64") }))
   );
 
-  return { ok: true, value: { title, size, price, condition, description, seller, own }, photos, blobs };
+  return {
+    ok: true,
+    value: { title, size, price, condition, description, seller, own, kind, ...(sourceUrl ? { sourceUrl } : {}) },
+    photos,
+    blobs
+  };
 }
 
 // Готовый пост для канала: каждая строка жирная со значком, без ника продавца.
@@ -53,7 +64,7 @@ export function listingPost(l: ListingInput & { id: string }, origin: string): s
     ``,
     line(`Цена: ${l.price.toLocaleString("ru-RU")} ₽`),
     ``,
-    `Купить: ${origin}/stock/${l.id}`
+    `${l.kind === "preorder" ? "Заказать" : "Купить"}: ${origin}${LISTING_PATH[l.kind ?? "stock"]}/${l.id}`
   ]
     .filter((x) => x !== null)
     .join("\n");
@@ -63,6 +74,9 @@ export function listingPost(l: ListingInput & { id: string }, origin: string): s
 // чтобы при пересылке поста в канал он туда не попал.
 export async function notifyListing(listing: Listing, blobs: Blob[], origin: string): Promise<boolean> {
   const sent = await sendTelegramAlbum(blobs, listingPost(listing, origin), LISTING_BOT);
+  if (sent && listing.sourceUrl) {
+    await sendTelegramMessage(`🔗 Ссылка на товар (только для вас):\n${escapeHtml(listing.sourceUrl)}`, LISTING_BOT, true);
+  }
   if (sent && !listing.own) {
     await sendTelegramMessage(
       `Продавец: @${listing.seller}\nОбъявление на модерации — опубликовать можно в /admin → «В наличии».`,

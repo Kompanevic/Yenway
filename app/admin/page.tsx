@@ -38,7 +38,7 @@ export default function AdminPage() {
   const [newPhoto, setNewPhoto] = useState<File | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"cards" | "stock" | "reviews">("cards");
+  const [tab, setTab] = useState<"cards" | "stock" | "preorder" | "reviews">("cards");
 
   async function load() {
     setLoading(true);
@@ -171,6 +171,7 @@ export default function AdminPage() {
           [
             ["cards", "Карточки"],
             ["stock", "В наличии"],
+            ["preorder", "Под заказ"],
             ["reviews", "Отзывы"]
           ] as const
         ).map(([key, name]) => (
@@ -187,7 +188,8 @@ export default function AdminPage() {
       </div>
 
       {tab === "cards" && <ItemCardTool />}
-      {tab === "stock" && <AdminStock />}
+      {tab === "stock" && <AdminStock key="stock" kind="stock" />}
+      {tab === "preorder" && <AdminStock key="preorder" kind="preorder" />}
       {tab === "reviews" && (
         <>
       {loading && <p className="mt-4 text-white/40 text-sm">Обновляем...</p>}
