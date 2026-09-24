@@ -1,12 +1,14 @@
 import { LISTING_PATH, type Listing, type ListingInput, type ListingKind } from "./listings-store";
 import type { ReviewPhoto } from "./reviews-store";
-import { LISTING_BOT, escapeHtml, sendTelegramAlbum, sendTelegramMessage } from "./telegram";
+import { ITEM_BOT, LISTING_BOT, escapeHtml, sendTelegramAlbum, sendTelegramMessage } from "./telegram";
+import { calculatePrice } from "./pricing";
+import { REGIONS, type RegionKey } from "./regions";
 import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS } from "./listing-constants";
 // Фото ужимаются в браузере до ~100–300 КБ; лимит с запасом под Upstash.
 const MAX_PHOTO_BYTES = 600 * 1024;
 
 export type ParsedListing =
-  | { ok: true; value: ListingInput; photos: ReviewPhoto[]; blobs: Blob[] }
+  | { ok: true; value: ListingInput; photos: ReviewPhoto[]; blobs: Blob[]; calc?: PreorderCalc }
   | { ok: false; error: string };
 
 // Пользователи выкладывают только «в наличии»; «под заказ» — только админ.
@@ -22,6 +24,12 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
   const sourceUrl = kind === "preorder" ? text("sourceUrl", 1000) : "";
   const weight = kind === "preorder" ? parseFloat(text("weightKg", 10).replace(",", ".")) : NaN;
   const weightKg = weight > 0 && weight <= 100 ? Math.round(weight * 100) / 100 : undefined;
+  const calcRegion = text("calcRegion", 10);
+  const calcLocalPrice = parseFloat(text("calcLocalPrice", 20).replace(",", "."));
+  const calc: PreorderCalc | undefined =
+    kind === "preorder" && Object.prototype.hasOwnProperty.call(REGIONS, calcRegion) && calcLocalPrice > 0
+      ? { region: calcRegion as RegionKey, localPrice: calcLocalPrice, chinaTier: text("calcChinaTier", 20) || undefined }
+      : undefined;
 
   if (title.length < 2) return { ok: false, error: "Укажите название модели" };
   if (!size) return { ok: false, error: "Укажите размер" };
@@ -60,7 +68,8 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
       ...(weightKg ? { weightKg } : {})
     },
     photos,
-    blobs
+    blobs,
+    calc
   };
 }
 
@@ -84,19 +93,58 @@ export function listingPost(l: ListingInput & { id: string }, origin: string): s
     .join("\n");
 }
 
-// Пост уходит в бота объявлений; ник продавца — отдельным сообщением,
-// чтобы при пересылке поста в канал он туда не попал.
-export async function notifyListing(listing: Listing, blobs: Blob[], origin: string): Promise<boolean> {
-  const sent = await sendTelegramAlbum(blobs, listingPost(listing, origin), LISTING_BOT);
-  if (sent && listing.sourceUrl) {
-    await sendTelegramMessage(`🔗 Ссылка на товар (только для вас):\n${escapeHtml(listing.sourceUrl)}`, LISTING_BOT, true);
+// Данные «расчёта под ключ» из формы — только для сообщения админу, не хранятся.
+export interface PreorderCalc {
+  region: RegionKey;
+  localPrice: number;
+  chinaTier?: string;
+}
+
+function calcMessage(listing: Listing, calc: PreorderCalc | undefined): string {
+  const lines = [`🧾 <b>Расчёт под ключ</b>`, ``];
+  if (calc) {
+    const r = REGIONS[calc.region];
+    const b = calculatePrice(calc.localPrice, calc.region, listing.sourceUrl ?? "", listing.weightKg ?? null, calc.chinaTier);
+    const rub = (n: number | null) => (n == null ? "уточняется" : `${n.toLocaleString("ru-RU")} ₽`);
+    lines.push(
+      `Страна: ${r.flag} ${r.name}`,
+      `Цена товара: ${calc.localPrice.toLocaleString("ru-RU")} ${r.currency}` +
+        (b.itemPriceRUB != null ? ` (≈ ${rub(b.itemPriceRUB)} по курсу)` : ` — курс не задан`),
+      `Комиссия: ${rub(b.commissionRUB)}`,
+      `Страховка: ${rub(b.insuranceRUB)}`,
+      ...(b.serviceFeeRUB != null ? [`Сервис: ${rub(b.serviceFeeRUB)}`] : []),
+      `Доставка: ${b.deliveryRUB != null ? `${rub(b.deliveryRUB)} (${listing.weightKg} кг${b.deliveryDays ? `, ${b.deliveryDays}` : ""})` : "укажите вес"}`,
+      `<b>Итого по расчёту: ${rub(b.totalRUB)}</b>`
+    );
+  } else {
+    lines.push(`Расчёт в форме не заполнялся.`);
   }
-  if (sent && !listing.own) {
+  lines.push(`На сайте: <b>${listing.price.toLocaleString("ru-RU")} ₽</b>`);
+  if (listing.sourceUrl) lines.push(``, `🔗 Ссылка на товар (только для вас):`, escapeHtml(listing.sourceUrl));
+  return lines.join("\n");
+}
+
+// «В наличии» — пост в бота объявлений, ник продавца отдельным сообщением,
+// чтобы при пересылке в канал он туда не попал. «Под заказ» — в бота
+// карточек: пост + отдельным сообщением расчёт под ключ и ссылка на товар.
+export async function notifyListing(
+  listing: Listing,
+  blobs: Blob[],
+  origin: string,
+  calc?: PreorderCalc
+): Promise<boolean> {
+  const preorder = listing.kind === "preorder";
+  const bot = preorder && ITEM_BOT.token ? ITEM_BOT : LISTING_BOT;
+  const sent = await sendTelegramAlbum(blobs, listingPost(listing, origin), bot);
+  if (!sent) return false;
+  if (preorder) {
+    await sendTelegramMessage(calcMessage(listing, calc), bot, true);
+  } else if (!listing.own) {
     await sendTelegramMessage(
       `Продавец: @${listing.seller}\nОбъявление на модерации — опубликовать можно в /admin → «В наличии».`,
-      LISTING_BOT,
+      bot,
       true
     );
   }
-  return sent;
+  return true;
 }

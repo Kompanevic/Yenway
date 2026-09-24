@@ -155,6 +155,9 @@ export default function ListingForm({
       if (kind === "preorder") {
         body.append("sourceUrl", sourceUrl);
         body.append("weightKg", weight);
+        body.append("calcRegion", region);
+        body.append("calcLocalPrice", localPrice);
+        if (region === "china") body.append("calcChinaTier", chinaTier);
       }
       const res = await fetch(own ? "/api/admin/stock" : "/api/stock", { method: "POST", body });
       const data = await res.json().catch(() => ({}));

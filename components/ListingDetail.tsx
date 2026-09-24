@@ -23,6 +23,31 @@ const COPY: Record<ListingKind, { back: string; unavailable: string; badge: stri
   }
 };
 
+// @ник в описании → ссылка на чат в Telegram (не цепляет почту вида name@gmail.com).
+const MENTION = /(?<![\w.])(@[a-zA-Z0-9_]{4,32})/g;
+
+function TelegramLinks({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(MENTION).map((part, i) =>
+        i % 2 === 1 ? (
+          <a
+            key={i}
+            href={`https://t.me/${part.slice(1)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accent underline underline-offset-2 hover:text-white"
+          >
+            {part}
+          </a>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+}
+
 // Ссылка на товар (sourceUrl) сюда намеренно не передаётся — её видит только админ.
 async function load(id: string, kind: ListingKind) {
   const l = await getListing(id).catch(() => undefined);
@@ -83,7 +108,11 @@ export default async function ListingDetail({ id, kind }: { id: string; kind: Li
               Цена под ключ: товар, комиссия, страховка и доставка. Возможна таможенная пошлина.
             </p>
           )}
-          {l.description && <p className="mt-6 text-white/60 whitespace-pre-line">{l.description}</p>}
+          {l.description && (
+            <p className="mt-6 text-white/60 whitespace-pre-line">
+              <TelegramLinks text={l.description} />
+            </p>
+          )}
           <div className="mt-8">
             {unavailable ? (
               <p className="text-white/50">{copy.unavailable}</p>

@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const listing = await addListing(parsed.value, parsed.photos, "published");
-    const notified = await notifyListing(listing, parsed.blobs, SITE_URL);
+    const notified = await notifyListing(listing, parsed.blobs, SITE_URL, parsed.calc);
     return NextResponse.json({ listing, notified });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Ошибка хранилища" }, { status: 500 });
