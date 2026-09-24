@@ -159,6 +159,11 @@ export default function AdminPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-6 py-16">
+      <div aria-hidden className="fixed inset-0 -z-10">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/api/admin/wallpaper" alt="" className="w-full h-full object-cover object-[50%_30%]" />
+        <div className="absolute inset-0 bg-ink/70" />
+      </div>
       <div className="flex items-center justify-between">
         <h1 className="font-display text-3xl font-bold">Админка</h1>
         <button onClick={logout} className="text-sm text-white/40 hover:text-white/70">

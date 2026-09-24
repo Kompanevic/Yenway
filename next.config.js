@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    // Файл читается через fs — явно включаем его в бандл функции на Vercel.
+    outputFileTracingIncludes: { "/api/admin/wallpaper": ["./private/admin-wallpaper.jpg"] }
+  },
   async headers() {
     return [
       {
