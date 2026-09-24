@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
-import { REGION_LIST } from "@/lib/regions";
+import { animate, motion, MotionValue, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
+import { REGION_LIST, Region } from "@/lib/regions";
 
 function GlobeIcon({ className }: { className?: string }) {
   return (
@@ -24,18 +24,73 @@ function GlobeIcon({ className }: { className?: string }) {
 }
 
 const RADIUS = 118;
-const ease = [0.16, 1, 0.3, 1] as const;
+const SPIN = Math.PI * 1.5; // на сколько «раскручиваются» по пути к своему месту
+const STAGGER = 0.05;
+
+// Позиция считается из одного общего прогресса — без ре-рендеров React на
+// каждом кадре, двигаются только transform/opacity (дёшево для GPU).
+function OrbitItem({ region, index, progress, onPick }: {
+  region: Region;
+  index: number;
+  progress: MotionValue<number>;
+  onPick: () => void;
+}) {
+  const angle = -Math.PI / 2 + (index * 2 * Math.PI) / REGION_LIST.length;
+  const local = useTransform(progress, (p) => {
+    const t = (p - index * STAGGER) / (1 - (REGION_LIST.length - 1) * STAGGER);
+    return Math.min(1, Math.max(0, t));
+  });
+  const x = useTransform(local, (t) => Math.cos(angle - (1 - t) * SPIN) * RADIUS * t);
+  const y = useTransform(local, (t) => Math.sin(angle - (1 - t) * SPIN) * RADIUS * t);
+  const opacity = useTransform(local, [0, 0.25, 1], [0, 1, 1]);
+  const scale = useTransform(local, [0, 1], [0.5, 1]);
+
+  return (
+    <motion.div className="absolute left-1/2 top-1/2 will-change-transform" style={{ x, y, opacity, scale }}>
+      <Link
+        href={`/order?region=${region.key}`}
+        onClick={onPick}
+        className="block -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-line bg-ink px-4 py-2 text-xs text-white/80 hover:bg-accent hover:text-ink hover:border-accent transition-colors"
+      >
+        {region.name}
+      </Link>
+    </motion.div>
+  );
+}
 
 export default function RegionGlobe() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const openRef = useRef(false);
   const ref = useRef<HTMLDivElement>(null);
+  const progress = useMotionValue(0);
+  const reduced = useReducedMotion();
+
+  const discOpacity = useTransform(progress, [0, 0.3], [0, 1]);
+  const discScale = useTransform(progress, [0, 1], [0.85, 1]);
+  const globeRotate = useTransform(progress, [0, 1], [0, 180]);
+
+  function show() {
+    openRef.current = true;
+    setOpen(true);
+    setMounted(true);
+    animate(progress, 1, { duration: reduced ? 0 : 1, ease: [0.33, 1, 0.68, 1] });
+  }
+
+  function hide() {
+    openRef.current = false;
+    setOpen(false);
+    animate(progress, 0, { duration: reduced ? 0 : 0.4, ease: "easeIn" }).then(() => {
+      if (!openRef.current) setMounted(false);
+    });
+  }
 
   useEffect(() => {
     if (!open) return;
     const onPointer = (e: PointerEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+      if (!ref.current?.contains(e.target as Node)) hide();
     };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && hide();
     document.addEventListener("pointerdown", onPointer);
     document.addEventListener("keydown", onKey);
     return () => {
@@ -50,49 +105,25 @@ export default function RegionGlobe() {
         type="button"
         aria-label="Страны"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (openRef.current ? hide() : show())}
         className={`block py-1 transition-colors hover:text-white ${open ? "text-white" : ""}`}
       >
-        <motion.span className="block w-6 h-6" animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.6, ease }}>
+        <motion.span className="block w-6 h-6" style={{ rotate: globeRotate }}>
           <GlobeIcon className="w-6 h-6" />
         </motion.span>
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5 }}
-            transition={{ duration: 0.35, ease }}
-            style={{ transformOrigin: "50% 0%" }}
-            className="absolute left-1/2 top-full mt-4 -ml-[170px] w-[340px] h-[340px] rounded-full bg-panel/85 backdrop-blur-md border border-line shadow-2xl z-50"
-          >
-            <GlobeIcon className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 text-white/20" />
-            {REGION_LIST.map((r, i) => {
-              const angle = -Math.PI / 2 + (i * 2 * Math.PI) / REGION_LIST.length;
-              return (
-                <motion.div
-                  key={r.key}
-                  className="absolute left-1/2 top-1/2"
-                  initial={{ x: 0, y: 0, opacity: 0, scale: 0.6 }}
-                  animate={{ x: Math.cos(angle) * RADIUS, y: Math.sin(angle) * RADIUS, opacity: 1, scale: 1 }}
-                  exit={{ x: 0, y: 0, opacity: 0, scale: 0.6 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.05 * i }}
-                >
-                  <Link
-                    href={`/order?region=${r.key}`}
-                    onClick={() => setOpen(false)}
-                    className="block -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-line bg-ink px-4 py-2 text-xs text-white/80 hover:bg-accent hover:text-ink hover:border-accent transition-colors"
-                  >
-                    {r.name}
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {mounted && (
+        <motion.div
+          style={{ opacity: discOpacity, scale: discScale, transformOrigin: "50% 0%" }}
+          className="absolute left-1/2 top-full mt-4 -ml-[170px] w-[340px] h-[340px] rounded-full bg-panel/90 backdrop-blur-sm border border-line shadow-2xl z-50"
+        >
+          <GlobeIcon className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 text-white/20" />
+          {REGION_LIST.map((r, i) => (
+            <OrbitItem key={r.key} region={r} index={i} progress={progress} onPick={hide} />
+          ))}
+        </motion.div>
+      )}
     </div>
   );
 }
