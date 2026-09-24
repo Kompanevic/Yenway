@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { REGION_LIST } from "@/lib/regions";
 import { MANAGER_TELEGRAM } from "@/lib/pricing";
+import RegionGlobe from "@/components/RegionGlobe";
 
 const JOURNAL_BANNERS = [
   {
@@ -213,7 +214,7 @@ export default function Home() {
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-6 py-7"
+        className="relative z-30 max-w-7xl mx-auto px-6 flex items-center justify-between gap-6 py-7"
       >
         <motion.a
           href="https://t.me/yenwayjapan"
@@ -226,13 +227,8 @@ export default function Home() {
           <Image src="/logo.jpg" alt="YenWay" width={48} height={48} className="rounded-full" />
           <span className="font-display text-2xl font-bold tracking-tight">YenWay</span>
         </motion.a>
-        <nav className="hidden xl:flex items-center gap-4 2xl:gap-6 font-display text-sm uppercase tracking-wide text-white/60 whitespace-nowrap">
-          {REGION_LIST.map((r) => (
-            <Link key={r.key} href={`/order?region=${r.key}`} className="relative group py-1">
-              {r.name}
-              <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
-            </Link>
-          ))}
+        <nav className="hidden lg:flex items-center gap-6 font-display text-sm uppercase tracking-wide text-white/60 whitespace-nowrap">
+          <RegionGlobe />
           <Link href="/wardrobe" className="relative group py-1 text-accent">
             Гардероб
             <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
@@ -250,7 +246,7 @@ export default function Home() {
             <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
           </Link>
         </nav>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="hidden xl:block shrink-0">
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="hidden lg:block shrink-0">
           <Link
             href="/order"
             className="font-display rounded-full bg-accent text-ink px-6 py-2.5 text-sm font-semibold hover:bg-accent2 transition-colors"
@@ -263,7 +259,7 @@ export default function Home() {
           type="button"
           aria-label="Меню"
           onClick={() => setMenuOpen((v) => !v)}
-          className="xl:hidden flex flex-col justify-center gap-1.5 w-10 h-10 shrink-0"
+          className="lg:hidden flex flex-col justify-center gap-1.5 w-10 h-10 shrink-0"
         >
           <motion.span
             animate={menuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
@@ -287,7 +283,7 @@ export default function Home() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="xl:hidden overflow-hidden border-t border-line bg-panel"
+            className="lg:hidden overflow-hidden border-t border-line bg-panel"
           >
             <nav className="max-w-7xl mx-auto px-6 py-6 flex flex-col gap-1 font-display text-lg">
               {REGION_LIST.map((r) => (
