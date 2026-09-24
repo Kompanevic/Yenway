@@ -20,6 +20,8 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
   const seller = own ? "" : text("seller", 40).replace(/^@/, "");
   const kind: ListingKind = own && text("kind", 10) === "preorder" ? "preorder" : "stock";
   const sourceUrl = kind === "preorder" ? text("sourceUrl", 1000) : "";
+  const weight = kind === "preorder" ? parseFloat(text("weightKg", 10).replace(",", ".")) : NaN;
+  const weightKg = weight > 0 && weight <= 100 ? Math.round(weight * 100) / 100 : undefined;
 
   if (title.length < 2) return { ok: false, error: "Укажите название модели" };
   if (!size) return { ok: false, error: "Укажите размер" };
@@ -45,7 +47,18 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
 
   return {
     ok: true,
-    value: { title, size, price, condition, description, seller, own, kind, ...(sourceUrl ? { sourceUrl } : {}) },
+    value: {
+      title,
+      size,
+      price,
+      condition,
+      description,
+      seller,
+      own,
+      kind,
+      ...(sourceUrl ? { sourceUrl } : {}),
+      ...(weightKg ? { weightKg } : {})
+    },
     photos,
     blobs
   };
@@ -58,6 +71,7 @@ export function listingPost(l: ListingInput & { id: string }, origin: string): s
   return [
     line(escapeHtml(l.title)),
     line(`Размер: ${escapeHtml(l.size)}`),
+    l.weightKg ? line(`Вес: ≈ ${l.weightKg} кг`) : null,
     line(`Состояние: ${escapeHtml(l.condition)}`),
     desc ? line(escapeHtml(desc)) : null,
     ``,

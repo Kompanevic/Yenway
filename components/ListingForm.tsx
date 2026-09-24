@@ -9,6 +9,8 @@ import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS, type ListingKind } from "@/lib/
 import { CHINA_DELIVERY_TIERS, MANAGER_TELEGRAM, calculatePrice, type Currency } from "@/lib/pricing";
 import { REGIONS, REGION_LIST, type RegionKey } from "@/lib/regions";
 
+const PREORDER_DESCRIPTION = `Подробнее в личные сообщения к менеджеру.
+Вес указан приблизительно, для точного расчёта обратитесь к менеджеру @${MANAGER_TELEGRAM}.`;
 const CURRENCY_REGION: Record<Currency, RegionKey> = { JPY: "japan", CNY: "china", KRW: "korea", USD: "usa", EUR: "europe" };
 
 const field = "w-full rounded-2xl bg-ink border border-line px-4 py-3 outline-none focus:border-accent transition-colors";
@@ -40,7 +42,7 @@ export default function ListingForm({
   const [size, setSize] = useState("");
   const [price, setPrice] = useState("");
   const [condition, setCondition] = useState(LISTING_CONDITIONS[2]);
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(kind === "preorder" ? PREORDER_DESCRIPTION : "");
   const [seller, setSeller] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +87,6 @@ export default function ListingForm({
       if (info.size) setSize(info.size.slice(0, 20));
       const cond = mapCondition(info.condition);
       if (cond) setCondition(cond);
-      if (info.description) setDescription(info.description.slice(0, 800));
       if (info.currency) setRegion(CURRENCY_REGION[info.currency]);
       if (info.price) setLocalPrice(String(info.price));
       if (!info.title && !info.image) {
@@ -151,7 +152,10 @@ export default function ListingForm({
       body.append("description", description);
       if (!own) body.append("seller", seller);
       body.append("kind", kind);
-      if (kind === "preorder") body.append("sourceUrl", sourceUrl);
+      if (kind === "preorder") {
+        body.append("sourceUrl", sourceUrl);
+        body.append("weightKg", weight);
+      }
       const res = await fetch(own ? "/api/admin/stock" : "/api/stock", { method: "POST", body });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Не удалось отправить");
@@ -160,7 +164,7 @@ export default function ListingForm({
       setTitle("");
       setSize("");
       setPrice("");
-      setDescription("");
+      setDescription(kind === "preorder" ? PREORDER_DESCRIPTION : "");
       setSourceUrl("");
       setLocalPrice("");
       setWeight("");

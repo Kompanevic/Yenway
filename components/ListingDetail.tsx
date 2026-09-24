@@ -66,6 +66,12 @@ export default async function ListingDetail({ id, kind }: { id: string; kind: Li
               <span className="text-white/40">Размер</span>
               <span>{l.size}</span>
             </div>
+            {l.weightKg && (
+              <div className="flex justify-between border-b border-line pb-2.5">
+                <span className="text-white/40">Вес</span>
+                <span>≈ {l.weightKg} кг</span>
+              </div>
+            )}
             <div className="flex justify-between border-b border-line pb-2.5">
               <span className="text-white/40">Состояние</span>
               <span>{l.condition}</span>

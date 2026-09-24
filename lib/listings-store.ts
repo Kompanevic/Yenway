@@ -21,6 +21,8 @@ export interface Listing {
   kind?: ListingKind;
   // Ссылка на товар для «под заказ» — только для админа, на сайт не выводится.
   sourceUrl?: string;
+  // Примерный вес «под заказ», по нему считалась цена под ключ.
+  weightKg?: number;
 }
 
 export type ListingInput = Omit<Listing, "id" | "photoCount" | "status" | "createdAt">;
