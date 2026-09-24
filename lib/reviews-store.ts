@@ -1,4 +1,5 @@
 import { redis } from "./redis";
+import { createHashStore, requireRedis } from "./hash-store";
 
 export interface StoredReview {
   id: string;
@@ -8,6 +9,7 @@ export interface StoredReview {
   date: string;
   status: "pending" | "published";
   hasPhoto?: boolean;
+  createdAt: string;
 }
 
 export interface ReviewPhoto {
@@ -22,38 +24,24 @@ export interface ReviewInput {
   photo?: ReviewPhoto;
 }
 
-const KEY = "yenway:reviews";
-// Фото лежат отдельными ключами, чтобы список отзывов оставался лёгким.
+const store = createHashStore<StoredReview>("yenway:reviews:v2", "yenway:reviews");
+// Фото лежат отдельными ключами, чтобы записи отзывов оставались лёгкими.
 const photoKey = (id: string) => `yenway:review-photo:${id}`;
 
-async function readAll(): Promise<StoredReview[]> {
-  if (!redis) return [];
-  const data = await redis.get<StoredReview[]>(KEY);
-  return data ?? [];
-}
-
-async function writeAll(reviews: StoredReview[]): Promise<void> {
-  if (!redis) throw new Error("Хранилище отзывов не настроено (нет KV_REST_API_URL/TOKEN)");
-  await redis.set(KEY, reviews);
-}
-
-export async function getAll(): Promise<StoredReview[]> {
-  return readAll();
+export function getAll(): Promise<StoredReview[]> {
+  return store.all();
 }
 
 export async function getPublished(): Promise<StoredReview[]> {
-  const all = await readAll();
-  return all.filter((r) => r.status === "published");
+  return (await store.all()).filter((r) => r.status === "published");
 }
 
 export async function getPending(): Promise<StoredReview[]> {
-  const all = await readAll();
-  return all.filter((r) => r.status === "pending");
+  return (await store.all()).filter((r) => r.status === "pending");
 }
 
-export async function getReview(id: string): Promise<StoredReview | undefined> {
-  const all = await readAll();
-  return all.find((r) => r.id === id);
+export function getReview(id: string): Promise<StoredReview | undefined> {
+  return store.get(id);
 }
 
 export async function getPhoto(id: string): Promise<ReviewPhoto | null> {
@@ -62,20 +50,20 @@ export async function getPhoto(id: string): Promise<ReviewPhoto | null> {
 }
 
 async function add(input: ReviewInput, status: StoredReview["status"]): Promise<StoredReview> {
-  if (!redis) throw new Error("Хранилище отзывов не настроено (нет KV_REST_API_URL/TOKEN)");
+  const r = requireRedis();
+  const now = new Date().toISOString();
   const review: StoredReview = {
     id: crypto.randomUUID(),
     username: input.username,
     rating: input.rating,
     text: input.text,
-    date: new Date().toISOString().slice(0, 7),
+    date: now.slice(0, 7),
     status,
-    hasPhoto: !!input.photo
+    hasPhoto: !!input.photo,
+    createdAt: now
   };
-  if (input.photo) await redis.set(photoKey(review.id), input.photo);
-  const all = await readAll();
-  all.unshift(review);
-  await writeAll(all);
+  if (input.photo) await r.set(photoKey(review.id), input.photo);
+  await store.put(review);
   return review;
 }
 
@@ -88,16 +76,11 @@ export function addPublished(input: ReviewInput): Promise<StoredReview> {
 }
 
 export async function approve(id: string): Promise<void> {
-  const all = await readAll();
-  const review = all.find((r) => r.id === id);
-  if (!review) throw new Error("Отзыв не найден");
-  review.status = "published";
-  await writeAll(all);
+  await store.patch(id, { status: "published" }, "Отзыв не найден");
 }
 
 export async function remove(id: string): Promise<void> {
-  const all = await readAll();
-  await writeAll(all.filter((r) => r.id !== id));
+  await store.remove(id);
   await redis?.del(photoKey(id));
 }
 
