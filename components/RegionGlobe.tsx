@@ -29,10 +29,11 @@ const STAGGER = 0.05;
 
 // Позиция считается из одного общего прогресса — без ре-рендеров React на
 // каждом кадре, двигаются только transform/opacity (дёшево для GPU).
-function OrbitItem({ region, index, progress, onPick }: {
+function OrbitItem({ region, index, progress, picked, onPick }: {
   region: Region;
   index: number;
   progress: MotionValue<number>;
+  picked: boolean;
   onPick: () => void;
 }) {
   const angle = -Math.PI / 2 + (index * 2 * Math.PI) / REGION_LIST.length;
@@ -50,7 +51,11 @@ function OrbitItem({ region, index, progress, onPick }: {
       <Link
         href={`/order?region=${region.key}`}
         onClick={onPick}
-        className="block -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-line bg-ink px-4 py-2 text-xs text-white/80 hover:bg-accent hover:text-ink hover:border-accent transition-colors"
+        className={`block -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border px-4 py-2 text-xs transition-colors ${
+          picked
+            ? "bg-accent text-ink border-accent animate-pulse"
+            : "border-line bg-ink text-white/80 hover:bg-accent hover:text-ink hover:border-accent"
+        }`}
       >
         {region.name}
       </Link>
@@ -61,6 +66,8 @@ function OrbitItem({ region, index, progress, onPick }: {
 export default function RegionGlobe() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  // Круг не сворачиваем при выборе страны — держим до открытия страницы заказа.
+  const [picked, setPicked] = useState<string | null>(null);
   const openRef = useRef(false);
   const ref = useRef<HTMLDivElement>(null);
   const progress = useMotionValue(0);
@@ -79,6 +86,7 @@ export default function RegionGlobe() {
 
   function hide() {
     openRef.current = false;
+    setPicked(null);
     setOpen(false);
     animate(progress, 0, { duration: reduced ? 0 : 0.4, ease: "easeIn" }).then(() => {
       if (!openRef.current) setMounted(false);
@@ -120,7 +128,7 @@ export default function RegionGlobe() {
         >
           <GlobeIcon className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 text-white/20" />
           {REGION_LIST.map((r, i) => (
-            <OrbitItem key={r.key} region={r} index={i} progress={progress} onPick={hide} />
+            <OrbitItem key={r.key} region={r} index={i} progress={progress} picked={picked === r.key} onPick={() => setPicked(r.key)} />
           ))}
         </motion.div>
       )}

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { REGION_LIST, RegionKey } from "@/lib/regions";
+import { REGIONS, REGION_LIST, RegionKey } from "@/lib/regions";
 import { CHINA_DELIVERY_TIERS, isManualRegion } from "@/lib/pricing";
 
 interface Result {
@@ -26,8 +27,19 @@ interface Result {
   notified: boolean;
 }
 
-export default function OrderForm({ initialRegion }: { initialRegion: RegionKey }) {
-  const [region, setRegion] = useState<RegionKey>(initialRegion);
+function regionFromParam(v: string | null): RegionKey {
+  return v && v in REGIONS ? (v as RegionKey) : "japan";
+}
+
+// Регион читается из ссылки в браузере — так страница заказа статическая
+// и открывается мгновенно с CDN, без сборки на сервере.
+export default function OrderForm() {
+  const param = useSearchParams().get("region");
+  const [region, setRegion] = useState<RegionKey>(() => regionFromParam(param));
+
+  useEffect(() => {
+    setRegion(regionFromParam(param));
+  }, [param]);
   const [link, setLink] = useState("");
   const [username, setUsername] = useState("");
   const [weight, setWeight] = useState("");

@@ -1,5 +1,6 @@
+import { Suspense } from "react";
 import OrderForm from "@/components/OrderForm";
-import { RegionKey, REGIONS, REGION_LIST } from "@/lib/regions";
+import { REGION_LIST } from "@/lib/regions";
 import {
   COMMISSION_RUB,
   MERCARI_COMMISSION_RUB,
@@ -12,16 +13,7 @@ import {
 const chinaRates = CHINA_DELIVERY_TIERS.map((t) => t.ratePerKg);
 const chinaDeliveryRange = `${Math.min(...chinaRates)}–${Math.max(...chinaRates)} ₽/кг`;
 
-export default function OrderPage({
-  searchParams
-}: {
-  searchParams: { region?: string };
-}) {
-  const initialRegion: RegionKey =
-    searchParams.region && searchParams.region in REGIONS
-      ? (searchParams.region as RegionKey)
-      : "japan";
-
+export default function OrderPage() {
   return (
     <main>
       <div className="max-w-2xl mx-auto px-6 pt-12">
@@ -72,7 +64,9 @@ export default function OrderPage({
       </div>
 
       <div className="max-w-5xl mx-auto px-6 pb-20 pt-14 grid lg:grid-cols-[1.1fr,0.9fr] gap-14">
-        <OrderForm initialRegion={initialRegion} />
+        <Suspense fallback={<div className="min-h-[520px]" />}>
+          <OrderForm />
+        </Suspense>
 
         <aside className="space-y-8 lg:pt-1">
           <div>
