@@ -131,7 +131,7 @@ function postButton(l: Listing, origin: string) {
 }
 
 // Тот же пост с кнопкой — прямо в канал (при пересылке кнопка теряется).
-export function postToChannel(listing: Listing, photo: Blob, origin: string): Promise<boolean> {
+function postToChannel(listing: Listing, photo: Blob, origin: string): Promise<boolean> {
   return sendTelegramPhoto(photo, "photo.jpg", listingPost(listing), CHANNEL_BOT, postButton(listing, origin));
 }
 
@@ -147,8 +147,8 @@ export async function notifyListing(
 ): Promise<boolean> {
   const preorder = listing.kind === "preorder";
   const bot = preorder && ITEM_BOT.token ? ITEM_BOT : LISTING_BOT;
-  // Опубликованное сразу (свои вещи, «под заказ») — ещё и в канал.
-  if (listing.status === "published") await postToChannel(listing, blobs[0], origin);
+  // В канал уходит только «под заказ»; вещи «в наличии» — нет.
+  if (preorder) await postToChannel(listing, blobs[0], origin);
   const sent = await sendTelegramPhoto(blobs[0], "photo.jpg", listingPost(listing), bot, postButton(listing, origin));
   if (!sent) return false;
   if (preorder) {
