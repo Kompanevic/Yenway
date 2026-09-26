@@ -57,11 +57,12 @@ export default async function ListingFeed({ kind }: { kind: ListingKind }) {
 
       {/* В клиент уходят только поля карточки — без ссылки на товар и прочего. */}
       <ListingGrid
-        items={items.map(({ id, title, size, price, region, sourceUrl }) => ({
+        items={items.map(({ id, title, size, price, photoCount, region, sourceUrl }) => ({
           id,
           title,
           size,
           price,
+          photoCount,
           // Флажок страны — только «под заказ»; сама ссылка в клиент не уходит.
           ...(kind === "preorder" ? { region: region ?? regionFromUrl(sourceUrl) } : {})
         }))}

@@ -12,7 +12,29 @@ export interface GridItem {
   title: string;
   size: string;
   price: number;
+  photoCount: number;
   region?: RegionKey;
+}
+
+// При наведении — плавно второе фото вещи (грузится только по первому наведению).
+function CardPhoto({ item }: { item: GridItem }) {
+  const [hovered, setHovered] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const zoom = "transition-transform duration-700 ease-out group-hover:scale-[1.06]";
+  return (
+    <div className="absolute inset-0" onPointerEnter={(e) => e.pointerType === "mouse" && setHovered(true)}>
+      <FadeImg src={`/api/stock-photo/${item.id}/0`} alt={item.title} loading="lazy" className={`w-full h-full object-cover ${zoom}`} />
+      {hovered && item.photoCount > 1 && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/stock-photo/${item.id}/1`}
+          alt=""
+          onLoad={() => setLoaded(true)}
+          className={`absolute inset-0 w-full h-full object-cover opacity-0 transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.06] ${loaded ? "group-hover:opacity-100" : ""}`}
+        />
+      )}
+    </div>
+  );
 }
 
 const norm = (s: string) => s.toLowerCase().replace(/ё/g, "е");
@@ -79,12 +101,7 @@ export default function ListingGrid({ items, basePath, emptyText }: { items: Gri
                 {l.region && (
                   <Flag region={l.region} className="absolute top-2.5 left-2.5 z-10 w-7 h-[18.67px] rounded-[3px] shadow-md ring-1 ring-black/20" />
                 )}
-                <FadeImg
-                  src={`/api/stock-photo/${l.id}/0`}
-                  alt={l.title}
-                  loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
-                />
+                <CardPhoto item={l} />
               </div>
               <div className="mt-2.5 font-display text-sm leading-snug line-clamp-2 break-words">
                 {l.title}
