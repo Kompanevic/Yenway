@@ -1,6 +1,6 @@
-import { LISTING_PATH, type Listing, type ListingInput, type ListingKind } from "./listings-store";
+import { LISTING_PATH, kindOf, type Listing, type ListingInput, type ListingKind } from "./listings-store";
 import type { ReviewPhoto } from "./reviews-store";
-import { ITEM_BOT, LISTING_BOT, escapeHtml, sendTelegramAlbum, sendTelegramMessage } from "./telegram";
+import { ITEM_BOT, LISTING_BOT, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
 import { calculatePrice } from "./pricing";
 import { REGIONS, type RegionKey } from "./regions";
 import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS } from "./listing-constants";
@@ -74,7 +74,8 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
 }
 
 // Готовый пост для канала: каждая строка жирная со значком, без ника продавца.
-export function listingPost(l: ListingInput & { id: string }, origin: string): string {
+// Ссылка на страницу — кнопкой под фото, см. notifyListing.
+export function listingPost(l: ListingInput): string {
   const desc = l.description.length > 500 ? l.description.slice(0, 500) + "…" : l.description;
   const line = (text: string) => `<b>✦ ${text}</b>`;
   return [
@@ -85,9 +86,7 @@ export function listingPost(l: ListingInput & { id: string }, origin: string): s
     desc ? line(escapeHtml(desc)) : null,
     ``,
     ``,
-    line(`Цена: ${l.price.toLocaleString("ru-RU")} ₽`),
-    ``,
-    `${l.kind === "preorder" ? "Заказать" : "Купить"}: ${origin}${LISTING_PATH[l.kind ?? "stock"]}/${l.id}`
+    line(`Цена: ${l.price.toLocaleString("ru-RU")} ₽`)
   ]
     .filter((x) => x !== null)
     .join("\n");
@@ -124,7 +123,8 @@ function calcMessage(listing: Listing, calc: PreorderCalc | undefined): string {
   return lines.join("\n");
 }
 
-// «В наличии» — пост в бота объявлений, ник продавца отдельным сообщением,
+// Пост — первое фото с кнопкой-ссылкой (у альбомов в Telegram кнопок не бывает,
+// остальные фото — на странице вещи). «В наличии» — в бота объявлений, ник продавца отдельным сообщением,
 // чтобы при пересылке в канал он туда не попал. «Под заказ» — в бота
 // карточек: пост + отдельным сообщением расчёт под ключ и ссылка на товар.
 export async function notifyListing(
@@ -135,7 +135,11 @@ export async function notifyListing(
 ): Promise<boolean> {
   const preorder = listing.kind === "preorder";
   const bot = preorder && ITEM_BOT.token ? ITEM_BOT : LISTING_BOT;
-  const sent = await sendTelegramAlbum(blobs, listingPost(listing, origin), bot);
+  const button = {
+    text: preorder ? "Заказать на YenWay" : "Купить на YenWay",
+    url: `${origin}${LISTING_PATH[kindOf(listing)]}/${listing.id}`
+  };
+  const sent = await sendTelegramPhoto(blobs[0], "photo.jpg", listingPost(listing), bot, button);
   if (!sent) return false;
   if (preorder) {
     await sendTelegramMessage(calcMessage(listing, calc), bot, true);
