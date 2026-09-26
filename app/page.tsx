@@ -7,6 +7,7 @@ import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform } fr
 import { REGION_LIST } from "@/lib/regions";
 import { MANAGER_TELEGRAM } from "@/lib/pricing";
 import RegionGlobe from "@/components/RegionGlobe";
+import Flag from "@/components/Flag";
 import { plural } from "@/lib/plural";
 
 const JOURNAL_BANNERS = [
@@ -324,7 +325,7 @@ export default function Home() {
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-3 py-3 border-b border-line/60 text-white/80"
                 >
-                  <span className="text-xl">{r.flag}</span>
+                  <Flag region={r.key} className="w-[1.35em] h-[0.9em] rounded-[2px] shrink-0 text-xl" />
                   {r.name}
                 </Link>
               ))}
@@ -472,7 +473,7 @@ export default function Home() {
                 className="h-full rounded-3xl bg-panel border border-line p-7 transition-colors hover:border-accent/50"
               >
                 <Link href={`/order?region=${r.key}`} className="block group">
-                  <div className="text-4xl grayscale">{r.flag}</div>
+                  <Flag region={r.key} className="w-[1.35em] h-[0.9em] rounded-[2px] shrink-0 text-4xl grayscale group-hover:grayscale-0 transition-[filter] duration-500" />
                   <div className="font-display mt-4 text-2xl font-semibold group-hover:text-accent transition-colors">
                     {r.name}
                   </div>

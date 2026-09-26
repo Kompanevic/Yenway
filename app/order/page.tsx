@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import OrderForm from "@/components/OrderForm";
 import { REGION_LIST } from "@/lib/regions";
+import Flag from "@/components/Flag";
 import {
   COMMISSION_RUB,
   MERCARI_COMMISSION_RUB,
@@ -89,8 +90,8 @@ export default function OrderPage() {
                 return (
                   <li key={r.key} className="rounded-xl bg-panel border border-line px-4 py-3">
                     <div className="flex items-center justify-between">
-                      <span className="font-display font-semibold">
-                        {r.flag} {r.name}
+                      <span className="font-display font-semibold inline-flex items-center gap-2">
+                        <Flag region={r.key} className="w-[1.35em] h-[0.9em] rounded-[2px] shrink-0" /> {r.name}
                       </span>
                       {manual && <span className="text-xs text-white/40">вручную</span>}
                     </div>

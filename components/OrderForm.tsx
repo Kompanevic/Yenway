@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { REGIONS, REGION_LIST, RegionKey } from "@/lib/regions";
+import Flag from "./Flag";
 import { CHINA_DELIVERY_TIERS, isManualRegion } from "@/lib/pricing";
 
 interface Result {
@@ -22,7 +23,7 @@ interface Result {
   } | null;
   manual: boolean;
   managerTelegram: string;
-  region: { name: string; flag: string; currency: string };
+  region: { key: RegionKey; name: string; flag: string; currency: string };
   notified: boolean;
 }
 
@@ -102,7 +103,7 @@ export default function OrderForm() {
                     : "border-line bg-panel text-white/60 hover:border-white/30"
                 }`}
               >
-                <div className="text-xl">{r.flag}</div>
+                <Flag region={r.key} className="block mx-auto w-[1.35em] h-[0.9em] rounded-[2px] text-xl" />
                 <span className="font-display">{r.name}</span>
               </motion.button>
             ))}
@@ -215,8 +216,8 @@ export default function OrderForm() {
               )}
               <div>
                 <div className="font-semibold">{result.preview.title ?? "Товар"}</div>
-                <div className="text-white/50 text-sm mt-1">
-                  {result.region.flag} {result.region.name}
+                <div className="text-white/50 text-sm mt-1 flex items-center gap-2">
+                  <Flag region={result.region.key} className="w-[1.35em] h-[0.9em] rounded-[2px] shrink-0" /> {result.region.name}
                 </div>
               </div>
             </div>
