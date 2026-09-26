@@ -86,3 +86,10 @@ export const LISTING_BOT: BotConfig = {
   token: process.env.LISTING_BOT_TOKEN,
   chatId: process.env.LISTING_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID
 };
+
+// Канал, куда сразу уходят опубликованные вещи. Бот объявлений (или бот
+// карточек) должен быть администратором канала с правом публикации.
+export const CHANNEL_BOT: BotConfig = {
+  token: process.env.LISTING_BOT_TOKEN ?? process.env.ITEM_BOT_TOKEN,
+  chatId: process.env.TELEGRAM_CHANNEL_ID ?? "@yenwayjapan"
+};

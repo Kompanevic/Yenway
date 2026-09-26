@@ -1,6 +1,6 @@
 import { LISTING_PATH, kindOf, type Listing, type ListingInput, type ListingKind } from "./listings-store";
 import type { ReviewPhoto } from "./reviews-store";
-import { ITEM_BOT, LISTING_BOT, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
+import { CHANNEL_BOT, ITEM_BOT, LISTING_BOT, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
 import { calculatePrice } from "./pricing";
 import { REGIONS, type RegionKey } from "./regions";
 import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS } from "./listing-constants";
@@ -123,6 +123,18 @@ function calcMessage(listing: Listing, calc: PreorderCalc | undefined): string {
   return lines.join("\n");
 }
 
+function postButton(l: Listing, origin: string) {
+  return {
+    text: kindOf(l) === "preorder" ? "Заказать на YenWay" : "Купить на YenWay",
+    url: `${origin}${LISTING_PATH[kindOf(l)]}/${l.id}`
+  };
+}
+
+// Тот же пост с кнопкой — прямо в канал (при пересылке кнопка теряется).
+export function postToChannel(listing: Listing, photo: Blob, origin: string): Promise<boolean> {
+  return sendTelegramPhoto(photo, "photo.jpg", listingPost(listing), CHANNEL_BOT, postButton(listing, origin));
+}
+
 // Пост — первое фото с кнопкой-ссылкой (у альбомов в Telegram кнопок не бывает,
 // остальные фото — на странице вещи). «В наличии» — в бота объявлений, ник продавца отдельным сообщением,
 // чтобы при пересылке в канал он туда не попал. «Под заказ» — в бота
@@ -135,11 +147,9 @@ export async function notifyListing(
 ): Promise<boolean> {
   const preorder = listing.kind === "preorder";
   const bot = preorder && ITEM_BOT.token ? ITEM_BOT : LISTING_BOT;
-  const button = {
-    text: preorder ? "Заказать на YenWay" : "Купить на YenWay",
-    url: `${origin}${LISTING_PATH[kindOf(listing)]}/${listing.id}`
-  };
-  const sent = await sendTelegramPhoto(blobs[0], "photo.jpg", listingPost(listing), bot, button);
+  // Опубликованное сразу (свои вещи, «под заказ») — ещё и в канал.
+  if (listing.status === "published") await postToChannel(listing, blobs[0], origin);
+  const sent = await sendTelegramPhoto(blobs[0], "photo.jpg", listingPost(listing), bot, postButton(listing, origin));
   if (!sent) return false;
   if (preorder) {
     await sendTelegramMessage(calcMessage(listing, calc), bot, true);
