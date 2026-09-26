@@ -1,4 +1,5 @@
 import { CURRENCIES, Currency } from "./pricing";
+import type { RegionKey } from "./regions";
 
 export interface ItemInfo {
   title: string | null;
@@ -142,6 +143,18 @@ function detectSize(text: string): string | null {
   const v = m?.[1]?.trim();
   if (!v || /^(表|chart|guide)$/i.test(v)) return null;
   return v;
+}
+
+const CURRENCY_REGION: Record<Currency, RegionKey> = { JPY: "japan", CNY: "china", KRW: "korea", USD: "usa", EUR: "europe" };
+
+// Страна товара по ссылке — для флажка у старых объявлений «под заказ».
+export function regionFromUrl(url: string | undefined): RegionKey | undefined {
+  try {
+    const c = url ? currencyFromHost(new URL(url).hostname) : null;
+    return c ? CURRENCY_REGION[c] : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function currencyFromHost(host: string): Currency | null {

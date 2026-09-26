@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ListingGrid from "./ListingGrid";
+import { regionFromUrl } from "@/lib/item-info";
 import { getListings, kindOf, LISTING_PATH, type ListingKind } from "@/lib/listings-store";
 
 const COPY: Record<ListingKind, { title: string; text: string; empty: string }> = {
@@ -21,7 +22,7 @@ export default async function ListingFeed({ kind }: { kind: ListingKind }) {
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-16">
-      <a href="/" className="text-white/40 text-sm hover:text-white/70 transition-colors">
+      <a href="/" className="block w-fit text-white/40 text-sm hover:text-white/70 transition-colors">
         ← на главную
       </a>
 
@@ -56,7 +57,14 @@ export default async function ListingFeed({ kind }: { kind: ListingKind }) {
 
       {/* В клиент уходят только поля карточки — без ссылки на товар и прочего. */}
       <ListingGrid
-        items={items.map(({ id, title, size, price }) => ({ id, title, size, price }))}
+        items={items.map(({ id, title, size, price, region, sourceUrl }) => ({
+          id,
+          title,
+          size,
+          price,
+          // Флажок страны — только «под заказ»; сама ссылка в клиент не уходит.
+          ...(kind === "preorder" ? { region: region ?? regionFromUrl(sourceUrl) } : {})
+        }))}
         basePath={LISTING_PATH[kind]}
         emptyText={copy.empty}
       />

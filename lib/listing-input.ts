@@ -65,7 +65,8 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
       own,
       kind,
       ...(sourceUrl ? { sourceUrl } : {}),
-      ...(weightKg ? { weightKg } : {})
+      ...(weightKg ? { weightKg } : {}),
+      ...(calc ? { region: calc.region } : {})
     },
     photos,
     blobs,

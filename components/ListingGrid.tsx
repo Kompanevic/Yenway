@@ -2,12 +2,15 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Flag from "./Flag";
+import type { RegionKey } from "@/lib/regions";
 
 export interface GridItem {
   id: string;
   title: string;
   size: string;
   price: number;
+  region?: RegionKey;
 }
 
 const norm = (s: string) => s.toLowerCase().replace(/ё/g, "е");
@@ -69,7 +72,10 @@ export default function ListingGrid({ items, basePath, emptyText }: { items: Gri
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
           {shown.map((l) => (
             <Link key={l.id} href={`${basePath}/${l.id}`} className="group block">
-              <div className="aspect-square rounded-2xl overflow-hidden border border-line bg-panel">
+              <div className="relative aspect-square rounded-2xl overflow-hidden border border-line bg-panel">
+                {l.region && (
+                  <Flag region={l.region} className="absolute top-2.5 left-2.5 z-10 w-7 h-[18.67px] rounded-[3px] shadow-md ring-1 ring-black/20" />
+                )}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`/api/stock-photo/${l.id}/0`}

@@ -1,6 +1,7 @@
 import { redis } from "./redis";
 import { createHashStore, requireRedis } from "./hash-store";
 import type { ReviewPhoto } from "./reviews-store";
+import type { RegionKey } from "./regions";
 
 export type ListingStatus = "pending" | "published" | "sold";
 import type { ListingKind } from "./listing-constants";
@@ -23,6 +24,8 @@ export interface Listing {
   sourceUrl?: string;
   // Примерный вес «под заказ», по нему считалась цена под ключ.
   weightKg?: number;
+  // Страна товара «под заказ» — флажок в ленте.
+  region?: RegionKey;
 }
 
 export type ListingInput = Omit<Listing, "id" | "photoCount" | "status" | "createdAt">;
