@@ -1,6 +1,6 @@
 import { LISTING_PATH, kindOf, type Listing, type ListingInput, type ListingKind } from "./listings-store";
 import type { ReviewPhoto } from "./reviews-store";
-import { CHANNEL_BOT, ITEM_BOT, LISTING_BOT, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
+import { CHANNEL_ID, CHANNEL_TOKENS, ITEM_BOT, LISTING_BOT, sendPhotoResult, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
 import { calculatePrice } from "./pricing";
 import { REGIONS, type RegionKey } from "./regions";
 import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS } from "./listing-constants";
@@ -131,8 +131,15 @@ function postButton(l: Listing, origin: string) {
 }
 
 // Тот же пост с кнопкой — прямо в канал (при пересылке кнопка теряется).
-function postToChannel(listing: Listing, photo: Blob, origin: string): Promise<boolean> {
-  return sendTelegramPhoto(photo, "photo.jpg", listingPost(listing), CHANNEL_BOT, postButton(listing, origin));
+// Пробуем ботов по очереди; null — опубликовано, иначе ошибки для админа.
+async function postToChannel(listing: Listing, photo: Blob, origin: string): Promise<string | null> {
+  const errors: string[] = [];
+  for (const token of CHANNEL_TOKENS) {
+    const err = await sendPhotoResult(photo, "photo.jpg", listingPost(listing), { token, chatId: CHANNEL_ID }, postButton(listing, origin));
+    if (!err) return null;
+    errors.push(err);
+  }
+  return Array.from(new Set(errors)).join("; ") || "нет ни одного токена бота";
 }
 
 // Пост — первое фото с кнопкой-ссылкой (у альбомов в Telegram кнопок не бывает,
@@ -148,11 +155,20 @@ export async function notifyListing(
   const preorder = listing.kind === "preorder";
   const bot = preorder && ITEM_BOT.token ? ITEM_BOT : LISTING_BOT;
   // В канал уходит только «под заказ»; вещи «в наличии» — нет.
-  if (preorder) await postToChannel(listing, blobs[0], origin);
+  const channelError = preorder ? await postToChannel(listing, blobs[0], origin) : null;
   const sent = await sendTelegramPhoto(blobs[0], "photo.jpg", listingPost(listing), bot, postButton(listing, origin));
   if (!sent) return false;
   if (preorder) {
     await sendTelegramMessage(calcMessage(listing, calc), bot, true);
+    if (channelError) {
+      await sendTelegramMessage(
+        `⚠️ В канал ${escapeHtml(CHANNEL_ID)} не опубликовано: ${escapeHtml(channelError)}\n\n` +
+          `«chat not found» — неверный канал (задайте TELEGRAM_CHANNEL_ID); ` +
+          `«not enough rights» / «not a member» — бот не админ канала с правом публикации.`,
+        bot,
+        true
+      );
+    }
   } else if (!listing.own) {
     await sendTelegramMessage(
       `Продавец: @${listing.seller}\nОбъявление на модерации — опубликовать можно в /admin → «В наличии».`,
