@@ -1,11 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import FadeImg from "./FadeImg";
-
-const ZOOM = 1.8;
 
 export default function ListingGallery({ id, count, title }: { id: string; count: number; title: string }) {
   const [active, setActive] = useState(0);
@@ -15,7 +13,6 @@ export default function ListingGallery({ id, count, title }: { id: string; count
   // Портал — только на клиенте после гидрации.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const zoomRef = useRef<HTMLDivElement>(null);
   const src = (n: number) => `/api/stock-photo/${id}/${n}`;
 
   const go = useCallback(
@@ -25,19 +22,6 @@ export default function ListingGallery({ id, count, title }: { id: string; count
     },
     [count]
   );
-
-  // Лупа при наведении мышью: фото приближается к точке под курсором.
-  // Стили пишем напрямую в DOM — без ре-рендеров на каждое движение.
-  function onMove(e: React.PointerEvent<HTMLDivElement>) {
-    const el = zoomRef.current;
-    if (!el || e.pointerType !== "mouse") return;
-    const r = e.currentTarget.getBoundingClientRect();
-    el.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
-    el.style.transform = `scale(${ZOOM})`;
-  }
-  function onLeave() {
-    if (zoomRef.current) zoomRef.current.style.transform = "";
-  }
 
   useEffect(() => {
     if (!open) return;
@@ -60,15 +44,11 @@ export default function ListingGallery({ id, count, title }: { id: string; count
   return (
     <div>
       <div
-        className="relative aspect-square rounded-3xl overflow-hidden border border-line bg-panel cursor-zoom-in"
-        onPointerMove={onMove}
-        onPointerLeave={onLeave}
-        onClick={() => {
-          onLeave();
-          setOpen(true);
-        }}
+        className="group relative aspect-square rounded-3xl overflow-hidden border border-line bg-panel cursor-zoom-in"
+        onClick={() => setOpen(true)}
       >
-        <div ref={zoomRef} className="absolute inset-0 transition-transform duration-300 ease-out will-change-transform">
+        {/* При наведении фото чуть плавно увеличивается */}
+        <div className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.04]">
           <FadeImg key={active} src={src(active)} alt={title} className="w-full h-full object-cover" />
         </div>
         <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-black/50 backdrop-blur px-3 py-1.5 text-xs text-white/80">
