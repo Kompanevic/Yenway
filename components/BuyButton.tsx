@@ -38,7 +38,7 @@ export default function BuyButton({ id, label = "Хочу купить" }: { id:
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="font-display w-full rounded-2xl bg-accent text-ink py-4 font-semibold text-lg hover:bg-accent2 transition-colors"
+        className="font-display w-full rounded-2xl btn-fx bg-accent text-ink py-4 font-semibold text-lg hover:bg-accent2 transition-colors"
       >
         {label}
       </button>
@@ -59,7 +59,7 @@ export default function BuyButton({ id, label = "Хочу купить" }: { id:
       <button
         type="submit"
         disabled={loading}
-        className="font-display w-full rounded-2xl bg-accent text-ink py-4 font-semibold text-lg hover:bg-accent2 transition-colors disabled:opacity-50"
+        className="font-display w-full rounded-2xl btn-fx bg-accent text-ink py-4 font-semibold text-lg hover:bg-accent2 transition-colors disabled:opacity-50"
       >
         {loading ? "Отправляем..." : "Отправить заявку"}
       </button>

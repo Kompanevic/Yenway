@@ -68,3 +68,50 @@ body {
     animation: none;
   }
 }
+
+/* Главные кнопки: при наведении приподнимаются, светятся и по ним пробегает блик */
+.btn-fx {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s ease,
+    background-color 0.25s ease;
+}
+
+.btn-fx::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.9) 50%, transparent 65%);
+  transform: translateX(-120%);
+}
+
+@media (hover: hover) {
+  .btn-fx:not(:disabled):hover {
+    /* цвет не меняем — на нём виден белый блик */
+    background-color: #e7e5e1;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 12px 32px -10px rgba(255, 255, 255, 0.45);
+  }
+
+  .btn-fx:not(:disabled):hover::after {
+    transform: translateX(120%);
+    transition: transform 0.8s ease;
+  }
+}
+
+.btn-fx:not(:disabled):active {
+  transform: scale(0.97);
+  transition-duration: 0.1s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-fx,
+  .btn-fx::after {
+    transition: none;
+  }
+}

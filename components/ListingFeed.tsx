@@ -48,7 +48,7 @@ export default async function ListingFeed({ kind }: { kind: ListingKind }) {
         {kind === "stock" && (
           <Link
             href="/stock/new"
-            className="font-display rounded-full bg-accent text-ink px-6 py-3 font-semibold hover:bg-accent2 transition-colors"
+            className="font-display rounded-full btn-fx bg-accent text-ink px-6 py-3 font-semibold hover:bg-accent2 transition-colors"
           >
             Выложить свою вещь
           </Link>

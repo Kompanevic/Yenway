@@ -188,9 +188,7 @@ export default function OrderForm() {
         <motion.button
           type="submit"
           disabled={loading}
-          whileHover={{ scale: loading ? 1 : 1.02 }}
-          whileTap={{ scale: loading ? 1 : 0.97 }}
-          className="font-display w-full rounded-2xl bg-accent text-ink py-4 font-semibold text-lg hover:bg-accent2 transition-colors disabled:opacity-50"
+          className="font-display w-full rounded-2xl btn-fx bg-accent text-ink py-4 font-semibold text-lg hover:bg-accent2 transition-colors disabled:opacity-50"
         >
           {loading ? "Считаем..." : "Рассчитать и отправить заявку"}
         </motion.button>

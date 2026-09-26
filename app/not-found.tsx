@@ -8,7 +8,7 @@ export default function NotFound() {
         Такой страницы нет — возможно, вещь уже продана или ссылка устарела.
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <Link href="/" className="font-display rounded-full bg-accent text-ink px-6 py-3 font-semibold hover:bg-accent2 transition-colors">
+        <Link href="/" className="font-display inline-block rounded-full btn-fx bg-accent text-ink px-6 py-3 font-semibold hover:bg-accent2 transition-colors">
           На главную
         </Link>
         <Link href="/stock" className="font-display rounded-full border border-line px-6 py-3 hover:border-white/40 transition-colors">

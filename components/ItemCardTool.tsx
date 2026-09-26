@@ -123,7 +123,7 @@ export default function ItemCardTool() {
         <button
           type="submit"
           disabled={busy}
-          className="font-display rounded-xl bg-accent text-ink px-5 py-2.5 font-semibold hover:bg-accent2 disabled:opacity-50 shrink-0"
+          className="font-display rounded-xl btn-fx bg-accent text-ink px-5 py-2.5 font-semibold hover:bg-accent2 disabled:opacity-50 shrink-0"
         >
           Получить
         </button>
@@ -189,7 +189,7 @@ export default function ItemCardTool() {
             type="button"
             onClick={send}
             disabled={busy || !url || !!status}
-            className="font-display w-full rounded-xl bg-accent text-ink py-2.5 font-semibold hover:bg-accent2 disabled:opacity-50"
+            className="font-display w-full rounded-xl btn-fx bg-accent text-ink py-2.5 font-semibold hover:bg-accent2 disabled:opacity-50"
           >
             Отправить в Telegram
           </button>

@@ -481,7 +481,7 @@ export default function ListingForm({
       <button
         type="submit"
         disabled={loading || !!autoStatus}
-        className="font-display w-full rounded-2xl bg-accent text-ink py-3.5 px-4 font-semibold hover:bg-accent2 transition-colors disabled:opacity-50"
+        className="font-display w-full rounded-2xl btn-fx bg-accent text-ink py-3.5 px-4 font-semibold hover:bg-accent2 transition-colors disabled:opacity-50"
       >
         {loading ? "Отправляем..." : own ? "Опубликовать" : "Отправить на модерацию"}
       </button>

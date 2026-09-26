@@ -6,7 +6,7 @@ import type { Listing, ListingStatus } from "@/lib/listings-store";
 import { kindOf, LISTING_PATH, type ListingKind } from "@/lib/listing-constants";
 
 const btn = "font-display text-sm rounded-xl px-3 py-1.5";
-const btnMain = `${btn} bg-accent text-ink font-semibold hover:bg-accent2`;
+const btnMain = `${btn} btn-fx bg-accent text-ink font-semibold hover:bg-accent2`;
 const btnGhost = `${btn} border border-line hover:border-red-400 hover:text-red-400`;
 
 export default function AdminStock({ kind }: { kind: ListingKind }) {

@@ -277,14 +277,14 @@ export default function Home() {
             <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
           </Link>
         </nav>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="hidden lg:block shrink-0">
+        <div className="hidden lg:block shrink-0">
           <Link
             href="/order"
-            className="font-display rounded-full bg-accent text-ink px-6 py-2.5 text-sm font-semibold hover:bg-accent2 transition-colors"
+            className="font-display inline-block rounded-full btn-fx bg-accent text-ink px-6 py-2.5 text-sm font-semibold hover:bg-accent2 transition-colors"
           >
             Сделать заказ
           </Link>
-        </motion.div>
+        </div>
 
         <button
           type="button"
@@ -366,7 +366,7 @@ export default function Home() {
               <Link
                 href="/order"
                 onClick={() => setMenuOpen(false)}
-                className="mt-4 rounded-full bg-accent text-ink text-center py-3 font-semibold"
+                className="btn-fx mt-4 rounded-full bg-accent text-ink text-center py-3 font-semibold"
               >
                 Сделать заказ
               </Link>
@@ -416,18 +416,14 @@ export default function Home() {
               посчитаем стоимость с доставкой и страховкой.
             </motion.p>
             <motion.div variants={fadeUp}>
-              <motion.div
-                className="mt-10 inline-block"
-                whileHover={{ scale: 1.06 }}
-                whileTap={{ scale: 0.94 }}
-              >
+              <div className="mt-10 inline-block">
                 <Link
                   href="/order"
-                  className="font-display inline-block rounded-full bg-accent text-ink px-10 py-4 font-semibold text-lg hover:bg-accent2 transition-colors"
+                  className="font-display inline-block rounded-full btn-fx bg-accent text-ink px-10 py-4 font-semibold text-lg hover:bg-accent2 transition-colors"
                 >
                   Сделать заказ
                 </Link>
-              </motion.div>
+              </div>
             </motion.div>
           </motion.div>
         </motion.div>
@@ -581,7 +577,7 @@ export default function Home() {
           >
             <Link
               href="/reviews"
-              className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-accent text-ink px-7 py-5 hover:bg-accent2 transition-colors"
+              className="flex flex-wrap items-center justify-between gap-4 rounded-3xl btn-fx bg-accent text-ink px-7 py-5 hover:bg-accent2 transition-colors"
             >
               {reviews.count > 0 ? (
                 <div className="flex items-center gap-4">

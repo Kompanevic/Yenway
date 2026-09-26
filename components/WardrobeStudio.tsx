@@ -121,7 +121,7 @@ export default function WardrobeStudio() {
             inputRef.current?.click();
           }}
           disabled={processing}
-          className="font-display rounded-2xl bg-accent text-ink px-6 py-3 font-semibold hover:bg-accent2 transition-colors disabled:opacity-50"
+          className="font-display rounded-2xl btn-fx bg-accent text-ink px-6 py-3 font-semibold hover:bg-accent2 transition-colors disabled:opacity-50"
         >
           {processing
             ? `Обрабатываем${progress ? ` ${progress.done + 1}/${progress.total}` : "..."}`

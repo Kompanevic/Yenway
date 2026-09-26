@@ -145,7 +145,7 @@ export default function AdminPage() {
           {loginError && <p className="text-red-400 text-sm">{loginError}</p>}
           <button
             type="submit"
-            className="font-display w-full rounded-2xl bg-accent text-ink py-3 font-semibold hover:bg-accent2 transition-colors"
+            className="font-display w-full rounded-2xl btn-fx bg-accent text-ink py-3 font-semibold hover:bg-accent2 transition-colors"
           >
             Войти
           </button>
@@ -251,13 +251,12 @@ export default function AdminPage() {
             />
           </label>
           {publishError && <p className="text-red-400 text-sm">{publishError}</p>}
-          <motion.button
-            whileTap={{ scale: 0.97 }}
+          <button
             type="submit"
-            className="font-display rounded-xl bg-accent text-ink px-5 py-2.5 font-semibold hover:bg-accent2 transition-colors"
+            className="font-display rounded-xl btn-fx bg-accent text-ink px-5 py-2.5 font-semibold hover:bg-accent2 transition-colors"
           >
             Опубликовать
-          </motion.button>
+          </button>
         </form>
       </section>
 
@@ -283,7 +282,7 @@ export default function AdminPage() {
                 <div className="flex gap-2 shrink-0">
                   <button
                     onClick={() => approve(r.id)}
-                    className="font-display text-sm rounded-xl bg-accent text-ink px-3 py-1.5 font-semibold hover:bg-accent2"
+                    className="font-display text-sm rounded-xl btn-fx bg-accent text-ink px-3 py-1.5 font-semibold hover:bg-accent2"
                   >
                     Опубликовать
                   </button>
