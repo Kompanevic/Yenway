@@ -17,7 +17,19 @@ function GlobeIcon({ className }: { className?: string }) {
       aria-hidden
     >
       <circle cx="12" cy="12" r="9.5" />
-      <ellipse cx="12" cy="12" rx="4.2" ry="9.5" />
+      {/* Меридианы со сдвигом фаз — глобус медленно «вращается» */}
+      {[0, -3, -6].map((d) => (
+        <ellipse
+          key={d}
+          cx="12"
+          cy="12"
+          rx="9.5"
+          ry="9.5"
+          vectorEffect="non-scaling-stroke"
+          className="globe-meridian"
+          style={{ animationDelay: `${d}s` }}
+        />
+      ))}
       <path d="M2.5 12h19M3.9 7h16.2M3.9 17h16.2" />
     </svg>
   );

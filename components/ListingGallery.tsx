@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import FadeImg from "./FadeImg";
 
 export default function ListingGallery({ id, count, title }: { id: string; count: number; title: string }) {
   const [active, setActive] = useState(0);
   const src = (n: number) => `/api/stock-photo/${id}/${n}`;
   return (
     <div>
-      <div className="aspect-square rounded-3xl overflow-hidden border border-line bg-panel">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src(active)} alt={title} className="w-full h-full object-cover" />
+      <div className="relative aspect-square rounded-3xl overflow-hidden border border-line bg-panel">
+        <FadeImg key={active} src={src(active)} alt={title} className="w-full h-full object-cover" />
       </div>
       {count > 1 && (
         <div className="mt-3 flex gap-2 overflow-x-auto">
@@ -18,7 +18,7 @@ export default function ListingGallery({ id, count, title }: { id: string; count
               key={n}
               type="button"
               onClick={() => setActive(n)}
-              className={`w-16 h-16 shrink-0 rounded-xl overflow-hidden border ${n === active ? "border-accent" : "border-line opacity-60"}`}
+              className={`w-16 h-16 shrink-0 rounded-xl overflow-hidden border transition-opacity ${n === active ? "border-accent" : "border-line opacity-60 hover:opacity-100"}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src(n)} alt="" loading="lazy" className="w-full h-full object-cover" />

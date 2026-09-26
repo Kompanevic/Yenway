@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import "@fontsource-variable/unbounded";
 import "./globals.css";
+import TopLoader from "@/components/TopLoader";
 import { SITE_URL } from "@/lib/site";
 
 const title = "YenWay — заказ вещей из Японии, Европы, США, Китая и Кореи";
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ru">
       <body className="bg-ink text-white antialiased">
+        <TopLoader />
         {children}
         <Analytics />
       </body>

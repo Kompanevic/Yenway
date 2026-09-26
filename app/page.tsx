@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { REGION_LIST } from "@/lib/regions";
 import { MANAGER_TELEGRAM } from "@/lib/pricing";
 import RegionGlobe from "@/components/RegionGlobe";
@@ -193,12 +193,38 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } }
 };
 
+// Заголовок проявляется по словам: из размытия и снизу.
+const words = { hidden: {}, show: { transition: { staggerChildren: 0.09 } } };
+const word = {
+  hidden: { opacity: 0, y: 30, filter: "blur(12px)" },
+  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const } }
+};
+const Words = ({ text }: { text: string }) => (
+  <>
+    {text.split(" ").map((w, i) => (
+      <span key={i}>
+        {i > 0 && " "}
+        <motion.span variants={word} className="inline-block">
+          {w}
+        </motion.span>
+      </span>
+    ))}
+  </>
+);
+
 const stagger = {
   hidden: {},
   show: { transition: { staggerChildren: 0.12 } }
 };
 
 export default function Home() {
+  // Параллакс: видео уходит медленнее страницы, текст — чуть быстрее и гаснет.
+  const heroRef = useRef<HTMLElement>(null);
+  const reduceMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const videoY = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
+  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "-18%"]);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [reviews, setReviews] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
 
@@ -349,8 +375,8 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <section className="relative overflow-hidden min-h-[94vh] flex items-center">
-        <div className="absolute inset-0 -z-10">
+      <section ref={heroRef} className="relative overflow-hidden min-h-[94vh] flex items-center">
+        <motion.div className="absolute inset-0 -z-10" style={reduceMotion ? undefined : { y: videoY }}>
           <motion.video
             className="w-full h-full object-cover opacity-60"
             initial={{ scale: 1.15 }}
@@ -365,17 +391,22 @@ export default function Home() {
             <source src="/hero-bg-v2.mp4" type="video/mp4" />
           </motion.video>
           <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-ink/55 to-ink" />
-        </div>
+        </motion.div>
 
-        <div className="max-w-7xl mx-auto px-6 py-16 text-center w-full">
+        <motion.div
+          className="max-w-7xl mx-auto px-6 py-16 text-center w-full"
+          style={reduceMotion ? undefined : { y: contentY, opacity: contentOpacity }}
+        >
           <motion.div initial="hidden" animate="show" variants={stagger}>
             <motion.h1
-              variants={fadeUp}
+              variants={words}
               className="font-display text-4xl sm:text-7xl lg:text-8xl font-bold leading-[0.95] tracking-tight break-words"
             >
-              Оригинальные бренды
+              <Words text="Оригинальные бренды" />
               <br />
-              <span className="text-white/50">со всего мира</span>
+              <span className="text-white/50">
+                <Words text="со всего мира" />
+              </span>
             </motion.h1>
             <motion.p
               variants={fadeUp}
@@ -399,7 +430,7 @@ export default function Home() {
               </motion.div>
             </motion.div>
           </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       <div className="border-y border-line overflow-hidden py-4 bg-panel/40">

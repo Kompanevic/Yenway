@@ -1,6 +1,7 @@
 import ReviewForm from "@/components/ReviewForm";
 import GlassIcons from "@/components/GlassIcons";
 import { getPublished, averageRating } from "@/lib/reviews-store";
+import Reveal from "@/components/Reveal";
 import { plural } from "@/lib/plural";
 
 export const dynamic = "force-dynamic";
@@ -52,8 +53,8 @@ export default async function ReviewsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {REVIEWS.map((r) => (
-                  <div key={r.id} className="rounded-2xl bg-panel/80 backdrop-blur-sm border border-line p-5">
+                {REVIEWS.map((r, i) => (
+                  <Reveal key={r.id} index={i % 2} className="rounded-2xl bg-panel/80 backdrop-blur-sm border border-line p-5">
                     <div className="flex items-center justify-between">
                       <span className="font-display font-semibold">@{r.username}</span>
                       <Stars rating={r.rating} />
@@ -69,7 +70,7 @@ export default async function ReviewsPage() {
                       />
                     )}
                     <div className="mt-3 text-xs text-white/30">{r.date}</div>
-                  </div>
+                  </Reveal>
                 ))}
               </div>
             )}

@@ -27,3 +27,44 @@ body {
 .animate-marquee {
   animation: marquee 22s linear infinite;
 }
+
+/* Мерцающая заглушка для фото и скелетонов */
+.shimmer {
+  background: linear-gradient(100deg, #151515 30%, #222 50%, #151515 70%) 0 0 / 300% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* Глобус в шапке: меридианы «вращаются» (сжимаются по X со сдвигом фаз) */
+.globe-meridian {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: meridian 9s infinite;
+}
+
+@keyframes meridian {
+  0%,
+  100% {
+    transform: scaleX(1);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: scaleX(0);
+    animation-timing-function: ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer,
+  .globe-meridian {
+    animation: none;
+  }
+}

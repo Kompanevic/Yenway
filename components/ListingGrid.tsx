@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import Flag from "./Flag";
+import Reveal from "./Reveal";
+import FadeImg from "./FadeImg";
 import type { RegionKey } from "@/lib/regions";
 
 export interface GridItem {
@@ -70,18 +72,18 @@ export default function ListingGrid({ items, basePath, emptyText }: { items: Gri
         <p className="mt-10 text-white/50">Ничего не нашлось по запросу «{query.trim()}».</p>
       ) : (
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
-          {shown.map((l) => (
-            <Link key={l.id} href={`${basePath}/${l.id}`} className="group block">
-              <div className="relative aspect-square rounded-2xl overflow-hidden border border-line bg-panel">
+          {shown.map((l, i) => (
+            <Reveal key={l.id} index={i}>
+            <Link href={`${basePath}/${l.id}`} className="group block">
+              <div className="relative aspect-square rounded-2xl overflow-hidden border border-line bg-panel transition-[border-color,box-shadow] duration-300 group-hover:border-white/30 group-hover:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.18)]">
                 {l.region && (
                   <Flag region={l.region} className="absolute top-2.5 left-2.5 z-10 w-7 h-[18.67px] rounded-[3px] shadow-md ring-1 ring-black/20" />
                 )}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <FadeImg
                   src={`/api/stock-photo/${l.id}/0`}
                   alt={l.title}
                   loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
                 />
               </div>
               <div className="mt-2.5 font-display text-sm leading-snug line-clamp-2 break-words">
@@ -91,6 +93,7 @@ export default function ListingGrid({ items, basePath, emptyText }: { items: Gri
               </div>
               <div className="mt-1 font-display text-sm font-semibold">{l.price.toLocaleString("ru-RU")} ₽</div>
             </Link>
+            </Reveal>
           ))}
         </div>
       )}
