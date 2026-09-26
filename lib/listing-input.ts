@@ -1,7 +1,7 @@
 import { LISTING_PATH, kindOf, type Listing, type ListingInput, type ListingKind } from "./listings-store";
 import type { ReviewPhoto } from "./reviews-store";
 import { CHANNEL_ID, CHANNEL_TOKENS, ITEM_BOT, LISTING_BOT, sendPhotoResult, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
-import { calculatePrice } from "./pricing";
+import { CURRENCIES, calculatePrice, type Currency } from "./pricing";
 import { REGIONS, type RegionKey } from "./regions";
 import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS } from "./listing-constants";
 // Фото ужимаются в браузере до ~100–300 КБ; лимит с запасом под Upstash.
@@ -25,10 +25,22 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
   const weight = kind === "preorder" ? parseFloat(text("weightKg", 10).replace(",", ".")) : NaN;
   const weightKg = weight > 0 && weight <= 100 ? Math.round(weight * 100) / 100 : undefined;
   const calcRegion = text("calcRegion", 10);
-  const calcLocalPrice = parseFloat(text("calcLocalPrice", 20).replace(",", "."));
+  const num = (k: string) => {
+    const n = parseFloat(text(k, 20).replace(",", "."));
+    return Number.isFinite(n) && n > 0 && n < 1e8 ? n : undefined;
+  };
+  const calcLocalPrice = num("calcLocalPrice");
+  const calcCurrency = text("calcCurrency", 5) as Currency;
   const calc: PreorderCalc | undefined =
-    kind === "preorder" && Object.prototype.hasOwnProperty.call(REGIONS, calcRegion) && calcLocalPrice > 0
-      ? { region: calcRegion as RegionKey, localPrice: calcLocalPrice, chinaTier: text("calcChinaTier", 20) || undefined }
+    kind === "preorder" && Object.prototype.hasOwnProperty.call(REGIONS, calcRegion) && calcLocalPrice
+      ? {
+          region: calcRegion as RegionKey,
+          localPrice: calcLocalPrice,
+          chinaTier: text("calcChinaTier", 20) || undefined,
+          ...(CURRENCIES.includes(calcCurrency) ? { currency: calcCurrency } : {}),
+          rate: num("calcRate"),
+          extraRUB: num("calcExtra")
+        }
       : undefined;
 
   if (title.length < 2) return { ok: false, error: "Укажите название модели" };
@@ -98,23 +110,37 @@ export interface PreorderCalc {
   region: RegionKey;
   localPrice: number;
   chinaTier?: string;
+  currency?: Currency;
+  // Курс, введённый в админке (₽ за 1 единицу валюты).
+  rate?: number;
+  // Доставка и комиссия вручную (США, Европа).
+  extraRUB?: number;
 }
 
 function calcMessage(listing: Listing, calc: PreorderCalc | undefined): string {
   const lines = [`🧾 <b>Расчёт под ключ</b>`, ``];
   if (calc) {
     const r = REGIONS[calc.region];
-    const b = calculatePrice(calc.localPrice, calc.region, listing.sourceUrl ?? "", listing.weightKg ?? null, calc.chinaTier);
+    const b = calculatePrice(calc.localPrice, calc.region, listing.sourceUrl ?? "", listing.weightKg ?? null, calc.chinaTier, calc.rate);
     const rub = (n: number | null) => (n == null ? "уточняется" : `${n.toLocaleString("ru-RU")} ₽`);
+    const extra = Math.round(calc.extraRUB ?? 0);
+    const total = b.totalRUB != null ? b.totalRUB + extra : null;
     lines.push(
       `Страна: ${r.flag} ${r.name}`,
-      `Цена товара: ${calc.localPrice.toLocaleString("ru-RU")} ${r.currency}` +
-        (b.itemPriceRUB != null ? ` (≈ ${rub(b.itemPriceRUB)} по курсу)` : ` — курс не задан`),
-      `Комиссия: ${rub(b.commissionRUB)}`,
-      `Страховка: ${rub(b.insuranceRUB)}`,
-      ...(b.serviceFeeRUB != null ? [`Сервис: ${rub(b.serviceFeeRUB)}`] : []),
-      `Доставка: ${b.deliveryRUB != null ? `${rub(b.deliveryRUB)} (${listing.weightKg} кг${b.deliveryDays ? `, ${b.deliveryDays}` : ""})` : "укажите вес"}`,
-      `<b>Итого по расчёту: ${rub(b.totalRUB)}</b>`
+      `Цена товара: ${calc.localPrice.toLocaleString("ru-RU")} ${calc.currency ?? r.currency}` +
+        (b.itemPriceRUB != null
+          ? ` (≈ ${rub(b.itemPriceRUB)}${calc.rate ? ` по курсу ${calc.rate} ₽` : " по курсу"})`
+          : ` — курс не задан`),
+      // США/Европа: тарифов нет — доставка и комиссия одной строкой из админки.
+      ...(extra
+        ? [`Доставка и комиссия (вручную): ${rub(extra)}`]
+        : [
+            `Комиссия: ${rub(b.commissionRUB)}`,
+            `Страховка: ${rub(b.insuranceRUB)}`,
+            ...(b.serviceFeeRUB != null ? [`Сервис: ${rub(b.serviceFeeRUB)}`] : []),
+            `Доставка: ${b.deliveryRUB != null ? `${rub(b.deliveryRUB)} (${listing.weightKg} кг${b.deliveryDays ? `, ${b.deliveryDays}` : ""})` : "укажите вес"}`
+          ]),
+      `<b>Итого по расчёту: ${rub(total)}</b>`
     );
   } else {
     lines.push(`Расчёт в форме не заполнялся.`);

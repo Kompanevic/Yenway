@@ -6,12 +6,31 @@ import { warmUpBgRemoval } from "@/lib/bg-removal";
 import { cutoutOnBlack } from "@/lib/card-image";
 import type { ItemInfo } from "@/lib/item-info";
 import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS, type ListingKind } from "@/lib/listing-constants";
-import { CHINA_DELIVERY_TIERS, MANAGER_TELEGRAM, calculatePrice, type Currency } from "@/lib/pricing";
+import {
+  CHINA_DELIVERY_TIERS,
+  CURRENCIES,
+  CURRENCY_REGION,
+  EXCHANGE_RATES,
+  MANAGER_TELEGRAM,
+  calculatePrice,
+  isManualRegion,
+  type Currency
+} from "@/lib/pricing";
 import { REGIONS, REGION_LIST, type RegionKey } from "@/lib/regions";
 
 const PREORDER_DESCRIPTION = `Подробнее в личные сообщения к менеджеру.
 Вес указан приблизительно, для точного расчёта обратитесь к менеджеру @${MANAGER_TELEGRAM}.`;
-const CURRENCY_REGION: Record<Currency, RegionKey> = { JPY: "japan", CNY: "china", KRW: "korea", USD: "usa", EUR: "europe" };
+// Курс по умолчанию: заданный в pricing.ts, иначе последний введённый вручную.
+const RATE_KEY = (c: Currency) => `yenway:rate:${c}`;
+function defaultRate(c: Currency): string {
+  const fixed = EXCHANGE_RATES[CURRENCY_REGION[c]];
+  if (fixed != null) return String(fixed);
+  try {
+    return localStorage.getItem(RATE_KEY(c)) ?? "";
+  } catch {
+    return "";
+  }
+}
 
 const field = "w-full rounded-2xl bg-ink border border-line px-4 py-3 outline-none focus:border-accent transition-colors";
 const label = "block font-display text-xs uppercase tracking-wide text-white/50 mb-2";
@@ -55,18 +74,47 @@ export default function ListingForm({
   const [weight, setWeight] = useState("");
   const [localPrice, setLocalPrice] = useState("");
   const [chinaTier, setChinaTier] = useState(CHINA_DELIVERY_TIERS[0].id);
+  // Валюта цены товара и курс (₽ за 1 единицу) — можно поменять вручную.
+  const [currency, setCurrency] = useState<Currency>("JPY");
+  const [rate, setRate] = useState("");
+  // США и Европа: тарифов нет — доставку и комиссию вписываем сами.
+  const [extra, setExtra] = useState("");
+  const manual = isManualRegion(region);
+  const num = (v: string) => {
+    const n = parseFloat(v.replace(",", "."));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+
+  useEffect(() => setRate(defaultRate(currency)), [currency]);
+
+  function pickRegion(r: RegionKey) {
+    setRegion(r);
+    setCurrency(REGIONS[r].currency as Currency);
+  }
+
+  function changeRate(v: string) {
+    setRate(v);
+    if (EXCHANGE_RATES[CURRENCY_REGION[currency]] == null) {
+      try {
+        localStorage.setItem(RATE_KEY(currency), v);
+      } catch {
+        // без запоминания
+      }
+    }
+  }
 
   const breakdown = useMemo(() => {
     if (kind !== "preorder") return null;
-    const lp = parseFloat(localPrice.replace(",", "."));
-    if (!Number.isFinite(lp) || lp <= 0) return null;
-    const w = parseFloat(weight.replace(",", "."));
-    return calculatePrice(lp, region, sourceUrl, Number.isFinite(w) && w > 0 ? w : null, chinaTier);
-  }, [kind, localPrice, weight, region, sourceUrl, chinaTier]);
+    const lp = num(localPrice);
+    if (lp == null) return null;
+    return calculatePrice(lp, region, sourceUrl, num(weight), chinaTier, num(rate));
+  }, [kind, localPrice, weight, region, sourceUrl, chinaTier, rate]);
+  const extraRUB = manual ? Math.round(num(extra) ?? 0) : 0;
+  const totalRUB = breakdown?.totalRUB != null ? breakdown.totalRUB + extraRUB : null;
 
   useEffect(() => {
-    if (breakdown?.totalRUB) setPrice(String(breakdown.totalRUB));
-  }, [breakdown?.totalRUB]);
+    if (totalRUB) setPrice(String(totalRUB));
+  }, [totalRUB]);
 
   // «Под заказ»: по ссылке заполняем поля, цену по курсу и превью с вырезанным фоном.
   async function fillFromLink(url: string) {
@@ -87,7 +135,10 @@ export default function ListingForm({
       if (info.size) setSize(info.size.slice(0, 20));
       const cond = mapCondition(info.condition);
       if (cond) setCondition(cond);
-      if (info.currency) setRegion(CURRENCY_REGION[info.currency]);
+      if (info.currency) {
+        setRegion(CURRENCY_REGION[info.currency]);
+        setCurrency(info.currency);
+      }
       if (info.price) setLocalPrice(String(info.price));
       if (!info.title && !info.image) {
         notes.push(`Площадка не отдала данные${info.fetchError ? ` (${info.fetchError})` : ""} — заполните поля вручную.`);
@@ -157,6 +208,9 @@ export default function ListingForm({
         body.append("weightKg", weight);
         body.append("calcRegion", region);
         body.append("calcLocalPrice", localPrice);
+        body.append("calcCurrency", currency);
+        body.append("calcRate", rate);
+        if (manual) body.append("calcExtra", extra);
         if (region === "china") body.append("calcChinaTier", chinaTier);
       }
       const res = await fetch(own ? "/api/admin/stock" : "/api/stock", { method: "POST", body });
@@ -273,7 +327,7 @@ export default function ListingForm({
           <div className="grid grid-cols-2 gap-3">
             <label>
               <span className="block text-[11px] text-white/40 mb-1">Страна</span>
-              <select value={region} onChange={(e) => setRegion(e.target.value as RegionKey)} className={field}>
+              <select value={region} onChange={(e) => pickRegion(e.target.value as RegionKey)} className={field}>
                 {REGION_LIST.map((r) => (
                   <option key={r.key} value={r.key}>
                     {r.name}
@@ -301,30 +355,70 @@ export default function ListingForm({
               ))}
             </select>
           )}
-          <label className="block">
-            <span className="block text-[11px] text-white/40 mb-1">Цена товара, {REGIONS[region].currency}</span>
-            <input
-              value={localPrice}
-              onChange={(e) => setLocalPrice(e.target.value)}
-              inputMode="decimal"
-              placeholder="45000"
-              className={field}
-            />
-          </label>
+          <div className="grid grid-cols-[1fr_auto_1fr] gap-3">
+            <label>
+              <span className="block text-[11px] text-white/40 mb-1">Цена товара</span>
+              <input
+                value={localPrice}
+                onChange={(e) => setLocalPrice(e.target.value)}
+                inputMode="decimal"
+                placeholder="45000"
+                className={field}
+              />
+            </label>
+            <label>
+              <span className="block text-[11px] text-white/40 mb-1">Валюта</span>
+              <select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} className={field}>
+                {CURRENCIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span className="block text-[11px] text-white/40 mb-1">Курс, ₽ за 1 {currency}</span>
+              <input
+                value={rate}
+                onChange={(e) => changeRate(e.target.value)}
+                inputMode="decimal"
+                placeholder={currency === "USD" ? "95" : currency === "EUR" ? "105" : "0.6"}
+                className={field}
+              />
+            </label>
+          </div>
+          {manual && (
+            <label className="block">
+              <span className="block text-[11px] text-white/40 mb-1">Доставка и комиссия, ₽ (для {REGIONS[region].name} считаем вручную)</span>
+              <input
+                value={extra}
+                onChange={(e) => setExtra(e.target.value)}
+                inputMode="numeric"
+                placeholder="6000"
+                className={field}
+              />
+            </label>
+          )}
           <p className="text-xs text-white/50 leading-relaxed">
             {!breakdown
               ? "Укажите цену товара — посчитаем итог с комиссией, страховкой и доставкой."
               : breakdown.itemPriceRUB == null
-                ? "США и Европа считаются вручную — впишите итоговую цену в рублях ниже."
+                ? `Укажите курс ${currency} — пересчитаем в рубли.`
                 : [
                     `Товар ${breakdown.itemPriceRUB.toLocaleString("ru-RU")} ₽`,
                     breakdown.commissionRUB != null ? `комиссия ${breakdown.commissionRUB} ₽` : null,
                     breakdown.insuranceRUB != null ? `страховка ${breakdown.insuranceRUB} ₽` : null,
                     breakdown.serviceFeeRUB != null ? `сервис ${breakdown.serviceFeeRUB} ₽` : null,
-                    breakdown.deliveryRUB != null ? `доставка ${breakdown.deliveryRUB.toLocaleString("ru-RU")} ₽` : "доставка — укажите вес"
+                    manual
+                      ? extraRUB
+                        ? `доставка и комиссия ${extraRUB.toLocaleString("ru-RU")} ₽`
+                        : "доставка и комиссия — впишите выше"
+                      : breakdown.deliveryRUB != null
+                        ? `доставка ${breakdown.deliveryRUB.toLocaleString("ru-RU")} ₽`
+                        : "доставка — укажите вес"
                   ]
                     .filter(Boolean)
-                    .join(" + ") + ` = ${breakdown.totalRUB?.toLocaleString("ru-RU")} ₽ → подставлено в «Цена, ₽»`}
+                    .join(" + ") + ` = ${totalRUB?.toLocaleString("ru-RU")} ₽ → подставлено в «Цена, ₽»`}
           </p>
         </div>
       )}

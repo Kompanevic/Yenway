@@ -25,7 +25,7 @@ export const EXCHANGE_RATES: Record<RegionKey, number | null> = {
 export const CURRENCIES = ["JPY", "CNY", "KRW", "USD", "EUR"] as const;
 export type Currency = (typeof CURRENCIES)[number];
 
-const CURRENCY_REGION: Record<Currency, RegionKey> = {
+export const CURRENCY_REGION: Record<Currency, RegionKey> = {
   JPY: "japan",
   CNY: "china",
   KRW: "korea",
@@ -142,9 +142,11 @@ export function calculatePrice(
   region: RegionKey,
   sourceUrl: string,
   weightKg: number | null,
-  chinaTierId?: string
+  chinaTierId?: string,
+  // Курс вручную (админка: любая валюта, США/Европа без заданного курса).
+  rateOverride?: number | null
 ): PriceBreakdown {
-  const rate = EXCHANGE_RATES[region];
+  const rate = rateOverride ?? EXCHANGE_RATES[region];
   const commissionRUB = getCommissionRub(region, sourceUrl);
   const insuranceRUB = INSURANCE_RUB[region];
   const serviceFeeRUB = SERVICE_FEE_RUB[region];
