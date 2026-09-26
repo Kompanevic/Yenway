@@ -470,9 +470,15 @@ export default function Home() {
                 key={r.key}
                 variants={fadeUp}
                 whileHover={{ y: -6 }}
-                className="h-full rounded-3xl bg-panel border border-line p-7 transition-colors hover:border-accent/50"
+                className="group relative isolate overflow-hidden h-full rounded-3xl bg-panel border border-line p-7 transition-colors hover:border-accent/50"
               >
-                <Link href={`/order?region=${r.key}`} className="block group">
+                {/* При наведении фон карточки — сильно размытый флаг страны */}
+                <Flag
+                  region={r.key}
+                  cover
+                  className="pointer-events-none absolute inset-0 -z-10 w-full h-full scale-150 blur-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-700"
+                />
+                <Link href={`/order?region=${r.key}`} className="block">
                   <Flag region={r.key} className="w-[1.35em] h-[0.9em] rounded-[2px] shrink-0 text-4xl grayscale group-hover:grayscale-0 transition-[filter] duration-500" />
                   <div className="font-display mt-4 text-2xl font-semibold group-hover:text-accent transition-colors">
                     {r.name}

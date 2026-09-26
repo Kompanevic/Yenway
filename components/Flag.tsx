@@ -62,9 +62,10 @@ const FLAGS: Record<RegionKey, JSX.Element> = {
   )
 };
 
-export default function Flag({ region, className = "" }: { region: RegionKey; className?: string }) {
+// cover — растянуть на весь блок с обрезкой (для фона), а не вписать.
+export default function Flag({ region, className = "", cover }: { region: RegionKey; className?: string; cover?: boolean }) {
   return (
-    <svg viewBox="0 0 30 20" className={className} aria-hidden>
+    <svg viewBox="0 0 30 20" preserveAspectRatio={cover ? "xMidYMid slice" : undefined} className={className} aria-hidden>
       {FLAGS[region]}
     </svg>
   );
