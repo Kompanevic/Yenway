@@ -9,6 +9,8 @@ import { REGION_LIST } from "@/lib/regions";
 import RegionGlobe from "./RegionGlobe";
 import Flag from "./Flag";
 
+const TELEGRAM = "https://t.me/yenwayjapan";
+
 const NAV = [
   { href: "/wardrobe", label: "Гардероб" },
   { href: "/search", label: "Найти вещь" },
@@ -30,20 +32,16 @@ export default function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 bg-ink/75 backdrop-blur-md border-b border-line/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-6 py-3 lg:py-4">
-        <motion.a
-          href="https://t.me/yenwayjapan"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 shrink-0"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Image src="/logo.jpg" alt="YenWay" width={40} height={40} className="rounded-full" priority />
-          <span className="font-display text-xl sm:text-2xl font-bold tracking-tight">YenWay</span>
-        </motion.a>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4 xl:gap-6 py-3 lg:py-4">
+        {/* Логотип — на главную */}
+        <motion.div className="shrink-0" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Link href="/" aria-label="YenWay — на главную" className="flex items-center gap-3">
+            <Image src="/logo.jpg" alt="YenWay" width={40} height={40} className="rounded-full" priority />
+            <span className="font-display text-xl sm:text-2xl font-bold tracking-tight">YenWay</span>
+          </Link>
+        </motion.div>
 
-        <nav className="hidden lg:flex items-center gap-6 font-display text-sm uppercase tracking-wide text-white/60 whitespace-nowrap">
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-6 font-display text-xs xl:text-sm uppercase tracking-wide text-white/60 whitespace-nowrap">
           <RegionGlobe />
           {NAV.map((n) => (
             <Link
@@ -57,10 +55,14 @@ export default function SiteHeader() {
               />
             </Link>
           ))}
+          <a href={TELEGRAM} target="_blank" rel="noopener noreferrer" className="relative group py-1 transition-colors hover:text-white">
+            Телеграм
+            <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
+          </a>
         </nav>
         <Link
           href="/order"
-          className="hidden lg:inline-block shrink-0 font-display rounded-full btn-fx bg-accent text-ink px-6 py-2.5 text-sm font-semibold hover:bg-accent2 transition-colors"
+          className="hidden lg:inline-block shrink-0 font-display rounded-full btn-fx bg-accent text-ink px-4 xl:px-6 py-2.5 text-xs xl:text-sm font-semibold hover:bg-accent2 transition-colors"
         >
           Сделать заказ
         </Link>
@@ -98,6 +100,9 @@ export default function SiteHeader() {
                   {n.label}
                 </Link>
               ))}
+              <a href={TELEGRAM} target="_blank" rel="noopener noreferrer" className="py-3 border-b border-line/60 text-white/70">
+                Телеграм ↗
+              </a>
               <div className="mt-4 mb-1 text-xs uppercase tracking-widest text-white/40">Заказать из страны</div>
               <div className="grid grid-cols-2 gap-2">
                 {REGION_LIST.map((r) => (
