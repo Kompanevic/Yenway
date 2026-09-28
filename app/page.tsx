@@ -7,185 +7,15 @@ import { REGION_LIST } from "@/lib/regions";
 import { MANAGER_TELEGRAM } from "@/lib/pricing";
 import Flag from "@/components/Flag";
 import { plural } from "@/lib/plural";
+import type { RegionKey } from "@/lib/regions";
 
-const JOURNAL_BANNERS = [
-  {
-    brand: "Vetements",
-    text: "Деконструкция как манифест",
-    render: (
-      <div className="absolute inset-0">
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(135deg, #161617 0%, #161617 47%, #f3f0b8 47%, #f3f0b8 53%, #161617 53%, #161617 100%)"
-          }}
-        />
-        <div
-          className="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl"
-          style={{ background: "#c9e8c0", opacity: 0.45 }}
-        />
-      </div>
-    )
-  },
-  {
-    brand: "Balenciaga",
-    text: "Дом, который переписывает правила",
-    render: (
-      <div className="absolute inset-0 bg-panel">
-        <div
-          className="absolute top-1/4 left-1/4 w-2/3 h-2/3 rounded-full blur-2xl"
-          style={{ background: "radial-gradient(circle, #d3c6ef, transparent 70%)", opacity: 0.55 }}
-        />
-        <div
-          className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, #bfe3e0, transparent 70%)", opacity: 0.5 }}
-        />
-        <div
-          className="absolute top-0 left-0 w-1/3 h-1/3 rounded-full blur-2xl"
-          style={{ background: "radial-gradient(circle, #f7c9c9, transparent 70%)", opacity: 0.4 }}
-        />
-      </div>
-    )
-  },
-  {
-    brand: "Rick Owens",
-    text: "Готическая эстетика на грани",
-    render: (
-      <div className="absolute inset-0 bg-black">
-        <div
-          className="absolute inset-0"
-          style={{ background: "radial-gradient(ellipse at 50% 100%, rgba(255,255,255,0.08), transparent 60%)" }}
-        />
-        <div
-          className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-28 blur-2xl"
-          style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.22), transparent)" }}
-        />
-        <div className="absolute inset-y-0 left-1/2 w-px bg-white/30" />
-      </div>
-    )
-  },
-  {
-    brand: "Maison Margiela",
-    text: "Анонимность как стиль",
-    render: (
-      <div className="absolute inset-0" style={{ background: "#19191a" }}>
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(100deg, transparent 42%, rgba(255,255,255,0.35) 42%, rgba(255,255,255,0.35) 43%, transparent 43%)"
-          }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(80deg, transparent 60%, rgba(255,255,255,0.35) 60%, rgba(255,255,255,0.35) 61%, transparent 61%)"
-          }}
-        />
-        <div
-          className="absolute bottom-6 left-6 w-16 h-16 rounded-full blur-2xl"
-          style={{ background: "#e8e6df", opacity: 0.12 }}
-        />
-      </div>
-    )
-  },
-  {
-    brand: "Comme des Garçons",
-    text: "Красота в асимметрии",
-    render: (
-      <div className="absolute inset-0 bg-black">
-        <div
-          className="absolute top-1/3 left-1/2 -translate-x-1/2 w-28 h-28 rounded-full blur-xl"
-          style={{ background: "radial-gradient(circle, #c94b4b, transparent 70%)", opacity: 0.85 }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(200deg, transparent 55%, rgba(255,255,255,0.07) 55%, rgba(255,255,255,0.07) 56.5%, transparent 56.5%)"
-          }}
-        />
-      </div>
-    )
-  },
-  {
-    brand: "Yohji Yamamoto",
-    text: "Чёрный — это тоже цвет",
-    render: (
-      <div className="absolute inset-0" style={{ background: "#0d0d0e" }}>
-        <div
-          className="absolute inset-y-0 left-1/4 w-1/4 blur-2xl"
-          style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.14), transparent)" }}
-        />
-        <div
-          className="absolute inset-y-0 right-1/4 w-1/3 blur-3xl"
-          style={{ background: "linear-gradient(to bottom, transparent, rgba(255,255,255,0.09), transparent)" }}
-        />
-      </div>
-    )
-  },
-  {
-    brand: "Alexander McQueen",
-    text: "Драма на грани искусства",
-    render: (
-      <div className="absolute inset-0 bg-black">
-        <div
-          className="absolute inset-0"
-          style={{ background: "radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.2), transparent 55%)" }}
-        />
-        <div
-          className="absolute top-0 right-0 w-1/2 h-full"
-          style={{
-            background: "linear-gradient(160deg, transparent 48%, rgba(255,255,255,0.1) 49%, transparent 50%)"
-          }}
-        />
-        <div
-          className="absolute bottom-8 right-8 w-20 h-20 rounded-full blur-2xl"
-          style={{ background: "#7c8a99", opacity: 0.35 }}
-        />
-      </div>
-    )
-  },
-  {
-    brand: "Junya Watanabe",
-    text: "Конструктор из ткани",
-    render: (
-      <div className="absolute inset-0 bg-panel">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
-            backgroundSize: "18px 18px"
-          }}
-        />
-        <div
-          className="absolute top-6 right-6 w-20 h-20"
-          style={{ background: "#f3f0b8", opacity: 0.45, clipPath: "polygon(0 0, 100% 0, 100% 100%)" }}
-        />
-        <div
-          className="absolute bottom-10 left-8 w-16 h-16 rounded-full blur-xl"
-          style={{ background: "#bfe3e0", opacity: 0.4 }}
-        />
-      </div>
-    )
-  },
-  {
-    brand: "Ann Demeulemeester",
-    text: "Тихий бунт в чёрном",
-    render: (
-      <div className="absolute inset-0 bg-black">
-        <div
-          className="absolute top-1/4 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full blur-3xl"
-          style={{ background: "rgba(255,255,255,0.1)" }}
-        />
-        <div className="absolute inset-y-0 left-1/2 w-px bg-white/25" />
-      </div>
-    )
-  }
-];
+interface LatestItem {
+  id: string;
+  title: string;
+  size: string;
+  price: number;
+  region?: RegionKey;
+}
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -225,6 +55,15 @@ export default function Home() {
   const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "-18%"]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
   const [reviews, setReviews] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
+
+  // Последние 6 вещей «под заказ» — обновляются вместе с лентой.
+  const [latest, setLatest] = useState<LatestItem[]>([]);
+  useEffect(() => {
+    fetch("/api/preorder")
+      .then((res) => res.json())
+      .then((data) => setLatest(data.items ?? []))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/reviews")
@@ -381,143 +220,63 @@ export default function Home() {
           ))}
         </motion.section>
 
-        <section className="py-24">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="font-display text-xs uppercase tracking-[0.3em] text-accent">
-              Почему мы
-            </div>
-            <h2 className="font-display text-2xl sm:text-4xl font-bold break-words mt-3 max-w-xl">
-              Мы несём ответственность за каждый заказ
-            </h2>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
-            className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5"
-          >
-            {[
-              [
-                "Полная ответственность",
-                "Ведём заказ лично от ссылки до посылки в ваших руках — и отвечаем за результат на каждом шаге."
-              ],
-              [
-                "Год подготовки",
-                "Прежде чем запуститься, мы месяцами выстраивали тарифы, склады и связи с площадками — чтобы у вас не было сюрпризов."
-              ],
-              [
-                "Прямая связь",
-                "Никаких ботов и очередей — вы напрямую на связи с человеком в Telegram."
-              ],
-              [
-                "Страховка включена",
-                "Каждая посылка застрахована уже в расчёте — риски на нас, а не на вас."
-              ]
-            ].map(([title, text]) => (
-              <motion.div
-                key={title}
-                variants={fadeUp}
-                whileHover={{ y: -6 }}
-                className="rounded-3xl bg-panel border border-line p-6"
-              >
-                <div className="font-display text-lg font-semibold">{title}</div>
-                <p className="mt-2.5 text-sm text-white/50">{text}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </section>
-
-        <section className="py-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.6 }}
-          >
-            <Link
-              href="/reviews"
-              className="flex flex-wrap items-center justify-between gap-4 rounded-3xl btn-fx bg-accent text-ink px-7 py-5 hover:bg-accent2 transition-colors"
+        {latest.length > 0 && (
+          <section className="py-24">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.6 }}
+              className="flex items-end justify-between gap-6 flex-wrap"
             >
-              {reviews.count > 0 ? (
-                <div className="flex items-center gap-4">
-                  <span className="font-display text-3xl font-bold">{reviews.average.toFixed(1)}</span>
-                  <div>
-                    <div className="leading-none">
-                      {"★".repeat(Math.round(reviews.average))}
-                      <span className="opacity-30">
-                        {"★".repeat(5 - Math.round(reviews.average))}
-                      </span>
-                    </div>
-                    <div className="text-xs opacity-60 mt-1">
-                      {reviews.count} {plural(reviews.count, ["отзыв", "отзыва", "отзывов"])} от покупателей
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="font-display font-bold">★★★★★ Оставьте первый отзыв</div>
-                  <div className="text-xs opacity-60 mt-1">Расскажите, как прошёл заказ</div>
-                </div>
-              )}
-              <span className="font-display text-sm font-semibold shrink-0">Смотреть отзывы →</span>
-            </Link>
-          </motion.div>
-        </section>
-
-        <section className="py-24">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.6 }}
-            className="flex items-end justify-between gap-6 flex-wrap"
-          >
-            <div>
-              <div className="font-display text-xs uppercase tracking-[0.3em] text-accent">
-                YenWay Journal
+              <div>
+                <div className="font-display text-xs uppercase tracking-[0.3em] text-accent">Под заказ</div>
+                <h2 className="font-display text-2xl sm:text-4xl font-bold break-words mt-3 max-w-xl">
+                  Свежие поступления
+                </h2>
+                <p className="mt-3 text-white/50 max-w-xl">
+                  Последние вещи, которые можно заказать. Цена указана под ключ — с доставкой и страховкой.
+                </p>
               </div>
-              <h2 className="font-display text-2xl sm:text-4xl font-bold break-words mt-3 max-w-xl">
-                Следим за модой каждый день
-              </h2>
-              <p className="mt-3 text-white/50 max-w-xl">
-                Показы, дропы и новости — но только те дома, что задают тон: Vetements, Balenciaga,
-                Rick Owens и им подобные. Никакого масс-маркета.
-              </p>
-            </div>
-          </motion.div>
+              <Link href="/preorder" className="font-display text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                Смотреть все →
+              </Link>
+            </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
-            className="mt-10 grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5"
-          >
-            {JOURNAL_BANNERS.map((banner) => (
-              <motion.div
-                key={banner.brand}
-                variants={fadeUp}
-                whileHover={{ y: -6 }}
-                className="relative rounded-2xl sm:rounded-3xl border border-line overflow-hidden aspect-square flex flex-col justify-end"
-              >
-                {banner.render}
-                <div className="relative p-4 sm:p-5">
-                  <div className="font-display text-base sm:text-lg font-bold leading-tight">
-                    {banner.brand}
-                  </div>
-                  <p className="mt-1 text-xs text-white/50 leading-snug">{banner.text}</p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </section>
+            <motion.div
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-80px" }}
+              variants={stagger}
+              className="mt-10 grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5"
+            >
+              {latest.map((item) => (
+                <motion.div key={item.id} variants={fadeUp}>
+                  <Link href={`/preorder/${item.id}`} className="group block">
+                    <div className="relative aspect-square rounded-2xl sm:rounded-3xl overflow-hidden border border-line bg-panel transition-[border-color,box-shadow] duration-300 group-hover:border-white/30 group-hover:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.18)]">
+                      {item.region && (
+                        <Flag region={item.region} className="absolute top-2.5 left-2.5 z-10 w-7 h-[18.67px] rounded-[3px] shadow-md ring-1 ring-black/20" />
+                      )}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`/api/stock-photo/${item.id}/0`}
+                        alt={item.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+                      />
+                    </div>
+                    <div className="mt-2.5 font-display text-sm leading-snug line-clamp-2 break-words">
+                      {item.title}
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-white mx-2 align-middle" />
+                      <span className="text-white/70 whitespace-nowrap">{item.size}</span>
+                    </div>
+                    <div className="mt-1 font-display text-sm font-semibold">{item.price.toLocaleString("ru-RU")} ₽</div>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          </section>
+        )}
 
         <footer className="py-10 text-center text-white/30 text-sm font-display space-y-2">
           <div>
