@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { REGION_LIST } from "@/lib/regions";
 import { MANAGER_TELEGRAM } from "@/lib/pricing";
-import RegionGlobe from "@/components/RegionGlobe";
 import Flag from "@/components/Flag";
 import { plural } from "@/lib/plural";
 
@@ -226,7 +224,6 @@ export default function Home() {
   const videoY = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
   const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "-18%"]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [reviews, setReviews] = useState<{ average: number; count: number }>({ average: 0, count: 0 });
 
   useEffect(() => {
@@ -238,144 +235,6 @@ export default function Home() {
 
   return (
     <main>
-      <motion.header
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="relative z-30 max-w-7xl mx-auto px-6 flex items-center justify-between gap-6 py-7"
-      >
-        <motion.a
-          href="https://t.me/yenwayjapan"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Image src="/logo.jpg" alt="YenWay" width={48} height={48} className="rounded-full" />
-          <span className="font-display text-2xl font-bold tracking-tight">YenWay</span>
-        </motion.a>
-        <nav className="hidden lg:flex items-center gap-6 font-display text-sm uppercase tracking-wide text-white/60 whitespace-nowrap">
-          <RegionGlobe />
-          <Link href="/wardrobe" className="relative group py-1 text-accent">
-            Гардероб
-            <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
-          </Link>
-          <Link href="/search" className="relative group py-1">
-            Найти вещь
-            <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
-          </Link>
-          <Link href="/stock" className="relative group py-1">
-            В наличии
-            <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
-          </Link>
-          <Link href="/preorder" className="relative group py-1">
-            Под заказ
-            <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
-          </Link>
-          <Link href="/reviews" className="relative group py-1">
-            Отзывы
-            <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
-          </Link>
-        </nav>
-        <div className="hidden lg:block shrink-0">
-          <Link
-            href="/order"
-            className="font-display inline-block rounded-full btn-fx bg-accent text-ink px-6 py-2.5 text-sm font-semibold hover:bg-accent2 transition-colors"
-          >
-            Сделать заказ
-          </Link>
-        </div>
-
-        <button
-          type="button"
-          aria-label="Меню"
-          onClick={() => setMenuOpen((v) => !v)}
-          className="lg:hidden flex flex-col justify-center gap-1.5 w-10 h-10 shrink-0"
-        >
-          <motion.span
-            animate={menuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
-            className="block h-0.5 w-6 bg-white rounded-full"
-          />
-          <motion.span
-            animate={menuOpen ? { opacity: 0 } : { opacity: 1 }}
-            className="block h-0.5 w-6 bg-white rounded-full"
-          />
-          <motion.span
-            animate={menuOpen ? { rotate: -45, y: -6 } : { rotate: 0, y: 0 }}
-            className="block h-0.5 w-6 bg-white rounded-full"
-          />
-        </button>
-      </motion.header>
-
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="lg:hidden overflow-hidden border-t border-line bg-panel"
-          >
-            <nav className="max-w-7xl mx-auto px-6 py-6 flex flex-col gap-1 font-display text-lg">
-              {REGION_LIST.map((r) => (
-                <Link
-                  key={r.key}
-                  href={`/order?region=${r.key}`}
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 py-3 border-b border-line/60 text-white/80"
-                >
-                  <Flag region={r.key} className="w-[1.35em] h-[0.9em] rounded-[2px] shrink-0 text-xl" />
-                  {r.name}
-                </Link>
-              ))}
-              <Link
-                href="/wardrobe"
-                onClick={() => setMenuOpen(false)}
-                className="py-3 border-b border-line/60 text-accent"
-              >
-                Гардероб
-              </Link>
-              <Link
-                href="/search"
-                onClick={() => setMenuOpen(false)}
-                className="py-3 border-b border-line/60 text-white/80"
-              >
-                Найти вещь
-              </Link>
-              <Link
-                href="/stock"
-                onClick={() => setMenuOpen(false)}
-                className="py-3 border-b border-line/60 text-white/80"
-              >
-                В наличии
-              </Link>
-              <Link
-                href="/preorder"
-                onClick={() => setMenuOpen(false)}
-                className="py-3 border-b border-line/60 text-white/80"
-              >
-                Под заказ
-              </Link>
-              <Link
-                href="/reviews"
-                onClick={() => setMenuOpen(false)}
-                className="py-3 border-b border-line/60 text-white/80"
-              >
-                Отзывы
-              </Link>
-              <Link
-                href="/order"
-                onClick={() => setMenuOpen(false)}
-                className="btn-fx mt-4 rounded-full bg-accent text-ink text-center py-3 font-semibold"
-              >
-                Сделать заказ
-              </Link>
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <section ref={heroRef} className="relative overflow-hidden min-h-[94vh] flex items-center">
         <motion.div className="absolute inset-0 -z-10" style={reduceMotion ? undefined : { y: videoY }}>
           <motion.video
