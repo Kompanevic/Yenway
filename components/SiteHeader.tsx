@@ -16,6 +16,7 @@ const NAV = [
   { href: "/search", label: "Найти вещь" },
   { href: "/stock", label: "В наличии" },
   { href: "/preorder", label: "Под заказ" },
+  { href: "/legit", label: "Легит-чек" },
   { href: "/reviews", label: "Отзывы" }
 ];
 
@@ -32,7 +33,7 @@ export default function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 bg-ink/75 backdrop-blur-md border-b border-line/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4 xl:gap-6 py-3 lg:py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-6 py-3 xl:py-4">
         {/* Логотип — на главную */}
         <motion.div className="shrink-0" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Link href="/" aria-label="YenWay — на главную" className="flex items-center gap-3">
@@ -41,7 +42,7 @@ export default function SiteHeader() {
           </Link>
         </motion.div>
 
-        <nav className="hidden lg:flex items-center gap-4 xl:gap-6 font-display text-xs xl:text-sm uppercase tracking-wide text-white/60 whitespace-nowrap">
+        <nav className="hidden xl:flex items-center gap-6 font-display text-sm uppercase tracking-wide text-white/60 whitespace-nowrap">
           <RegionGlobe />
           {NAV.map((n) => (
             <Link
@@ -62,7 +63,7 @@ export default function SiteHeader() {
         </nav>
         <Link
           href="/order"
-          className="hidden lg:inline-block shrink-0 font-display rounded-full btn-fx bg-accent text-ink px-4 xl:px-6 py-2.5 text-xs xl:text-sm font-semibold hover:bg-accent2 transition-colors"
+          className="hidden xl:inline-block shrink-0 font-display rounded-full btn-fx bg-accent text-ink px-6 py-2.5 text-sm font-semibold hover:bg-accent2 transition-colors"
         >
           Сделать заказ
         </Link>
@@ -72,7 +73,7 @@ export default function SiteHeader() {
           aria-label="Меню"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((v) => !v)}
-          className="lg:hidden flex flex-col justify-center items-center gap-1.5 w-10 h-10 shrink-0"
+          className="xl:hidden flex flex-col justify-center items-center gap-1.5 w-10 h-10 shrink-0"
         >
           <motion.span animate={menuOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }} className="block h-0.5 w-6 bg-white rounded-full" />
           <motion.span animate={menuOpen ? { opacity: 0 } : { opacity: 1 }} className="block h-0.5 w-6 bg-white rounded-full" />
@@ -87,7 +88,7 @@ export default function SiteHeader() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="lg:hidden overflow-hidden border-t border-line bg-panel"
+            className="xl:hidden overflow-hidden border-t border-line bg-panel"
           >
             {/* Длинное меню прокручивается внутри, не вылезая за экран */}
             <nav className="max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col font-display text-lg">
