@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { downscaleImage } from "@/lib/image";
-import { warmUpBgRemoval } from "@/lib/bg-removal";
-import { cutoutOnBlack } from "@/lib/card-image";
 import type { ItemInfo } from "@/lib/item-info";
 import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS, type ListingKind } from "@/lib/listing-constants";
 import {
@@ -68,7 +66,6 @@ export default function ListingForm({
   const [done, setDone] = useState(false);
   const [autoStatus, setAutoStatus] = useState<string | null>(null);
   const [autoNote, setAutoNote] = useState<string | null>(null);
-  const autoPhotoUrl = useRef<string | null>(null);
   // Расчёт «под ключ» для «под заказ»: цена товара в валюте площадки + вес/страна.
   const [region, setRegion] = useState<RegionKey>("japan");
   const [weight, setWeight] = useState("");
@@ -119,7 +116,6 @@ export default function ListingForm({
   // «Под заказ»: по ссылке заполняем поля, цену по курсу и превью с вырезанным фоном.
   async function fillFromLink(url: string) {
     if (!/^https?:\/\/\S+$/.test(url)) return;
-    warmUpBgRemoval();
     setAutoNote(null);
     setAutoStatus("Смотрим страницу вещи…");
     const notes: string[] = [];
@@ -142,23 +138,6 @@ export default function ListingForm({
       if (info.price) setLocalPrice(String(info.price));
       if (!info.title && !info.image) {
         notes.push(`Площадка не отдала данные${info.fetchError ? ` (${info.fetchError})` : ""} — заполните поля вручную.`);
-      }
-      if (info.image) {
-        setAutoStatus("Вырезаем фон… (первый раз дольше — качается модель)");
-        const img = await fetch(`/api/admin/image-proxy?url=${encodeURIComponent(info.image)}`);
-        if (!img.ok) {
-          notes.push("Фото со страницы не загрузилось — добавьте его вручную.");
-        } else {
-          const { card, note } = await cutoutOnBlack(await img.blob());
-          if (note) notes.push(note);
-          if (card) {
-            const file = await downscaleImage(new File([card], "cover.jpg", { type: "image/jpeg" }), 1200, 0.85);
-            const url = URL.createObjectURL(file);
-            const previous = autoPhotoUrl.current;
-            autoPhotoUrl.current = url;
-            setPhotos((prev) => [{ file, url }, ...prev.filter((p) => p.url !== previous)].slice(0, MAX_LISTING_PHOTOS));
-          }
-        }
       }
     } catch (e) {
       notes.push(e instanceof Error ? e.message : "Ошибка");
@@ -226,7 +205,6 @@ export default function ListingForm({
       setLocalPrice("");
       setWeight("");
       setAutoNote(null);
-      autoPhotoUrl.current = null;
       onDone?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
@@ -248,7 +226,6 @@ export default function ListingForm({
               type="url"
               value={sourceUrl}
               onChange={(e) => setSourceUrl(e.target.value)}
-              onFocus={warmUpBgRemoval}
               onPaste={(e) => {
                 const pasted = e.clipboardData.getData("text").trim();
                 if (pasted) setTimeout(() => fillFromLink(pasted), 0);
@@ -269,7 +246,7 @@ export default function ListingForm({
           {autoNote && <p className="mt-2 text-sm text-amber-300/80">{autoNote}</p>}
           {!autoStatus && !autoNote && (
             <p className="mt-2 text-xs text-white/30">
-              Вставьте ссылку — заполним поля, цену по курсу и превью с вырезанным фоном. Всё можно поправить.
+              Вставьте ссылку — заполним название, размер, состояние и цену. Фото добавьте сами. Всё можно поправить.
             </p>
           )}
         </div>
