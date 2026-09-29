@@ -47,8 +47,11 @@ export async function POST(req: NextRequest) {
     .filter((x) => x !== null)
     .join("\n");
 
-  const sent =
-    (await sendTelegramAlbum(photos, caption)) ||
+  // В альбоме Telegram не больше 10 фото — остальные вторым альбомом.
+  let sent = await sendTelegramAlbum(photos.slice(0, 10), caption);
+  if (sent && photos.length > 10) await sendTelegramAlbum(photos.slice(10), `Легит-чек @${username} — фото 11–${photos.length}`);
+  sent =
+    sent ||
     (await sendTelegramMessage(`${caption}\n\n⚠️ Фото отправить не удалось — попросите клиента прислать их в личку.`));
   if (!sent) {
     return NextResponse.json(

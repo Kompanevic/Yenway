@@ -22,6 +22,11 @@ export default function LegitForm() {
       setError(`Нужно минимум ${LEGIT_MIN_PHOTOS} фото со всех сторон`);
       return;
     }
+    // Лимит тела запроса на Vercel — 4,5 МБ.
+    if (photos.reduce((sum, p) => sum + p.file.size, 0) > 4.2 * 1024 * 1024) {
+      setError("Фото получились слишком тяжёлыми — уберите одно-два и попробуйте снова");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {

@@ -23,7 +23,7 @@ export default function PhotoPicker({
       Array.from(files)
         .slice(0, max - photos.length)
         .map(async (f) => {
-          const file = await downscaleImage(f, 1280, 0.8);
+          const file = await downscaleImage(f, 1200, 0.75);
           return { file, url: URL.createObjectURL(file) };
         })
     );
