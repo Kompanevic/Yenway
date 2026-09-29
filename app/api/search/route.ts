@@ -3,7 +3,6 @@ import { sendTelegramPhoto, sendTelegramMessage, escapeHtml } from "@/lib/telegr
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
-const SEARCH_FEE_RUB = 450;
 
 export async function POST(req: NextRequest) {
   const allowed = await checkRateLimit(req, "search", 5, 600);
@@ -49,9 +48,7 @@ export async function POST(req: NextRequest) {
     ``,
     `Вещь: ${escapeHtml(itemName)}`,
     description ? `Описание/размер: ${escapeHtml(description)}` : null,
-    `Покупатель: @${username}`,
-    ``,
-    `Услуга поиска платная — ${SEARCH_FEE_RUB} ₽ (обсудить с клиентом).`
+    `Покупатель: @${username}`
   ]
     .filter(Boolean)
     .join("\n");
@@ -68,5 +65,5 @@ export async function POST(req: NextRequest) {
       { status: 502 }
     );
   }
-  return NextResponse.json({ notified: true, fee: SEARCH_FEE_RUB });
+  return NextResponse.json({ notified: true });
 }

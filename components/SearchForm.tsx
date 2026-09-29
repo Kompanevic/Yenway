@@ -122,11 +122,6 @@ export default function SearchForm() {
           />
         </div>
 
-        <p className="text-xs text-white/40">
-          Стоимость услуги поиска — 450 ₽. Прямо сейчас платить не нужно — мы свяжемся с вами в
-          Telegram и всё обсудим.
-        </p>
-
         {error && <p className="text-red-400 text-sm">{error}</p>}
 
         <motion.button
