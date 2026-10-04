@@ -6,6 +6,7 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 import { REGION_LIST } from "@/lib/regions";
 import { MANAGER_TELEGRAM } from "@/lib/pricing";
 import Flag from "@/components/Flag";
+import BoughtStrip from "@/components/BoughtStrip";
 import { plural } from "@/lib/plural";
 import type { RegionKey } from "@/lib/regions";
 
@@ -144,6 +145,8 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      <BoughtStrip />
 
       <div className="max-w-7xl mx-auto px-6">
         <section className="py-24">

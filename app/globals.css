@@ -64,7 +64,8 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .shimmer,
-  .globe-meridian {
+  .globe-meridian,
+  .animate-marquee {
     animation: none;
   }
 }

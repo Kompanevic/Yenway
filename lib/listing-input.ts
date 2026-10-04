@@ -20,9 +20,11 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
   const condition = text("condition", 40);
   const description = text("description", 800);
   const seller = own ? "" : text("seller", 40).replace(/^@/, "");
-  const kind: ListingKind = own && text("kind", 10) === "preorder" ? "preorder" : "stock";
-  const sourceUrl = kind === "preorder" ? text("sourceUrl", 1000) : "";
-  const weight = kind === "preorder" ? parseFloat(text("weightKg", 10).replace(",", ".")) : NaN;
+  // «Под заказ» и «Выкупленные» выкладывает только админ.
+  const rawKind = text("kind", 10);
+  const kind: ListingKind = own && (rawKind === "preorder" || rawKind === "bought") ? rawKind : "stock";
+  const sourceUrl = kind !== "stock" ? text("sourceUrl", 1000) : "";
+  const weight = kind !== "stock" ? parseFloat(text("weightKg", 10).replace(",", ".")) : NaN;
   const weightKg = weight > 0 && weight <= 100 ? Math.round(weight * 100) / 100 : undefined;
   const calcRegion = text("calcRegion", 10);
   const num = (k: string) => {
@@ -32,7 +34,7 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
   const calcLocalPrice = num("calcLocalPrice");
   const calcCurrency = text("calcCurrency", 5) as Currency;
   const calc: PreorderCalc | undefined =
-    kind === "preorder" && Object.prototype.hasOwnProperty.call(REGIONS, calcRegion) && calcLocalPrice
+    kind !== "stock" && Object.prototype.hasOwnProperty.call(REGIONS, calcRegion) && calcLocalPrice
       ? {
           region: calcRegion as RegionKey,
           localPrice: calcLocalPrice,
@@ -47,7 +49,7 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
   if (!size) return { ok: false, error: "Укажите размер" };
   if (!Number.isFinite(price) || price < 1) return { ok: false, error: "Укажите цену в рублях" };
   if (!LISTING_CONDITIONS.includes(condition)) return { ok: false, error: "Выберите состояние" };
-  if (kind === "preorder" && !/^https?:\/\/\S+$/.test(sourceUrl)) {
+  if ((kind === "preorder" || sourceUrl) && !/^https?:\/\/\S+$/.test(sourceUrl)) {
     return { ok: false, error: "Укажите ссылку на товар (https://...)" };
   }
   if (!own && !/^[a-zA-Z0-9_]{4,32}$/.test(seller)) {
@@ -179,6 +181,8 @@ export async function notifyListing(
   origin: string,
   calc?: PreorderCalc
 ): Promise<boolean> {
+  // «Выкупленные» — просто витрина на сайте, в боты и канал не отправляем.
+  if (listing.kind === "bought") return true;
   const preorder = listing.kind === "preorder";
   const bot = preorder && ITEM_BOT.token ? ITEM_BOT : LISTING_BOT;
   // В канал уходит только «под заказ»; вещи «в наличии» — нет.

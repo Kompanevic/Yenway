@@ -13,11 +13,20 @@ const COPY: Record<ListingKind, { title: string; text: string; empty: string }> 
     title: "Под заказ",
     text: "Вещи, которые мы выкупим и привезём под вас. Сроки и детали уточним в Telegram.",
     empty: "Скоро здесь появятся вещи под заказ."
+  },
+  bought: {
+    title: "Выкупленные",
+    text: "Вещи, которые мы уже выкупили и привезли клиентам. Хотите такую же — найдём и привезём под вас.",
+    empty: "Скоро здесь появятся выкупленные вещи."
   }
 };
 
+// «Выкупленные» — по дате выкупа (вещь могла долго висеть в «Под заказ»).
+const boughtDate = (l: { boughtAt?: string; createdAt: string }) => l.boughtAt ?? l.createdAt;
+
 export default async function ListingFeed({ kind }: { kind: ListingKind }) {
   const items = (await getListings().catch(() => [])).filter((l) => l.status === "published" && kindOf(l) === kind);
+  if (kind === "bought") items.sort((a, b) => boughtDate(b).localeCompare(boughtDate(a)));
   const copy = COPY[kind];
 
   return (
@@ -26,12 +35,12 @@ export default async function ListingFeed({ kind }: { kind: ListingKind }) {
         ← на главную
       </a>
 
-      <div className="mt-5 inline-flex rounded-full border border-line p-1 font-display text-sm">
+      <div className="mt-5 inline-flex max-w-full overflow-x-auto rounded-full border border-line p-1 font-display text-xs sm:text-sm">
         {(Object.keys(COPY) as ListingKind[]).map((k) => (
           <Link
             key={k}
             href={LISTING_PATH[k]}
-            className={`rounded-full px-4 py-1.5 transition-colors ${
+            className={`whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 transition-colors ${
               k === kind ? "bg-accent text-ink font-semibold" : "text-white/60 hover:text-white"
             }`}
           >
@@ -42,7 +51,7 @@ export default async function ListingFeed({ kind }: { kind: ListingKind }) {
 
       <div className="mt-5 flex flex-wrap items-end justify-between gap-5">
         <div>
-          <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight">{copy.title}</h1>
+          <h1 className="font-display text-3xl min-[360px]:text-4xl sm:text-5xl font-bold tracking-tight break-words">{copy.title}</h1>
           <p className="text-white/50 mt-3 text-lg max-w-xl">{copy.text}</p>
         </div>
         {kind === "stock" && (
@@ -63,11 +72,12 @@ export default async function ListingFeed({ kind }: { kind: ListingKind }) {
           size,
           price,
           photoCount,
-          // Флажок страны — только «под заказ»; сама ссылка в клиент не уходит.
-          ...(kind === "preorder" ? { region: region ?? regionFromUrl(sourceUrl) } : {})
+          // Флажок страны — «под заказ» и «выкупленные»; сама ссылка в клиент не уходит.
+          ...(kind !== "stock" ? { region: region ?? regionFromUrl(sourceUrl) } : {})
         }))}
         basePath={LISTING_PATH[kind]}
         emptyText={copy.empty}
+        {...(kind === "bought" ? { badge: "Выкуплено", pricePrefix: "за " } : {})}
       />
     </main>
   );

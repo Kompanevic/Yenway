@@ -7,7 +7,8 @@ export const LISTING_CONDITIONS = [
   "Есть следы носки"
 ];
 
-export type ListingKind = "stock" | "preorder";
-export const LISTING_PATH: Record<ListingKind, string> = { stock: "/stock", preorder: "/preorder" };
+// bought — «Выкупленные»: витрина вещей, которые мы уже выкупили клиентам.
+export type ListingKind = "stock" | "preorder" | "bought";
+export const LISTING_PATH: Record<ListingKind, string> = { stock: "/stock", preorder: "/preorder", bought: "/bought" };
 // Старые объявления без поля kind — «в наличии».
 export const kindOf = (l: { kind?: ListingKind }): ListingKind => l.kind ?? "stock";

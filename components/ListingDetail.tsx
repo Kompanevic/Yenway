@@ -20,6 +20,14 @@ const COPY: Record<ListingKind, { back: string; unavailable: string; badge: stri
     action: "Хочу заказать",
     note: "Мы выкупим вещь под вас и свяжемся в Telegram, чтобы уточнить сроки и детали.",
     meta: "Под заказ на YenWay."
+  },
+  bought: {
+    back: "← Выкупленные",
+    badge: "Выкуплено",
+    unavailable: "",
+    action: "Хочу такую же",
+    note: "Найдём такую же или похожую вещь, выкупим и привезём под вас — напишем в Telegram.",
+    meta: "Выкупили для клиента через YenWay."
   }
 };
 
@@ -51,7 +59,9 @@ function TelegramLinks({ text }: { text: string }) {
 // Ссылка на товар (sourceUrl) сюда намеренно не передаётся — её видит только админ.
 async function load(id: string, kind: ListingKind) {
   const l = await getListing(id).catch(() => undefined);
-  return l && l.status !== "pending" && kindOf(l) === kind ? l : undefined;
+  if (!l || kindOf(l) !== kind) return undefined;
+  // Скрытые из «Выкупленных» не показываем вовсе.
+  return l.status === "published" || (l.status === "sold" && kind !== "bought") ? l : undefined;
 }
 
 export async function listingMetadata(id: string, kind: ListingKind): Promise<Metadata> {
@@ -80,6 +90,11 @@ export default async function ListingDetail({ id, kind }: { id: string; kind: Li
           <ListingGallery id={l.id} count={l.photoCount} title={l.title} />
         </div>
         <div>
+          {kind === "bought" && (
+            <span className="inline-block mb-4 rounded-full bg-emerald-400 text-ink px-3 py-1 font-display text-xs font-bold uppercase tracking-wide">
+              ✓ {copy.badge}
+            </span>
+          )}
           {unavailable && (
             <span className="inline-block mb-4 rounded-full border border-line px-3 py-1 font-display text-xs uppercase tracking-wide text-white/60">
               {copy.badge}
@@ -108,6 +123,7 @@ export default async function ListingDetail({ id, kind }: { id: string; kind: Li
               Цена под ключ: товар, комиссия, страховка и доставка. Возможна таможенная пошлина.
             </p>
           )}
+          {kind === "bought" && <p className="mt-1 text-xs text-white/40">Итоговая цена для клиента под ключ — с доставкой и страховкой.</p>}
           {l.description && (
             <p className="mt-6 text-white/60 whitespace-pre-line">
               <TelegramLinks text={l.description} />

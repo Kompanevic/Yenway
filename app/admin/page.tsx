@@ -39,7 +39,7 @@ export default function AdminPage() {
   const [newPhoto, setNewPhoto] = useState<File | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"cards" | "stock" | "preorder" | "legit" | "reviews">("cards");
+  const [tab, setTab] = useState<"cards" | "stock" | "preorder" | "bought" | "legit" | "reviews">("cards");
 
   async function load() {
     setLoading(true);
@@ -178,6 +178,7 @@ export default function AdminPage() {
             ["cards", "Карточки"],
             ["stock", "В наличии"],
             ["preorder", "Под заказ"],
+            ["bought", "Выкупленные"],
             ["legit", "Легит-чек"],
             ["reviews", "Отзывы"]
           ] as const
@@ -197,6 +198,7 @@ export default function AdminPage() {
       {tab === "cards" && <ItemCardTool />}
       {tab === "stock" && <AdminStock key="stock" kind="stock" />}
       {tab === "preorder" && <AdminStock key="preorder" kind="preorder" />}
+      {tab === "bought" && <AdminStock key="bought" kind="bought" />}
       {tab === "legit" && <AdminLegit />}
       {tab === "reviews" && (
         <>

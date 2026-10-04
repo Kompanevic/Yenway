@@ -24,6 +24,8 @@ export interface Listing {
   sourceUrl?: string;
   // Примерный вес «под заказ», по нему считалась цена под ключ.
   weightKg?: number;
+  // Когда вещь попала в «Выкупленные» — по этой дате сортируем витрину.
+  boughtAt?: string;
   // Страна товара «под заказ» — флажок в ленте.
   region?: RegionKey;
 }
@@ -63,6 +65,15 @@ export async function addListing(input: ListingInput, photos: ReviewPhoto[], sta
 
 export function setListingStatus(id: string, status: ListingStatus): Promise<Listing> {
   return store.patch(id, { status }, "Объявление не найдено");
+}
+
+// «Под заказ» ↔ «Выкупленные»: вещь переезжает в раздел и сразу видна в нём.
+export function setListingKind(id: string, kind: "preorder" | "bought"): Promise<Listing> {
+  return store.patch(
+    id,
+    { kind, status: "published", ...(kind === "bought" ? { boughtAt: new Date().toISOString() } : {}) },
+    "Объявление не найдено"
+  );
 }
 
 export async function removeListing(id: string): Promise<void> {

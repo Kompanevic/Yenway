@@ -39,7 +39,20 @@ function CardPhoto({ item }: { item: GridItem }) {
 
 const norm = (s: string) => s.toLowerCase().replace(/ё/g, "е");
 
-export default function ListingGrid({ items, basePath, emptyText }: { items: GridItem[]; basePath: string; emptyText: string }) {
+export default function ListingGrid({
+  items,
+  basePath,
+  emptyText,
+  badge,
+  pricePrefix = ""
+}: {
+  items: GridItem[];
+  basePath: string;
+  emptyText: string;
+  // Метка на каждой карточке (например, «Выкуплено») и подпись перед ценой.
+  badge?: string;
+  pricePrefix?: string;
+}) {
   const [query, setQuery] = useState("");
 
   const shown = useMemo(() => {
@@ -98,6 +111,11 @@ export default function ListingGrid({ items, basePath, emptyText }: { items: Gri
             <Reveal key={l.id} index={i}>
             <Link href={`${basePath}/${l.id}`} className="group block">
               <div className="relative aspect-square rounded-2xl overflow-hidden border border-line bg-panel transition-[border-color,box-shadow] duration-300 group-hover:border-white/30 group-hover:shadow-[0_12px_40px_-12px_rgba(255,255,255,0.18)]">
+                {badge && (
+                  <span className="absolute top-2.5 right-2.5 z-10 rounded-full bg-emerald-400 text-ink px-2.5 py-0.5 font-display text-[10px] sm:text-xs font-bold">
+                    ✓ {badge}
+                  </span>
+                )}
                 {l.region && (
                   <Flag region={l.region} className="absolute top-2.5 left-2.5 z-10 w-7 h-[18.67px] rounded-[3px] shadow-md ring-1 ring-black/20" />
                 )}
@@ -108,7 +126,10 @@ export default function ListingGrid({ items, basePath, emptyText }: { items: Gri
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-white mx-2 align-middle" />
                 <span className="text-white/70 whitespace-nowrap">{l.size}</span>
               </div>
-              <div className="mt-1 font-display text-sm font-semibold">{l.price.toLocaleString("ru-RU")} ₽</div>
+              <div className="mt-1 font-display text-sm font-semibold">
+                {pricePrefix}
+                {l.price.toLocaleString("ru-RU")} ₽
+              </div>
             </Link>
             </Reveal>
           ))}

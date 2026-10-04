@@ -21,10 +21,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "Вещь уже недоступна" }, { status: 404 });
   }
 
-  const preorder = kindOf(listing) === "preorder";
+  const kind = kindOf(listing);
+  const preorder = kind !== "stock";
   const sent = await sendTelegramMessage(
     [
-      preorder ? `🛍 <b>Хочу заказать — Под заказ</b>` : `🛍 <b>Хочу купить — В наличии</b>`,
+      kind === "bought"
+        ? `🛍 <b>Хочу такую же — Выкупленные</b>`
+        : preorder
+          ? `🛍 <b>Хочу заказать — Под заказ</b>`
+          : `🛍 <b>Хочу купить — В наличии</b>`,
       ``,
       `Вещь: ${escapeHtml(listing.title)} • ${escapeHtml(listing.size)}`,
       `Цена: ${listing.price.toLocaleString("ru-RU")} ₽`,
