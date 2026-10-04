@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import OrderForm from "@/components/OrderForm";
 import { REGION_LIST } from "@/lib/regions";
 import Flag from "@/components/Flag";
@@ -42,6 +43,21 @@ export default function OrderPage() {
             </div>
           ))}
         </div>
+
+        <Link
+          href="/bought"
+          className="group mt-4 flex items-center justify-between gap-4 rounded-2xl border border-emerald-300/30 bg-emerald-300/5 px-5 py-4 hover:border-emerald-300/60 transition-colors"
+        >
+          <span>
+            <span className="block font-display text-sm font-semibold">
+              <span className="text-emerald-300">✓</span> Не уверены, стоит ли доверять?
+            </span>
+            <span className="block text-sm text-white/50 mt-0.5">Посмотрите вещи, которые мы уже выкупили и привезли клиентам.</span>
+          </span>
+          <span className="shrink-0 font-display text-sm text-white/70 group-hover:text-white group-hover:translate-x-0.5 transition-all">
+            Смотреть →
+          </span>
+        </Link>
       </div>
 
       <div className="relative w-full h-[30vh] min-h-[200px] max-h-[340px] mt-14 overflow-hidden bg-ink">

@@ -124,6 +124,12 @@ export default function Home() {
                   Сделать заказ
                 </Link>
               </div>
+              <Link
+                href="/bought"
+                className="mt-5 block w-fit mx-auto text-sm text-white/60 hover:text-white underline-offset-4 hover:underline transition-colors"
+              >
+                <span className="text-emerald-300">✓</span> Сомневаетесь? Посмотрите, что мы уже выкупили →
+              </Link>
             </motion.div>
           </motion.div>
         </motion.div>
