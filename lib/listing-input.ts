@@ -161,14 +161,23 @@ function postButton(l: Listing, origin: string) {
 
 // Тот же пост с кнопкой — прямо в канал (при пересылке кнопка теряется).
 // Пробуем ботов по очереди; null — опубликовано, иначе ошибки для админа.
-async function postToChannel(listing: Listing, photo: Blob, origin: string): Promise<string | null> {
+async function sendToChannel(photo: Blob, caption: string, button?: { text: string; url: string }): Promise<string | null> {
   const errors: string[] = [];
   for (const token of CHANNEL_TOKENS) {
-    const err = await sendPhotoResult(photo, "photo.jpg", listingPost(listing), { token, chatId: CHANNEL_ID }, postButton(listing, origin));
+    const err = await sendPhotoResult(photo, "photo.jpg", caption, { token, chatId: CHANNEL_ID }, button);
     if (!err) return null;
     errors.push(err);
   }
   return Array.from(new Set(errors)).join("; ") || "нет ни одного токена бота";
+}
+
+function postToChannel(listing: Listing, photo: Blob, origin: string): Promise<string | null> {
+  return sendToChannel(photo, listingPost(listing), postButton(listing, origin));
+}
+
+// «Выкупленные»: по кнопке в админке — фото, название и ВЫКУПЛЕНО.
+export function postBoughtToChannel(listing: Listing, photo: Blob): Promise<string | null> {
+  return sendToChannel(photo, `<b>${escapeHtml(listing.title)}</b>\n\n<b>✦ ВЫКУПЛЕНО ✦</b>`);
 }
 
 // Пост — первое фото с кнопкой-ссылкой (у альбомов в Telegram кнопок не бывает,

@@ -55,6 +55,15 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
     load();
   }
 
+  async function toChannel(id: string) {
+    const res = await fetch(`/api/admin/stock/${id}/channel`, { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      setError(null);
+      alert("Опубликовано в канал");
+    } else setError(data.error ?? "Не удалось опубликовать в канал");
+  }
+
   const groups: { title: string; status: ListingStatus }[] = bought
     ? [
         { title: "В разделе «Выкупленные»", status: "published" },
@@ -148,6 +157,11 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
                       {l.status === "published" && (
                         <button onClick={() => act(l.id, "PATCH", "sold")} className={btnMain}>
                           {bought ? "Скрыть" : preorder ? "Снять" : "Продано"}
+                        </button>
+                      )}
+                      {bought && (
+                        <button onClick={() => toChannel(l.id)} className={btnMain}>
+                          В канал
                         </button>
                       )}
                       {bought && (
