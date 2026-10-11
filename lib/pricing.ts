@@ -14,13 +14,29 @@ export function isManualRegion(region: RegionKey): boolean {
 }
 
 // Курс валюты площадки к рублю (сколько RUB стоит 1 единица валюты)
+// Для Японии здесь базовый курс, по цене вещи он уточняется в JPY_RATE_TIERS.
 export const EXCHANGE_RATES: Record<RegionKey, number | null> = {
-  japan: 0.67,
+  japan: 0.69,
   korea: 0.08,
   china: 14.1,
   usa: null,
   europe: null
 };
+
+// Япония: курс зависит от цены вещи в иенах (дешевле вещь — курс выше).
+export const JPY_RATE_TIERS: { below: number; rate: number }[] = [
+  { below: 5000, rate: 0.71 }, // меньше 5 000 ¥
+  { below: 10000, rate: 0.7 }, // от 5 000 до 9 999 ¥
+  { below: Infinity, rate: 0.69 } // от 10 000 ¥
+];
+
+// Курс для страны с учётом цены вещи (в валюте площадки).
+export function exchangeRate(region: RegionKey, amount?: number | null): number | null {
+  if (region === "japan" && amount != null && amount > 0) {
+    return (JPY_RATE_TIERS.find((t) => amount < t.below) ?? JPY_RATE_TIERS[JPY_RATE_TIERS.length - 1]).rate;
+  }
+  return EXCHANGE_RATES[region];
+}
 
 export const CURRENCIES = ["JPY", "CNY", "KRW", "USD", "EUR"] as const;
 export type Currency = (typeof CURRENCIES)[number];
@@ -35,7 +51,7 @@ export const CURRENCY_REGION: Record<Currency, RegionKey> = {
 
 // Только по курсу, без доставки и комиссий. null — курс для валюты не задан.
 export function convertToRub(amount: number, currency: Currency): number | null {
-  const rate = EXCHANGE_RATES[CURRENCY_REGION[currency]];
+  const rate = exchangeRate(CURRENCY_REGION[currency], amount);
   return rate == null ? null : Math.round(amount * rate);
 }
 
@@ -146,7 +162,7 @@ export function calculatePrice(
   // Курс вручную (админка: любая валюта, США/Европа без заданного курса).
   rateOverride?: number | null
 ): PriceBreakdown {
-  const rate = rateOverride ?? EXCHANGE_RATES[region];
+  const rate = rateOverride ?? exchangeRate(region, itemPriceLocal);
   const commissionRUB = getCommissionRub(region, sourceUrl);
   const insuranceRUB = INSURANCE_RUB[region];
   const serviceFeeRUB = SERVICE_FEE_RUB[region];

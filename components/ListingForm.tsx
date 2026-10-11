@@ -11,6 +11,7 @@ import {
   CURRENCIES,
   CURRENCY_REGION,
   EXCHANGE_RATES,
+  exchangeRate,
   MANAGER_TELEGRAM,
   calculatePrice,
   isManualRegion,
@@ -85,6 +86,12 @@ export default function ListingForm({
   };
 
   useEffect(() => setRate(defaultRate(currency)), [currency]);
+  // Иена: курс по ступеням от цены вещи (lib/pricing.ts → JPY_RATE_TIERS).
+  useEffect(() => {
+    const lp = num(localPrice);
+    if (currency === "JPY" && lp) setRate(String(exchangeRate("japan", lp)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currency, localPrice]);
 
   function pickRegion(r: RegionKey) {
     setRegion(r);
