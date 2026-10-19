@@ -49,7 +49,6 @@ export default function SiteHeader() {
         </motion.div>
 
         <nav className="hidden xl:flex col-start-2 translate-x-5 items-center gap-4 2xl:gap-6 font-display text-[13px] 2xl:text-sm uppercase tracking-wide text-white/60 whitespace-nowrap">
-          <RegionGlobe />
           {NAV.map((n) =>
             n.cta ? (
               <Link
@@ -73,6 +72,8 @@ export default function SiteHeader() {
               </Link>
             )
           )}
+          {/* Глобус с выбором страны — в конце строки */}
+          <RegionGlobe />
         </nav>
 
         <button
