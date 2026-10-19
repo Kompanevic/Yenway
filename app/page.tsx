@@ -121,7 +121,7 @@ export default function Home() {
                   href="/order"
                   className="font-display inline-block rounded-full btn-fx bg-accent text-ink px-10 py-4 font-semibold text-lg hover:bg-accent2 transition-colors"
                 >
-                  Сделать заказ
+                  Рассчитать
                 </Link>
               </div>
               <Link

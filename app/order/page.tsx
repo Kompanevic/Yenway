@@ -23,7 +23,7 @@ export default function OrderPage() {
           ← на главную
         </a>
         <h1 className="font-display text-4xl sm:text-5xl font-bold mt-5 tracking-tight">
-          Оформить заказ
+          Рассчитать стоимость
         </h1>
         <p className="text-white/50 mt-3 text-lg">
           Вставьте ссылку на товар и укажите ник в Telegram — мы рассчитаем стоимость и свяжемся с

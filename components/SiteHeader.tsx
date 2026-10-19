@@ -65,7 +65,7 @@ export default function SiteHeader() {
           href="/order"
           className="hidden xl:inline-block shrink-0 font-display rounded-full btn-fx bg-accent text-ink px-6 py-2.5 text-sm font-semibold hover:bg-accent2 transition-colors"
         >
-          Сделать заказ
+          Рассчитать
         </Link>
 
         <button
@@ -119,7 +119,7 @@ export default function SiteHeader() {
                 ))}
               </div>
               <Link href="/order" className="btn-fx mt-4 rounded-full bg-accent text-ink text-center py-3 font-semibold">
-                Сделать заказ
+                Рассчитать
               </Link>
             </nav>
           </motion.div>
