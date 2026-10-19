@@ -54,7 +54,7 @@ export async function sendTelegramPhoto(
   filename: string,
   caption: string,
   bot: BotConfig = MAIN_BOT,
-  button?: { text: string; url: string }
+  button?: { text: string; url: string } | { text: string; url: string }[]
 ): Promise<boolean> {
   return (await sendPhotoResult(photo, filename, caption, bot, button)) === null;
 }
@@ -65,7 +65,7 @@ export async function sendPhotoResult(
   filename: string,
   caption: string,
   bot: BotConfig,
-  button?: { text: string; url: string }
+  button?: { text: string; url: string } | { text: string; url: string }[]
 ): Promise<string | null> {
   if (!bot.token || !bot.chatId) {
     console.error("Токен или chat_id Telegram-бота не заданы в переменных окружения");
@@ -79,7 +79,8 @@ export async function sendPhotoResult(
     form.append("parse_mode", "HTML");
     form.append("photo", photo, filename);
     // Кнопка-ссылка под фото; при пересылке в канал она сохраняется.
-    if (button) form.append("reply_markup", JSON.stringify({ inline_keyboard: [[button]] }));
+    // Кнопки-ссылки под фото (несколько — в один ряд); при пересылке в канал сохраняются.
+    if (button) form.append("reply_markup", JSON.stringify({ inline_keyboard: [Array.isArray(button) ? button : [button]] }));
 
     const res = await fetch(`https://api.telegram.org/bot${bot.token}/sendPhoto`, {
       method: "POST",

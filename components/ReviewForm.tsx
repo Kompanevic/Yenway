@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTgUsername } from "@/lib/tg-webapp";
 import { downscaleImage } from "@/lib/image";
 
 export default function ReviewForm() {
   const [username, setUsername] = useState("");
+  useTgUsername(setUsername);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [text, setText] = useState("");

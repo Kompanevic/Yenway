@@ -1,10 +1,12 @@
 "use client";
 
+import { useTgUsername } from "@/lib/tg-webapp";
 import { useState } from "react";
 
 export default function BuyButton({ id, label = "Хочу купить" }: { id: string; label?: string }) {
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState("");
+  useTgUsername(setUsername);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);

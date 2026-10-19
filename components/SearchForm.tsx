@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTgUsername } from "@/lib/tg-webapp";
 import { downscaleImage } from "@/lib/image";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 
 export default function SearchForm() {
   const [username, setUsername] = useState("");
+  useTgUsername(setUsername);
   const [itemName, setItemName] = useState("");
   const [description, setDescription] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);

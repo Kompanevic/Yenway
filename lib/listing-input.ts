@@ -152,16 +152,21 @@ function calcMessage(listing: Listing, calc: PreorderCalc | undefined): string {
   return lines.join("\n");
 }
 
+// Две кнопки: сайт и мини-апп в Telegram. Ссылка на мини-апп —
+// TELEGRAM_MINIAPP_URL (t.me/<бот>/<приложение> из BotFather → /newapp);
+// startapp открывает сразу нужную вещь. Без переменной — только сайт.
+const MINIAPP_URL = process.env.TELEGRAM_MINIAPP_URL;
+
 function postButton(l: Listing, origin: string) {
-  return {
-    text: kindOf(l) === "preorder" ? "Заказать на YenWay" : "Купить на YenWay",
-    url: `${origin}${LISTING_PATH[kindOf(l)]}/${l.id}`
-  };
+  const kind = kindOf(l);
+  const site = { text: kind === "preorder" ? "🌐 Заказать на сайте" : "🌐 Купить на сайте", url: `${origin}${LISTING_PATH[kind]}/${l.id}` };
+  if (!MINIAPP_URL) return site;
+  return [site, { text: "📱 Открыть в Telegram", url: `${MINIAPP_URL}?startapp=${kind}_${l.id}` }];
 }
 
 // Тот же пост с кнопкой — прямо в канал (при пересылке кнопка теряется).
 // Пробуем ботов по очереди; null — опубликовано, иначе ошибки для админа.
-async function sendToChannel(photo: Blob, caption: string, button?: { text: string; url: string }): Promise<string | null> {
+async function sendToChannel(photo: Blob, caption: string, button?: { text: string; url: string } | { text: string; url: string }[]): Promise<string | null> {
   const errors: string[] = [];
   for (const token of CHANNEL_TOKENS) {
     const err = await sendPhotoResult(photo, "photo.jpg", caption, { token, chatId: CHANNEL_ID }, button);

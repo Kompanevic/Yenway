@@ -17,6 +17,7 @@ import {
   isManualRegion,
   type Currency
 } from "@/lib/pricing";
+import { useTgUsername } from "@/lib/tg-webapp";
 import { REGIONS, REGION_LIST, type RegionKey } from "@/lib/regions";
 
 const PREORDER_DESCRIPTION = `Подробнее в личные сообщения к менеджеру.
@@ -64,6 +65,7 @@ export default function ListingForm({
   const [condition, setCondition] = useState(LISTING_CONDITIONS[2]);
   const [description, setDescription] = useState(kind === "preorder" ? PREORDER_DESCRIPTION : "");
   const [seller, setSeller] = useState("");
+  useTgUsername(setSeller);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);

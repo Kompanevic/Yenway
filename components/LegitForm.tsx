@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import PhotoPicker, { type PickedPhoto } from "./PhotoPicker";
+import { useTgUsername } from "@/lib/tg-webapp";
 import { LEGIT_ANGLES, LEGIT_FEE_RUB, LEGIT_MAX_PHOTOS, LEGIT_MIN_PHOTOS } from "@/lib/legit";
 
 const field = "w-full rounded-2xl bg-ink border border-line px-4 py-3.5 outline-none focus:border-accent transition-colors";
@@ -12,6 +13,7 @@ export default function LegitForm() {
   const [model, setModel] = useState("");
   const [comment, setComment] = useState("");
   const [username, setUsername] = useState("");
+  useTgUsername(setUsername);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);

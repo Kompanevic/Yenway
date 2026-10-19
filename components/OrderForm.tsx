@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { REGIONS, REGION_LIST, RegionKey } from "@/lib/regions";
 import Flag from "./Flag";
+import { useTgUsername } from "@/lib/tg-webapp";
 import { CHINA_DELIVERY_TIERS, isManualRegion } from "@/lib/pricing";
 
 interface Result {
@@ -42,6 +43,7 @@ export default function OrderForm() {
   }, [param]);
   const [link, setLink] = useState("");
   const [username, setUsername] = useState("");
+  useTgUsername(setUsername);
   const [weight, setWeight] = useState("");
   const [chinaTier, setChinaTier] = useState(CHINA_DELIVERY_TIERS[0].id);
   const [loading, setLoading] = useState(false);
