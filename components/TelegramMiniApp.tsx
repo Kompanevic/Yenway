@@ -37,8 +37,12 @@ export default function TelegramMiniApp() {
       document.documentElement.classList.add("tg-app");
       window.dispatchEvent(new Event(TG_READY_EVENT));
       // Открыли по кнопке из канала: startapp=<раздел>_<id> → сразу на вещь.
-      const m = /^(stock|preorder|bought)_([\w-]{8,64})$/.exec(wa.initDataUnsafe.start_param ?? "");
+      // Или на раздел: startapp=order / preorder / stock / bought.
+      const start = wa.initDataUnsafe.start_param ?? "";
+      const m = /^(stock|preorder|bought)_([\w-]{8,64})$/.exec(start);
       if (m) router.replace(`${LISTING_PATH[m[1] as ListingKind]}/${m[2]}`);
+      else if (start === "order") router.replace("/order");
+      else if (start in LISTING_PATH) router.replace(LISTING_PATH[start as ListingKind]);
     };
     document.head.appendChild(script);
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAuthed } from "@/lib/admin-auth";
 import { getListing, getListingPhoto, kindOf } from "@/lib/listings-store";
 import { postBoughtToChannel } from "@/lib/listing-input";
+import { SITE_URL } from "@/lib/site";
 
 // Пост «ВЫКУПЛЕНО» в канал для вещи из «Выкупленных».
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const photo = await getListingPhoto(params.id, 0);
   if (!photo) return NextResponse.json({ error: "У вещи нет фото" }, { status: 400 });
 
-  const err = await postBoughtToChannel(listing, new Blob([Buffer.from(photo.data, "base64")], { type: photo.type }));
+  const err = await postBoughtToChannel(listing, new Blob([Buffer.from(photo.data, "base64")], { type: photo.type }), SITE_URL);
   if (err) return NextResponse.json({ error: `Telegram: ${err}` }, { status: 502 });
   return NextResponse.json({ ok: true });
 }
