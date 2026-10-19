@@ -155,7 +155,11 @@ function calcMessage(listing: Listing, calc: PreorderCalc | undefined): string {
 // Две кнопки: сайт и мини-апп в Telegram. Ссылка на мини-апп —
 // TELEGRAM_MINIAPP_URL (t.me/<бот>/<приложение> из BotFather → /newapp).
 // Без переменной — только сайт.
-const MINIAPP_URL = process.env.TELEGRAM_MINIAPP_URL;
+// Берём только ссылку вида https://t.me/<бот>/<приложение>: если туда по ошибке
+// вставить адрес сайта, обе кнопки вели бы на сайт.
+const MINIAPP_URL = /^https:\/\/t\.me\/\w+\/\w+$/.test(process.env.TELEGRAM_MINIAPP_URL?.trim() ?? "")
+  ? process.env.TELEGRAM_MINIAPP_URL!.trim()
+  : undefined;
 
 function postButton(l: Listing, origin: string) {
   const kind = kindOf(l);
