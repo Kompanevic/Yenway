@@ -3,7 +3,8 @@ import type { ReviewPhoto } from "./reviews-store";
 import { CHANNEL_ID, CHANNEL_TOKENS, ITEM_BOT, LISTING_BOT, sendPhotoResult, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
 import { CURRENCIES, calculatePrice, type Currency } from "./pricing";
 import { REGIONS, type RegionKey } from "./regions";
-import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS } from "./listing-constants";
+import { LISTING_CATEGORIES, LISTING_CONDITIONS, MAX_LISTING_PHOTOS } from "./listing-constants";
+import type { ListingEdit } from "./listings-store";
 // Фото ужимаются в браузере до ~100–300 КБ; лимит с запасом под Upstash.
 const MAX_PHOTO_BYTES = 600 * 1024;
 
@@ -80,12 +81,48 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
       kind,
       ...(sourceUrl ? { sourceUrl } : {}),
       ...(weightKg ? { weightKg } : {}),
+      ...(LISTING_CATEGORIES.includes(text("category", 30)) ? { category: text("category", 30) } : {}),
       ...(calc ? { region: calc.region } : {})
     },
     photos,
     blobs,
     calc
   };
+}
+
+// Правка объявления из админки: только разрешённые поля, с проверкой.
+export function parseListingEdit(body: unknown): { ok: true; value: ListingEdit } | { ok: false; error: string } {
+  const b = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
+  const str = (k: string, max: number) => (typeof b[k] === "string" ? (b[k] as string).trim().slice(0, max) : undefined);
+  const out: ListingEdit = {};
+  const title = str("title", 120);
+  if (title !== undefined) {
+    if (title.length < 2) return { ok: false, error: "Укажите название" };
+    out.title = title;
+  }
+  const size = str("size", 20);
+  if (size !== undefined) {
+    if (!size) return { ok: false, error: "Укажите размер" };
+    out.size = size;
+  }
+  if (b.price !== undefined) {
+    const price = Number(String(b.price).replace(/\D/g, ""));
+    if (!Number.isFinite(price) || price < 1) return { ok: false, error: "Укажите цену в рублях" };
+    out.price = price;
+  }
+  const condition = str("condition", 40);
+  if (condition !== undefined) {
+    if (!LISTING_CONDITIONS.includes(condition)) return { ok: false, error: "Выберите состояние" };
+    out.condition = condition;
+  }
+  const description = str("description", 800);
+  if (description !== undefined) out.description = description;
+  const category = str("category", 30);
+  if (category !== undefined) {
+    if (category && !LISTING_CATEGORIES.includes(category)) return { ok: false, error: "Неизвестный тип вещи" };
+    out.category = category || undefined;
+  }
+  return { ok: true, value: out };
 }
 
 // Готовый пост для канала: каждая строка жирная со значком, без ника продавца.

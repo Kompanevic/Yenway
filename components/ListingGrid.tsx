@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { LISTING_CATEGORIES } from "@/lib/listing-constants";
 import Flag from "./Flag";
 import Reveal from "./Reveal";
 import FadeImg from "./FadeImg";
@@ -14,6 +15,7 @@ export interface GridItem {
   price: number;
   photoCount: number;
   region?: RegionKey;
+  category?: string;
 }
 
 // При наведении — плавно второе фото вещи (грузится только по первому наведению).
@@ -54,15 +56,21 @@ export default function ListingGrid({
   pricePrefix?: string;
 }) {
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<string | null>(null);
+  // Фильтры показываем только по типам, которые есть в ленте, в порядке списка.
+  const categories = useMemo(
+    () => LISTING_CATEGORIES.filter((c) => items.some((i) => i.category === c)),
+    [items]
+  );
 
   const shown = useMemo(() => {
     const words = norm(query).split(/\s+/).filter(Boolean);
-    if (words.length === 0) return items;
     return items.filter((i) => {
+      if (category && i.category !== category) return false;
       const title = norm(i.title);
       return words.every((w) => title.includes(w));
     });
-  }, [items, query]);
+  }, [items, query, category]);
 
   if (items.length === 0) {
     return <div className="mt-12 rounded-3xl bg-panel border border-line p-10 text-center text-white/50">{emptyText}</div>;
@@ -103,8 +111,25 @@ export default function ListingGrid({
         </svg>
       </div>
 
+      {categories.length > 0 && (
+        <div className="mt-5 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {[null, ...categories].map((c) => (
+            <button
+              key={c ?? "all"}
+              type="button"
+              onClick={() => setCategory(c)}
+              className={`shrink-0 rounded-full border px-4 py-1.5 font-display text-xs sm:text-sm transition-colors ${
+                category === c ? "bg-accent text-ink border-accent font-semibold" : "border-line text-white/60 hover:text-white hover:border-white/30"
+              }`}
+            >
+              {c ?? "Все"}
+            </button>
+          ))}
+        </div>
+      )}
+
       {shown.length === 0 ? (
-        <p className="mt-10 text-white/50">Ничего не нашлось по запросу «{query.trim()}».</p>
+        <p className="mt-10 text-white/50">{query.trim() ? `Ничего не нашлось по запросу «${query.trim()}».` : "В этой категории пока пусто."}</p>
       ) : (
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
           {shown.map((l, i) => (

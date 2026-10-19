@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import ListingForm from "./ListingForm";
 import type { Listing, ListingStatus } from "@/lib/listings-store";
-import { kindOf, LISTING_PATH, type ListingKind } from "@/lib/listing-constants";
+import { kindOf, LISTING_CATEGORIES, LISTING_CONDITIONS, LISTING_PATH, type ListingKind } from "@/lib/listing-constants";
 
 const btn = "font-display text-sm rounded-xl px-3 py-1.5";
 const btnMain = `${btn} btn-fx bg-accent text-ink font-semibold hover:bg-accent2`;
@@ -15,11 +15,73 @@ const HEADINGS: Record<ListingKind, { title: string; note: string }> = {
   bought: { title: "Добавить выкупленную вещь", note: "Появится в разделе «Выкупленные» на сайте. В боты и канал не отправляется." }
 };
 
+const field = "w-full rounded-xl bg-ink border border-line px-3 py-2 text-sm outline-none focus:border-accent";
+
+// Правка опубликованного объявления: название, размер, цена, состояние, тип, описание.
+function EditListing({ listing, onSaved, onCancel }: { listing: Listing; onSaved: () => void; onCancel: () => void }) {
+  const [v, setV] = useState({
+    title: listing.title,
+    size: listing.size,
+    price: String(listing.price),
+    condition: listing.condition,
+    category: listing.category ?? "",
+    description: listing.description
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setV((prev) => ({ ...prev, [k]: e.target.value }));
+
+  async function save() {
+    setSaving(true);
+    setError(null);
+    const res = await fetch(`/api/admin/stock/${listing.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ edit: v })
+    });
+    const data = await res.json().catch(() => ({}));
+    setSaving(false);
+    if (res.ok) onSaved();
+    else setError(data.error ?? "Не удалось сохранить");
+  }
+
+  return (
+    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+      <input value={v.title} onChange={set("title")} placeholder="Название" className={`${field} sm:col-span-2`} />
+      <input value={v.size} onChange={set("size")} placeholder="Размер" className={field} />
+      <input value={v.price} onChange={set("price")} inputMode="numeric" placeholder="Цена, ₽" className={field} />
+      <select value={v.category} onChange={set("category")} className={field}>
+        <option value="">Тип вещи — не выбран</option>
+        {LISTING_CATEGORIES.map((c) => (
+          <option key={c}>{c}</option>
+        ))}
+      </select>
+      <select value={v.condition} onChange={set("condition")} className={field}>
+        {LISTING_CONDITIONS.map((c) => (
+          <option key={c}>{c}</option>
+        ))}
+      </select>
+      <textarea value={v.description} onChange={set("description")} rows={3} placeholder="Описание" className={`${field} sm:col-span-2 resize-none`} />
+      {error && <p className="text-red-400 text-sm sm:col-span-2">{error}</p>}
+      <div className="flex gap-2 sm:col-span-2">
+        <button onClick={save} disabled={saving} className={`${btnMain} disabled:opacity-50`}>
+          {saving ? "Сохраняем..." : "Сохранить"}
+        </button>
+        <button onClick={onCancel} className={`${btn} border border-line`}>
+          Отмена
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminStock({ kind }: { kind: ListingKind }) {
   const preorder = kind === "preorder";
   const bought = kind === "bought";
   const [all, setAll] = useState<Listing[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
   const listings = all.filter((l) => kindOf(l) === kind);
   // Для «Выкупленных»: вещи из «Под заказ», которые можно отметить выкупленными.
   const preorders = bought
@@ -132,7 +194,8 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
             ) : (
               <div className="space-y-3">
                 {items.map((l) => (
-                  <div key={l.id} className="rounded-2xl bg-panel border border-line p-3 flex gap-3 items-center">
+                  <div key={l.id} className="rounded-2xl bg-panel border border-line p-3">
+                  <div className="flex gap-3 items-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={`/api/stock-photo/${l.id}/0`} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
                     <div className="min-w-0 flex-1">
@@ -140,7 +203,8 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
                         {l.title} • {l.size}
                       </a>
                       <div className="text-sm text-white/50">
-                        {l.price.toLocaleString("ru-RU")} ₽ · {l.condition} · {l.own ? "ваша вещь" : `@${l.seller}`} · {l.photoCount} фото
+                        {l.price.toLocaleString("ru-RU")} ₽ · {l.condition} · {l.category ?? "тип не выбран"} · {l.own ? "ваша вещь" : `@${l.seller}`} ·{" "}
+                        {l.photoCount} фото
                       </div>
                       {l.sourceUrl && (
                         <a href={l.sourceUrl} target="_blank" rel="noopener noreferrer" className="block truncate text-xs text-white/40 underline underline-offset-2 hover:text-white/70">
@@ -174,10 +238,24 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
                           Вернуть
                         </button>
                       )}
+                      <button onClick={() => setEditing(editing === l.id ? null : l.id)} className={`${btn} border border-line hover:border-accent`}>
+                        Изменить
+                      </button>
                       <button onClick={() => act(l.id, "DELETE")} className={btnGhost}>
                         Удалить
                       </button>
                     </div>
+                  </div>
+                  {editing === l.id && (
+                    <EditListing
+                      listing={l}
+                      onCancel={() => setEditing(null)}
+                      onSaved={() => {
+                        setEditing(null);
+                        load();
+                      }}
+                    />
+                  )}
                   </div>
                 ))}
               </div>

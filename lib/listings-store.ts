@@ -24,6 +24,8 @@ export interface Listing {
   sourceUrl?: string;
   // Примерный вес «под заказ», по нему считалась цена под ключ.
   weightKg?: number;
+  // Тип вещи (LISTING_CATEGORIES) — для фильтров.
+  category?: string;
   // Когда вещь попала в «Выкупленные» — по этой дате сортируем витрину.
   boughtAt?: string;
   // Страна товара «под заказ» — флажок в ленте.
@@ -65,6 +67,13 @@ export async function addListing(input: ListingInput, photos: ReviewPhoto[], sta
 
 export function setListingStatus(id: string, status: ListingStatus): Promise<Listing> {
   return store.patch(id, { status }, "Объявление не найдено");
+}
+
+// Правка опубликованного объявления из админки (фото не меняются).
+export type ListingEdit = Partial<Pick<Listing, "title" | "size" | "price" | "condition" | "description" | "category">>;
+
+export function editListing(id: string, changes: ListingEdit): Promise<Listing> {
+  return store.patch(id, changes, "Объявление не найдено");
 }
 
 // «Под заказ» ↔ «Выкупленные»: вещь переезжает в раздел и сразу видна в нём.

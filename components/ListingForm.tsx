@@ -5,7 +5,7 @@ import { downscaleImage } from "@/lib/image";
 import { warmUpBgRemoval } from "@/lib/bg-removal";
 import { cutoutOnBlack } from "@/lib/card-image";
 import type { ItemInfo } from "@/lib/item-info";
-import { LISTING_CONDITIONS, MAX_LISTING_PHOTOS, type ListingKind } from "@/lib/listing-constants";
+import { LISTING_CATEGORIES, LISTING_CONDITIONS, MAX_LISTING_PHOTOS, type ListingKind } from "@/lib/listing-constants";
 import {
   CHINA_DELIVERY_TIERS,
   CURRENCIES,
@@ -63,6 +63,7 @@ export default function ListingForm({
   const [size, setSize] = useState("");
   const [price, setPrice] = useState("");
   const [condition, setCondition] = useState(LISTING_CONDITIONS[2]);
+  const [category, setCategory] = useState("");
   const [description, setDescription] = useState(kind === "preorder" ? PREORDER_DESCRIPTION : "");
   const [seller, setSeller] = useState("");
   useTgUsername(setSeller);
@@ -207,6 +208,7 @@ export default function ListingForm({
       body.append("size", size);
       body.append("price", price);
       body.append("condition", condition);
+      if (category) body.append("category", category);
       body.append("description", description);
       if (!own) body.append("seller", seller);
       body.append("kind", kind);
@@ -229,6 +231,7 @@ export default function ListingForm({
       setSize("");
       setPrice("");
       setDescription(kind === "preorder" ? PREORDER_DESCRIPTION : "");
+      setCategory("");
       setSourceUrl("");
       setLocalPrice("");
       setWeight("");
@@ -440,6 +443,18 @@ export default function ListingForm({
           <input required inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="35000" className={field} />
         </div>
       </div>
+
+      {own && (
+        <div>
+          <label className={label}>Тип вещи <span className="normal-case tracking-normal text-white/30">(для фильтров)</span></label>
+          <select value={category} onChange={(e) => setCategory(e.target.value)} className={field}>
+            <option value="">— не выбран —</option>
+            {LISTING_CATEGORIES.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
         <label className={label}>Состояние</label>

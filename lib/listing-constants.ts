@@ -8,6 +8,25 @@ export const LISTING_CONDITIONS = [
 ];
 
 // bought — «Выкупленные»: витрина вещей, которые мы уже выкупили клиентам.
+// Тип вещи — для фильтров в ленте.
+export const LISTING_CATEGORIES = [
+  "Футболки",
+  "Лонгсливы",
+  "Худи",
+  "Свитшоты",
+  "Свитеры",
+  "Рубашки",
+  "Куртки",
+  "Пальто",
+  "Штаны",
+  "Джинсы",
+  "Шорты",
+  "Обувь",
+  "Сумки",
+  "Аксессуары",
+  "Другое"
+];
+
 export type ListingKind = "stock" | "preorder" | "bought";
 export const LISTING_PATH: Record<ListingKind, string> = { stock: "/stock", preorder: "/preorder", bought: "/bought" };
 // Старые объявления без поля kind — «в наличии».
