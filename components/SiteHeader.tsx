@@ -11,13 +11,17 @@ import Flag from "./Flag";
 
 const TELEGRAM = "https://t.me/yenwayjapan";
 
-const NAV = [
-  { href: "/wardrobe", label: "Гардероб" },
+// cta — главная кнопка (выделена); match — какие разделы подсвечивают пункт;
+// external — ссылка наружу. «Смотреть вещи» ведёт в «Под заказ», а «В наличии»
+// и «Выкупленные» — через переключатель на той же странице.
+const NAV: { href: string; label: string; cta?: boolean; match?: string[]; external?: boolean }[] = [
+  { href: "/order", label: "Рассчитать", cta: true },
   { href: "/search", label: "Найти вещь" },
-  { href: "/stock", label: "В наличии" },
-  { href: "/preorder", label: "Под заказ" },
+  { href: "/preorder", label: "Смотреть вещи", match: ["/preorder", "/stock", "/bought"] },
   { href: "/legit", label: "Легит-чек" },
-  { href: "/reviews", label: "Отзывы" }
+  { href: "/reviews", label: "Отзывы" },
+  { href: TELEGRAM, label: "ТГ", external: true },
+  { href: "/wardrobe", label: "Гардероб" }
 ];
 
 // Общая шапка всех страниц (кроме админки): липкая, с подсветкой текущего раздела.
@@ -29,7 +33,8 @@ export default function SiteHeader() {
   useEffect(() => setMenuOpen(false), [pathname]);
 
   if (pathname.startsWith("/admin")) return null;
-  const active = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  const active = (n: (typeof NAV)[number]) => !n.external && (n.match ?? [n.href]).some(isActive);
 
   return (
     <header className="sticky top-0 z-40 bg-ink/75 backdrop-blur-md border-b border-line/60">
@@ -44,29 +49,30 @@ export default function SiteHeader() {
 
         <nav className="hidden xl:flex items-center gap-6 font-display text-sm uppercase tracking-wide text-white/60 whitespace-nowrap">
           <RegionGlobe />
-          {NAV.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              className={`relative group py-1 transition-colors hover:text-white ${active(n.href) ? "text-white" : ""}`}
-            >
-              {n.label}
-              <span
-                className={`absolute left-0 -bottom-0.5 h-px bg-accent transition-all duration-300 group-hover:w-full ${active(n.href) ? "w-full" : "w-0"}`}
-              />
-            </Link>
-          ))}
-          <a href={TELEGRAM} target="_blank" rel="noopener noreferrer" className="relative group py-1 transition-colors hover:text-white">
-            Телеграм
-            <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full" />
-          </a>
+          {NAV.map((n) =>
+            n.cta ? (
+              <Link
+                key={n.href}
+                href={n.href}
+                className="font-display rounded-full btn-fx bg-accent text-ink px-5 py-2 font-semibold hover:bg-accent2 transition-colors"
+              >
+                {n.label}
+              </Link>
+            ) : (
+              <Link
+                key={n.href}
+                href={n.href}
+                {...(n.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                className={`relative group py-1 transition-colors hover:text-white ${active(n) ? "text-white" : ""}`}
+              >
+                {n.label}
+                <span
+                  className={`absolute left-0 -bottom-0.5 h-px bg-accent transition-all duration-300 group-hover:w-full ${active(n) ? "w-full" : "w-0"}`}
+                />
+              </Link>
+            )
+          )}
         </nav>
-        <Link
-          href="/order"
-          className="hidden xl:inline-block shrink-0 font-display rounded-full btn-fx bg-accent text-ink px-6 py-2.5 text-sm font-semibold hover:bg-accent2 transition-colors"
-        >
-          Рассчитать
-        </Link>
 
         <button
           type="button"
@@ -92,18 +98,18 @@ export default function SiteHeader() {
           >
             {/* Длинное меню прокручивается внутри, не вылезая за экран */}
             <nav className="max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col font-display text-lg">
-              {NAV.map((n) => (
+              {/* «Рассчитать» — большой кнопкой внизу меню */}
+              {NAV.filter((n) => !n.cta).map((n) => (
                 <Link
                   key={n.href}
                   href={n.href}
-                  className={`py-3 border-b border-line/60 ${active(n.href) ? "text-white" : "text-white/70"}`}
+                  {...(n.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                  className={`py-3 border-b border-line/60 ${active(n) ? "text-white" : "text-white/70"}`}
                 >
                   {n.label}
+                  {n.external && " ↗"}
                 </Link>
               ))}
-              <a href={TELEGRAM} target="_blank" rel="noopener noreferrer" className="py-3 border-b border-line/60 text-white/70">
-                Телеграм ↗
-              </a>
               <div className="mt-4 mb-1 text-xs uppercase tracking-widest text-white/40">Заказать из страны</div>
               <div className="grid grid-cols-2 gap-2">
                 {REGION_LIST.map((r) => (

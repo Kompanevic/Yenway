@@ -124,6 +124,16 @@ export default function Home() {
                   Рассчитать
                 </Link>
               </div>
+              <div className="mt-3">
+                <a
+                  href={`https://t.me/${MANAGER_TELEGRAM}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-display inline-block rounded-full border border-white/25 bg-white/5 backdrop-blur-sm px-6 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/10 hover:border-white/40 hover:text-white transition-colors"
+                >
+                  Обратиться к менеджеру
+                </a>
+              </div>
               <Link
                 href="/bought"
                 className="mt-5 block w-fit mx-auto text-sm text-white/60 hover:text-white underline-offset-4 hover:underline transition-colors"
