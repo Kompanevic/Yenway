@@ -38,16 +38,17 @@ export default function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 bg-ink/75 backdrop-blur-md border-b border-line/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-6 py-3 xl:py-4">
+      {/* Сетка: логотип слева, меню строго по центру, справа кнопка меню (телефон) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-[1fr_auto_1fr] items-center gap-6 py-3 xl:py-4">
         {/* Логотип — на главную */}
-        <motion.div className="shrink-0" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        <motion.div className="shrink-0 justify-self-start" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Link href="/" aria-label="YenWay — на главную" className="flex items-center gap-3">
             <Image src="/logo.jpg" alt="YenWay" width={40} height={40} className="rounded-full" priority />
             <span className="font-display text-xl sm:text-2xl font-bold tracking-tight">YenWay</span>
           </Link>
         </motion.div>
 
-        <nav className="hidden xl:flex items-center gap-6 font-display text-sm uppercase tracking-wide text-white/60 whitespace-nowrap">
+        <nav className="hidden xl:flex col-start-2 items-center gap-4 2xl:gap-6 font-display text-[13px] 2xl:text-sm uppercase tracking-wide text-white/60 whitespace-nowrap">
           <RegionGlobe />
           {NAV.map((n) =>
             n.cta ? (
@@ -79,7 +80,7 @@ export default function SiteHeader() {
           aria-label="Меню"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((v) => !v)}
-          className="xl:hidden flex flex-col justify-center items-center gap-1.5 w-10 h-10 shrink-0"
+          className="xl:hidden col-start-3 justify-self-end flex flex-col justify-center items-center gap-1.5 w-10 h-10 shrink-0"
         >
           <motion.span animate={menuOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }} className="block h-0.5 w-6 bg-white rounded-full" />
           <motion.span animate={menuOpen ? { opacity: 0 } : { opacity: 1 }} className="block h-0.5 w-6 bg-white rounded-full" />
