@@ -153,15 +153,16 @@ function calcMessage(listing: Listing, calc: PreorderCalc | undefined): string {
 }
 
 // Две кнопки: сайт и мини-апп в Telegram. Ссылка на мини-апп —
-// TELEGRAM_MINIAPP_URL (t.me/<бот>/<приложение> из BotFather → /newapp);
-// startapp открывает сразу нужную вещь. Без переменной — только сайт.
+// TELEGRAM_MINIAPP_URL (t.me/<бот>/<приложение> из BotFather → /newapp).
+// Без переменной — только сайт.
 const MINIAPP_URL = process.env.TELEGRAM_MINIAPP_URL;
 
 function postButton(l: Listing, origin: string) {
   const kind = kindOf(l);
   const site = { text: "🌐 Перейти на сайт", url: `${origin}${LISTING_PATH[kind]}/${l.id}` };
   if (!MINIAPP_URL) return site;
-  return [site, { text: "📱 Открыть прямо тут", url: `${MINIAPP_URL}?startapp=${kind}_${l.id}` }];
+  // Мини-апп открывается на главной, а не на самой вещи.
+  return [site, { text: "📱 Открыть прямо тут", url: MINIAPP_URL }];
 }
 
 // Под постом «ВЫКУПЛЕНО»: заказать своё или посмотреть другие вещи —
