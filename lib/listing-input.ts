@@ -161,22 +161,16 @@ const MINIAPP_URL = /^https:\/\/t\.me\/\w+\/\w+$/.test(process.env.TELEGRAM_MINI
   ? process.env.TELEGRAM_MINIAPP_URL!.trim()
   : undefined;
 
-function postButton(l: Listing, origin: string) {
-  const kind = kindOf(l);
-  const site = { text: "🌐 Перейти на сайт", url: `${origin}${LISTING_PATH[kind]}/${l.id}` };
-  if (!MINIAPP_URL) return site;
-  // Мини-апп открывается на главной, а не на самой вещи.
-  return [site, { text: "📱 Открыть прямо тут", url: MINIAPP_URL }];
+// Одна кнопка «Приложение» — мини-апп на главной (без мини-аппа — главная сайта).
+function appButton(origin: string) {
+  return { text: "Приложение", url: MINIAPP_URL ?? origin };
 }
 
-// Под постом «ВЫКУПЛЕНО»: заказать своё или посмотреть другие вещи —
-// в мини-аппе, а без него — на сайте.
-function boughtButtons(origin: string) {
-  const link = (start: string, path: string) => (MINIAPP_URL ? `${MINIAPP_URL}?startapp=${start}` : `${origin}${path}`);
-  return [
-    { text: "🧮 Рассчитать свою вещь", url: link("order", "/order") },
-    { text: "🛍 Смотреть вещи", url: link("preorder", "/preorder") }
-  ];
+// «Под заказ» — кнопка приложения; «В наличии» (пост в бота) — ссылка на вещь.
+function postButton(l: Listing, origin: string) {
+  const kind = kindOf(l);
+  if (kind === "preorder") return appButton(origin);
+  return { text: "🌐 Перейти на сайт", url: `${origin}${LISTING_PATH[kind]}/${l.id}` };
 }
 
 // Тот же пост с кнопкой — прямо в канал (при пересылке кнопка теряется).
@@ -197,7 +191,7 @@ function postToChannel(listing: Listing, photo: Blob, origin: string): Promise<s
 
 // «Выкупленные»: по кнопке в админке — фото, название и ВЫКУПЛЕНО.
 export function postBoughtToChannel(listing: Listing, photo: Blob, origin: string): Promise<string | null> {
-  return sendToChannel(photo, `<b>${escapeHtml(listing.title)}</b>\n\n<b>✦ ВЫКУПЛЕНО ✦</b>`, boughtButtons(origin));
+  return sendToChannel(photo, `<b>${escapeHtml(listing.title)}</b>\n\n<b>✦ ВЫКУПЛЕНО ✦</b>`, appButton(origin));
 }
 
 // Пост — первое фото с кнопкой-ссылкой (у альбомов в Telegram кнопок не бывает,
