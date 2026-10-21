@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { downscaleImage } from "@/lib/image";
-import { warmUpBgRemoval } from "@/lib/bg-removal";
-import { cutoutOnBlack } from "@/lib/card-image";
 import type { ItemInfo } from "@/lib/item-info";
 import { LISTING_CATEGORIES, LISTING_CONDITIONS, MAX_LISTING_PHOTOS, type ListingKind } from "@/lib/listing-constants";
 import {
@@ -128,7 +126,6 @@ export default function ListingForm({
   // «Под заказ»: по ссылке заполняем поля, цену по курсу и превью с вырезанным фоном.
   async function fillFromLink(url: string) {
     if (!/^https?:\/\/\S+$/.test(url)) return;
-    if (kind === "bought") warmUpBgRemoval();
     setAutoNote(null);
     setAutoStatus("Смотрим страницу вещи…");
     const notes: string[] = [];
@@ -151,22 +148,6 @@ export default function ListingForm({
       if (info.price) setLocalPrice(String(info.price));
       if (!info.title && !info.image) {
         notes.push(`Площадка не отдала данные${info.fetchError ? ` (${info.fetchError})` : ""} — заполните поля вручную.`);
-      }
-      // «Выкупленные»: первое фото со страницы — с вырезанным фоном на чёрном.
-      // Если вышло плохо, его можно убрать крестиком и загрузить своё.
-      if (kind === "bought" && info.image) {
-        setAutoStatus("Вырезаем фон… (первый раз дольше — качается модель)");
-        const img = await fetch(`/api/admin/image-proxy?url=${encodeURIComponent(info.image)}`);
-        if (!img.ok) {
-          notes.push("Фото со страницы не загрузилось — добавьте его вручную.");
-        } else {
-          const { card, note } = await cutoutOnBlack(await img.blob());
-          if (note) notes.push(note);
-          if (card) {
-            const file = await downscaleImage(new File([card], "cover.jpg", { type: "image/jpeg" }), 1200, 0.85);
-            setPhotos((prev) => [{ file, url: URL.createObjectURL(file) }, ...prev].slice(0, MAX_LISTING_PHOTOS));
-          }
-        }
       }
     } catch (e) {
       notes.push(e instanceof Error ? e.message : "Ошибка");
@@ -277,9 +258,7 @@ export default function ListingForm({
           {autoNote && <p className="mt-2 text-sm text-amber-300/80">{autoNote}</p>}
           {!autoStatus && !autoNote && (
             <p className="mt-2 text-xs text-white/30">
-              {kind === "bought"
-                ? "Вставьте ссылку — заполним поля и вырежем фон у первого фото. Если вышло плохо — уберите его и загрузите своё."
-                : "Вставьте ссылку — заполним название, размер, состояние и цену. Фото добавьте сами. Всё можно поправить."}
+              Вставьте ссылку — заполним название, размер, состояние и цену. Фото добавьте сами. Всё можно поправить.
             </p>
           )}
         </div>
