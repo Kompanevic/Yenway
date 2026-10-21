@@ -226,10 +226,6 @@ function postToChannel(listing: Listing, photo: Blob, origin: string): Promise<s
   return sendToChannel(photo, listingPost(listing), postButton(listing, origin));
 }
 
-// «Выкупленные»: по кнопке в админке — фото, название и ВЫКУПЛЕНО.
-export function postBoughtToChannel(listing: Listing, photo: Blob, origin: string): Promise<string | null> {
-  return sendToChannel(photo, `<b>${escapeHtml(listing.title)}</b>\n\n<b>✦ ВЫКУПЛЕНО ✦</b>`, appButton(origin));
-}
 
 // Пост — первое фото с кнопкой-ссылкой (у альбомов в Telegram кнопок не бывает,
 // остальные фото — на странице вещи). «В наличии» — в бота объявлений, ник продавца отдельным сообщением,

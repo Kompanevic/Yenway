@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ListingForm from "./ListingForm";
+import BulkCategories from "./BulkCategories";
 import type { Listing, ListingStatus } from "@/lib/listings-store";
 import { kindOf, LISTING_CATEGORIES, LISTING_CONDITIONS, LISTING_PATH, type ListingKind } from "@/lib/listing-constants";
 
@@ -117,14 +118,7 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
     load();
   }
 
-  async function toChannel(id: string) {
-    const res = await fetch(`/api/admin/stock/${id}/channel`, { method: "POST" });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok) {
-      setError(null);
-      alert("Опубликовано в канал");
-    } else setError(data.error ?? "Не удалось опубликовать в канал");
-  }
+
 
   const groups: { title: string; status: ListingStatus }[] = bought
     ? [
@@ -173,6 +167,8 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
           )}
         </section>
       )}
+
+      <BulkCategories listings={listings} onDone={load} />
 
       <section className="mt-10 rounded-3xl bg-panel border border-line p-6">
         <h2 className="font-display font-semibold mb-1">{HEADINGS[kind].title}</h2>
@@ -223,9 +219,9 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
                           {bought ? "Скрыть" : preorder ? "Снять" : "Продано"}
                         </button>
                       )}
-                      {bought && (
-                        <button onClick={() => toChannel(l.id)} className={btnMain}>
-                          В канал
+                      {preorder && (
+                        <button onClick={() => act(l.id, "PATCH", undefined, "bought")} className={btnMain}>
+                          Выкуплено
                         </button>
                       )}
                       {bought && (

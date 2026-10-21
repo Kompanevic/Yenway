@@ -76,6 +76,12 @@ export function editListing(id: string, changes: ListingEdit): Promise<Listing> 
   return store.patch(id, changes, "Объявление не найдено");
 }
 
+// Массово проставить тип вещи (пустой — снять тип).
+export async function setListingsCategory(ids: string[], category: string | undefined): Promise<number> {
+  const done = await Promise.all(ids.map((id) => store.patch(id, { category }, "").then(() => 1).catch(() => 0)));
+  return done.reduce<number>((a, b) => a + b, 0);
+}
+
 // «Под заказ» ↔ «Выкупленные»: вещь переезжает в раздел и сразу видна в нём.
 export function setListingKind(id: string, kind: "preorder" | "bought"): Promise<Listing> {
   return store.patch(
