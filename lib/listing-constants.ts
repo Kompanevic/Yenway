@@ -54,3 +54,28 @@ const CATEGORY_HINTS: [string, RegExp][] = [
 export function guessCategory(title: string): string | undefined {
   return CATEGORY_HINTS.find(([, re]) => re.test(title))?.[0];
 }
+
+// Размеры для фильтров. «Один размер» (OS, free size, フリー…) подходит под
+// любой выбранный размер.
+const ONE_SIZE = /^(o\/?s|one ?size|free( ?size)?|f|onesize|フリー(サイズ)?|ワンサイズ|единый( размер)?|универсальный)$/i;
+const LETTER_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+
+export function isOneSize(size: string): boolean {
+  return ONE_SIZE.test(size.trim());
+}
+
+// Приводим размер к одному виду: «42 EU» → «42», «m» → «M», «27,5 см» → «27.5».
+export function sizeKey(size: string): string {
+  const s = size.trim().toUpperCase().replace(",", ".").replace(/\s*(EU|EUR|RU|US|UK|JP|CM|СМ|РАЗМЕР|SIZE)\s*/g, " ").trim();
+  return s.replace(/\s+/g, " ");
+}
+
+export function compareSizes(a: string, b: string): number {
+  const la = LETTER_ORDER.indexOf(a), lb = LETTER_ORDER.indexOf(b);
+  if (la !== -1 || lb !== -1) return (la === -1 ? 99 : la) - (lb === -1 ? 99 : lb);
+  const na = parseFloat(a), nb = parseFloat(b);
+  if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+  if (!Number.isNaN(na)) return -1;
+  if (!Number.isNaN(nb)) return 1;
+  return a.localeCompare(b);
+}

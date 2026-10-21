@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { LISTING_CATEGORIES } from "@/lib/listing-constants";
+import { compareSizes, isOneSize, LISTING_CATEGORIES, LISTING_CONDITIONS, sizeKey } from "@/lib/listing-constants";
 import Flag from "./Flag";
 import Reveal from "./Reveal";
 import FadeImg from "./FadeImg";
@@ -16,6 +16,27 @@ export interface GridItem {
   photoCount: number;
   region?: RegionKey;
   category?: string;
+  condition?: string;
+}
+
+function Chips({ label, options, value, onChange, allLabel = "Все" }: { label?: string; options: string[]; value: string | null; onChange: (v: string | null) => void; allLabel?: string }) {
+  return (
+    <div className="mt-3 -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1">
+      {label && <span className="shrink-0 font-display text-[11px] uppercase tracking-wide text-white/40 mr-1">{label}</span>}
+      {[null, ...options].map((o) => (
+        <button
+          key={o ?? "all"}
+          type="button"
+          onClick={() => onChange(o)}
+          className={`shrink-0 rounded-full border px-3.5 py-1.5 font-display text-xs sm:text-sm transition-colors ${
+            value === o ? "bg-accent text-ink border-accent font-semibold" : "border-line text-white/60 hover:text-white hover:border-white/30"
+          }`}
+        >
+          {o ?? allLabel}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 // При наведении — плавно второе фото вещи (грузится только по первому наведению).
@@ -63,14 +84,31 @@ export default function ListingGrid({
     [items]
   );
 
+  // 2-й уровень: размеры — только внутри выбранного типа (обувь и одежда
+  // меряются по-разному); OS/free size подходят под любой размер.
+  const [size, setSize] = useState<string | null>(null);
+  const [condition, setCondition] = useState<string | null>(null);
+  const sizes = useMemo(() => {
+    if (!category) return [];
+    const set = new Set<string>();
+    for (const i of items) if (i.category === category && !isOneSize(i.size)) set.add(sizeKey(i.size));
+    return Array.from(set).sort(compareSizes);
+  }, [items, category]);
+  const conditions = useMemo(
+    () => LISTING_CONDITIONS.filter((c) => items.some((i) => i.condition === c && (!category || i.category === category))),
+    [items, category]
+  );
+
   const shown = useMemo(() => {
     const words = norm(query).split(/\s+/).filter(Boolean);
     return items.filter((i) => {
       if (category && i.category !== category) return false;
+      if (size && !isOneSize(i.size) && sizeKey(i.size) !== size) return false;
+      if (condition && i.condition !== condition) return false;
       const title = norm(i.title);
       return words.every((w) => title.includes(w));
     });
-  }, [items, query, category]);
+  }, [items, query, category, size, condition]);
 
   if (items.length === 0) {
     return <div className="mt-12 rounded-3xl bg-panel border border-line p-10 text-center text-white/50">{emptyText}</div>;
@@ -112,24 +150,21 @@ export default function ListingGrid({
       </div>
 
       {categories.length > 0 && (
-        <div className="mt-5 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {[null, ...categories].map((c) => (
-            <button
-              key={c ?? "all"}
-              type="button"
-              onClick={() => setCategory(c)}
-              className={`shrink-0 rounded-full border px-4 py-1.5 font-display text-xs sm:text-sm transition-colors ${
-                category === c ? "bg-accent text-ink border-accent font-semibold" : "border-line text-white/60 hover:text-white hover:border-white/30"
-              }`}
-            >
-              {c ?? "Все"}
-            </button>
-          ))}
-        </div>
+        <Chips
+          options={categories}
+          value={category}
+          onChange={(c) => {
+            setCategory(c);
+            setSize(null);
+            setCondition(null);
+          }}
+        />
       )}
+      {sizes.length > 0 && <Chips label="Размер" options={sizes} value={size} onChange={setSize} allLabel="Любой" />}
+      {conditions.length > 1 && <Chips label="Состояние" options={conditions} value={condition} onChange={setCondition} allLabel="Любое" />}
 
       {shown.length === 0 ? (
-        <p className="mt-10 text-white/50">{query.trim() ? `Ничего не нашлось по запросу «${query.trim()}».` : "В этой категории пока пусто."}</p>
+        <p className="mt-10 text-white/50">{query.trim() ? `Ничего не нашлось по запросу «${query.trim()}».` : "По этим фильтрам ничего нет."}</p>
       ) : (
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
           {shown.map((l, i) => (
