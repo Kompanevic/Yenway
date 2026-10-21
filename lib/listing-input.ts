@@ -1,4 +1,4 @@
-import { type Listing, type ListingInput, type ListingKind } from "./listings-store";
+import { kindOf, type Listing, type ListingInput, type ListingKind } from "./listings-store";
 import type { ReviewPhoto } from "./reviews-store";
 import { CHANNEL_ID, CHANNEL_TOKENS, ITEM_BOT, LISTING_BOT, sendPhotoResult, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
 import { CURRENCIES, calculatePrice, isManualRegion, type Currency } from "./pricing";
@@ -196,14 +196,10 @@ const MINIAPP_DEFAULT = "https://t.me/Yenwaywearbot/YenWay";
 const envMiniApp = process.env.TELEGRAM_MINIAPP_URL?.trim().replace(/^(t\.me)/, "https://$1") ?? "";
 const MINIAPP_URL = /^https:\/\/t\.me\/\w+\/\w+$/.test(envMiniApp) ? envMiniApp : MINIAPP_DEFAULT;
 
-// Одна кнопка «Приложение» — всегда мини-апп.
-function appButton(_origin: string) {
-  return { text: "Приложение", url: MINIAPP_URL };
-}
-
-// Под любым постом — одна кнопка мини-аппа.
-function postButton(_l: Listing, origin: string) {
-  return appButton(origin);
+// Под постом — кнопка мини-аппа сразу на страницу вещи (startapp=<раздел>_<id>,
+// разбирает TelegramMiniApp).
+function postButton(l: Listing, _origin: string) {
+  return { text: "Приложение", url: `${MINIAPP_URL}?startapp=${kindOf(l)}_${l.id}` };
 }
 
 // Тот же пост с кнопкой — прямо в канал (при пересылке кнопка теряется).

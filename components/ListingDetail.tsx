@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getListing, kindOf, LISTING_PATH, type ListingKind } from "@/lib/listings-store";
 import ListingGallery from "./ListingGallery";
@@ -60,7 +60,9 @@ function TelegramLinks({ text }: { text: string }) {
 // Ссылка на товар (sourceUrl) сюда намеренно не передаётся — её видит только админ.
 async function load(id: string, kind: ListingKind) {
   const l = await getListing(id).catch(() => undefined);
-  if (!l || kindOf(l) !== kind) return undefined;
+  if (!l) return undefined;
+  // Вещь переехала (например, «Под заказ» → «Выкупленные») — старые ссылки из канала ведут в новый раздел.
+  if (kindOf(l) !== kind) redirect(`${LISTING_PATH[kindOf(l)]}/${l.id}`);
   // Скрытые из «Выкупленных» не показываем вовсе.
   return l.status === "published" || (l.status === "sold" && kind !== "bought") ? l : undefined;
 }
