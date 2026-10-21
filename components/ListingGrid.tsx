@@ -21,8 +21,9 @@ export interface GridItem {
 
 function Chips({ label, options, value, onChange, allLabel = "Все" }: { label?: string; options: string[]; value: string | null; onChange: (v: string | null) => void; allLabel?: string }) {
   return (
-    <div className="mt-3 -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1">
-      {label && <span className="shrink-0 font-display text-[11px] uppercase tracking-wide text-white/40 mr-1">{label}</span>}
+    <div>
+      {label && <div className="font-display text-[11px] uppercase tracking-wide text-white/40 mb-2">{label}</div>}
+      <div className="flex flex-wrap gap-2">
       {[null, ...options].map((o) => (
         <button
           key={o ?? "all"}
@@ -35,6 +36,7 @@ function Chips({ label, options, value, onChange, allLabel = "Все" }: { label
           {o ?? allLabel}
         </button>
       ))}
+      </div>
     </div>
   );
 }
@@ -88,6 +90,7 @@ export default function ListingGrid({
   // меряются по-разному); OS/free size подходят под любой размер.
   const [size, setSize] = useState<string | null>(null);
   const [condition, setCondition] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const sizes = useMemo(() => {
     if (!category) return [];
     const set = new Set<string>();
@@ -98,6 +101,14 @@ export default function ListingGrid({
     () => LISTING_CONDITIONS.filter((c) => items.some((i) => i.condition === c && (!category || i.category === category))),
     [items, category]
   );
+
+  const hasFilters = categories.length > 0 || conditions.length > 1;
+  const active = [category, condition, size].filter((x): x is string => !!x);
+  function resetFilters() {
+    setCategory(null);
+    setSize(null);
+    setCondition(null);
+  }
 
   const shown = useMemo(() => {
     const words = norm(query).split(/\s+/).filter(Boolean);
@@ -116,12 +127,13 @@ export default function ListingGrid({
 
   return (
     <>
-      <div className="mt-10 relative max-w-md">
+      <div className="mt-10 flex gap-2 max-w-xl">
+      <div className="relative flex-1">
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Поиск по названию"
+          placeholder="Поиск"
           aria-label="Поиск по названию"
           className="w-full rounded-full bg-panel border border-line pl-11 pr-11 py-3 outline-none focus:border-accent transition-colors [&::-webkit-search-cancel-button]:appearance-none"
         />
@@ -148,20 +160,67 @@ export default function ListingGrid({
           <path d="m20 20-3.5-3.5" />
         </svg>
       </div>
-
-      {categories.length > 0 && (
-        <Chips
-          options={categories}
-          value={category}
-          onChange={(c) => {
-            setCategory(c);
-            setSize(null);
-            setCondition(null);
-          }}
-        />
+      {hasFilters && (
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((v) => !v)}
+          aria-expanded={filtersOpen}
+          className={`shrink-0 flex items-center gap-2 rounded-full border px-4 sm:px-5 font-display text-sm transition-colors ${
+            filtersOpen || active.length ? "border-accent text-white" : "border-line text-white/70 hover:text-white hover:border-white/30"
+          }`}
+        >
+          <span aria-hidden className="text-lg leading-none tracking-tighter">⋯</span>
+          Фильтры
+          {active.length > 0 && (
+            <span className="min-w-5 h-5 px-1.5 rounded-full bg-accent text-ink text-xs font-semibold leading-5 text-center">{active.length}</span>
+          )}
+        </button>
       )}
-      {sizes.length > 0 && <Chips label="Размер" options={sizes} value={size} onChange={setSize} allLabel="Любой" />}
-      {conditions.length > 1 && <Chips label="Состояние" options={conditions} value={condition} onChange={setCondition} allLabel="Любое" />}
+      </div>
+
+      {/* Выбранные фильтры — короткой строкой, когда панель закрыта */}
+      {!filtersOpen && active.length > 0 && (
+        <div className="mt-3 flex items-center gap-2 text-sm text-white/60">
+          <span>{active.join(" · ")}</span>
+          <button type="button" onClick={resetFilters} className="text-white/40 hover:text-white" aria-label="Сбросить фильтры">
+            ✕
+          </button>
+        </div>
+      )}
+
+      {filtersOpen && (
+        <div className="mt-4 max-w-xl rounded-3xl bg-panel border border-line p-5 space-y-5">
+          {categories.length > 0 && (
+            <Chips
+              label="Тип вещи"
+              options={categories}
+              value={category}
+              onChange={(c) => {
+                setCategory(c);
+                setSize(null);
+              }}
+            />
+          )}
+          {conditions.length > 1 && <Chips label="Состояние" options={conditions} value={condition} onChange={setCondition} allLabel="Любое" />}
+          {category ? (
+            sizes.length > 0 && <Chips label="Размер" options={sizes} value={size} onChange={setSize} allLabel="Любой" />
+          ) : (
+            <p className="text-xs text-white/40">Выберите тип вещи, чтобы выбрать размер.</p>
+          )}
+          <div className="flex items-center justify-between pt-1">
+            <button type="button" onClick={resetFilters} className="text-sm text-white/50 hover:text-white">
+              Сбросить
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(false)}
+              className="font-display rounded-full btn-fx bg-accent text-ink px-5 py-2 text-sm font-semibold hover:bg-accent2"
+            >
+              Показать {shown.length}
+            </button>
+          </div>
+        </div>
+      )}
 
       {shown.length === 0 ? (
         <p className="mt-10 text-white/50">{query.trim() ? `Ничего не нашлось по запросу «${query.trim()}».` : "По этим фильтрам ничего нет."}</p>
