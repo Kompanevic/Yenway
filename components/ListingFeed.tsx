@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ListingGrid from "./ListingGrid";
 import { regionFromUrl } from "@/lib/item-info";
+import { guessCategory } from "@/lib/listing-constants";
 import { getStats } from "@/lib/listing-stats";
 import { getListings, kindOf, LISTING_PATH, type ListingKind } from "@/lib/listings-store";
 
@@ -74,7 +75,8 @@ export default async function ListingFeed({ kind }: { kind: ListingKind }) {
           size,
           price,
           photoCount,
-          ...(category ? { category } : {}),
+          // Тип не отмечен — определяем по названию, чтобы вещь находилась в фильтрах.
+          ...((category ?? guessCategory(title)) ? { category: category ?? guessCategory(title) } : {}),
           condition,
           views: stats[id]?.views ?? 0,
           likes: stats[id]?.likes ?? 0,

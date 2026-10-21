@@ -83,11 +83,8 @@ export default function ListingGrid({
 }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string | null>(null);
-  // Фильтры показываем только по типам, которые есть в ленте, в порядке списка.
-  const categories = useMemo(
-    () => LISTING_CATEGORIES.filter((c) => items.some((i) => i.category === c)),
-    [items]
-  );
+  // Все типы вещей — всегда, даже если таких сейчас нет в ленте.
+  const categories = LISTING_CATEGORIES;
 
   // 2-й уровень: размеры — только внутри выбранного типа (обувь и одежда
   // меряются по-разному); OS/free size подходят под любой размер.
