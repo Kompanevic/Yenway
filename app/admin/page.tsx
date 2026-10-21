@@ -162,7 +162,7 @@ export default function AdminPage() {
     <main className="max-w-4xl mx-auto px-6 py-16">
       <div aria-hidden className="fixed inset-0 -z-10">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/api/admin/wallpaper" alt="" className="w-full h-full object-cover object-[50%_30%]" />
+        <img src="/api/admin/wallpaper?v=2" alt="" className="w-full h-full object-cover object-center" />
         <div className="absolute inset-0 bg-ink/70" />
       </div>
       <div className="flex items-center justify-between">
