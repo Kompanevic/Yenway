@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getListing, kindOf, LISTING_PATH } from "@/lib/listings-store";
 import { escapeHtml, sendTelegramMessage } from "@/lib/telegram";
+import { recordRequest } from "@/lib/requests-store";
+import { tgUserFrom } from "@/lib/tg-auth";
 import { SITE_URL } from "@/lib/site";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -51,5 +53,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       { status: 502 }
     );
   }
+  await recordRequest(
+    {
+      type: "buy",
+      title: `${listing.title} • ${listing.size}`,
+      username,
+      price: listing.price,
+      link: `${LISTING_PATH[kindOf(listing)]}/${listing.id}`
+    },
+    tgUserFrom(req)
+  );
   return NextResponse.json({ notified: true });
 }

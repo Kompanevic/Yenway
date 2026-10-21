@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { escapeHtml, sendTelegramAlbum, sendTelegramMessage } from "@/lib/telegram";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { recordRequest } from "@/lib/requests-store";
+import { tgUserFrom } from "@/lib/tg-auth";
 import { LEGIT_FEE_RUB, LEGIT_MAX_PHOTOS, LEGIT_MAX_PHOTO_BYTES, LEGIT_MIN_PHOTOS } from "@/lib/legit";
 
 // Заявка на легит-чек: фото со всех сторон + ник → альбомом в основной бот.
@@ -59,5 +61,6 @@ export async function POST(req: NextRequest) {
       { status: 502 }
     );
   }
+  await recordRequest({ type: "legit", title: model || "Rick Owens", username }, tgUserFrom(req));
   return NextResponse.json({ ok: true });
 }

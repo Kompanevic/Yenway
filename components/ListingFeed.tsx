@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ListingGrid from "./ListingGrid";
 import { regionFromUrl } from "@/lib/item-info";
+import { getStats } from "@/lib/listing-stats";
 import { getListings, kindOf, LISTING_PATH, type ListingKind } from "@/lib/listings-store";
 
 const COPY: Record<ListingKind, { title: string; text: string; empty: string }> = {
@@ -26,12 +27,13 @@ const boughtDate = (l: { boughtAt?: string; createdAt: string }) => l.boughtAt ?
 
 export default async function ListingFeed({ kind }: { kind: ListingKind }) {
   const items = (await getListings().catch(() => [])).filter((l) => l.status === "published" && kindOf(l) === kind);
+  const stats = await getStats(items.map((l) => l.id));
   if (kind === "bought") items.sort((a, b) => boughtDate(b).localeCompare(boughtDate(a)));
   const copy = COPY[kind];
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-16">
-      <a href="/" className="block w-fit text-white/40 text-sm hover:text-white/70 transition-colors">
+      <a href="/" className="tg-hide block w-fit text-white/40 text-sm hover:text-white/70 transition-colors">
         ← на главную
       </a>
 
@@ -74,6 +76,8 @@ export default async function ListingFeed({ kind }: { kind: ListingKind }) {
           photoCount,
           ...(category ? { category } : {}),
           condition,
+          views: stats[id]?.views ?? 0,
+          likes: stats[id]?.likes ?? 0,
           // Флажок страны — «под заказ» и «выкупленные»; сама ссылка в клиент не уходит.
           ...(kind !== "stock" ? { region: region ?? regionFromUrl(sourceUrl) } : {})
         }))}

@@ -5,6 +5,7 @@ import "./globals.css";
 import TopLoader from "@/components/TopLoader";
 import SiteHeader from "@/components/SiteHeader";
 import TelegramMiniApp from "@/components/TelegramMiniApp";
+import MiniAppTabBar from "@/components/MiniAppTabBar";
 import { SITE_URL } from "@/lib/site";
 
 const title = "YenWay — заказ вещей из Японии, Европы, США, Китая и Кореи";
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <TopLoader />
         <SiteHeader />
         {children}
+        <MiniAppTabBar />
         <Analytics />
       </body>
     </html>

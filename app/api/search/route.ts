@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendTelegramPhoto, sendTelegramMessage, escapeHtml } from "@/lib/telegram";
+import { recordRequest } from "@/lib/requests-store";
+import { tgUserFrom } from "@/lib/tg-auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
@@ -65,5 +67,6 @@ export async function POST(req: NextRequest) {
       { status: 502 }
     );
   }
+  await recordRequest({ type: "search", title: itemName, username }, tgUserFrom(req));
   return NextResponse.json({ notified: true });
 }

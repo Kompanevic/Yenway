@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import PhotoPicker, { type PickedPhoto } from "./PhotoPicker";
-import { useTgUsername } from "@/lib/tg-webapp";
+import { tgInitHeaders, useTgUsername } from "@/lib/tg-webapp";
 import { LEGIT_ANGLES, LEGIT_FEE_RUB, LEGIT_MAX_PHOTOS, LEGIT_MIN_PHOTOS } from "@/lib/legit";
 
 const field = "w-full rounded-2xl bg-ink border border-line px-4 py-3.5 outline-none focus:border-accent transition-colors";
@@ -37,7 +37,7 @@ export default function LegitForm() {
       body.append("model", model);
       body.append("comment", comment);
       body.append("username", username);
-      const res = await fetch("/api/legit", { method: "POST", body });
+      const res = await fetch("/api/legit", { method: "POST", body, headers: tgInitHeaders() });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Что-то пошло не так");
       setSent(true);

@@ -116,3 +116,11 @@ body {
     transition: none;
   }
 }
+
+/* Мини-апп Telegram: место под нижнюю панель, без кнопки меню в шапке */
+.tg-app body {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+.tg-app .tg-hide {
+  display: none;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTgUsername } from "@/lib/tg-webapp";
+import { tgInitHeaders, useTgUsername } from "@/lib/tg-webapp";
 import { useState } from "react";
 
 export default function BuyButton({ id, label = "Хочу купить" }: { id: string; label?: string }) {
@@ -18,7 +18,7 @@ export default function BuyButton({ id, label = "Хочу купить" }: { id:
     try {
       const res = await fetch(`/api/stock/${id}/buy`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...tgInitHeaders() },
         body: JSON.stringify({ username })
       });
       const data = await res.json().catch(() => ({}));

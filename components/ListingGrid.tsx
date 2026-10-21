@@ -6,6 +6,7 @@ import { compareSizes, isOneSize, LISTING_CATEGORIES, LISTING_CONDITIONS, sizeKe
 import Flag from "./Flag";
 import Reveal from "./Reveal";
 import FadeImg from "./FadeImg";
+import { EyeIcon, HeartIcon } from "./Icons";
 import type { RegionKey } from "@/lib/regions";
 
 export interface GridItem {
@@ -17,6 +18,8 @@ export interface GridItem {
   region?: RegionKey;
   category?: string;
   condition?: string;
+  views?: number;
+  likes?: number;
 }
 
 function Chips({ label, options, value, onChange, allLabel = "Все" }: { label?: string; options: string[]; value: string | null; onChange: (v: string | null) => void; allLabel?: string }) {
@@ -249,6 +252,12 @@ export default function ListingGrid({
                 {pricePrefix}
                 {l.price.toLocaleString("ru-RU")} ₽
               </div>
+              {(l.views || l.likes) ? (
+                <div className="mt-1 flex items-center gap-3 text-[11px] text-white/40">
+                  <span className="flex items-center gap-1"><EyeIcon className="w-3.5 h-3.5" />{l.views ?? 0}</span>
+                  {l.likes ? <span className="flex items-center gap-1"><HeartIcon className="w-3.5 h-3.5" />{l.likes}</span> : null}
+                </div>
+              ) : null}
             </Link>
             </Reveal>
           ))}

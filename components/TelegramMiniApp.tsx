@@ -43,6 +43,8 @@ export default function TelegramMiniApp() {
       if (m) router.replace(`${LISTING_PATH[m[1] as ListingKind]}/${m[2]}`);
       else if (start === "order") router.replace("/order");
       else if (start in LISTING_PATH) router.replace(LISTING_PATH[start as ListingKind]);
+      // Первый экран приложения — лента.
+      else if (window.location.pathname === "/") router.replace("/preorder");
     };
     document.head.appendChild(script);
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getListing, kindOf, LISTING_PATH, type ListingKind } from "@/lib/listings-store";
 import ListingGallery from "./ListingGallery";
+import ListingActions from "./ListingActions";
 import BuyButton from "./BuyButton";
 
 const COPY: Record<ListingKind, { back: string; unavailable: string; badge: string; action: string; note: string; meta: string }> = {
@@ -124,6 +125,7 @@ export default async function ListingDetail({ id, kind }: { id: string; kind: Li
             </p>
           )}
           {kind === "bought" && <p className="mt-1 text-xs text-white/40">Итоговая цена для клиента под ключ — с доставкой и страховкой.</p>}
+          <ListingActions id={l.id} canBuy={!unavailable && kind !== "bought"} />
           {l.description && (
             <p className="mt-6 text-white/60 whitespace-pre-line">
               <TelegramLinks text={l.description} />

@@ -81,7 +81,7 @@ export default function SiteHeader() {
           aria-label="Меню"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((v) => !v)}
-          className="xl:hidden col-start-3 justify-self-end flex flex-col justify-center items-center gap-1.5 w-10 h-10 shrink-0"
+          className="tg-hide xl:hidden col-start-3 justify-self-end flex flex-col justify-center items-center gap-1.5 w-10 h-10 shrink-0"
         >
           <motion.span animate={menuOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }} className="block h-0.5 w-6 bg-white rounded-full" />
           <motion.span animate={menuOpen ? { opacity: 0 } : { opacity: 1 }} className="block h-0.5 w-6 bg-white rounded-full" />

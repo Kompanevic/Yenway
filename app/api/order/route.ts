@@ -3,6 +3,8 @@ import { fetchLinkPreview } from "@/lib/og";
 import { calculatePrice, isManualRegion, MANAGER_TELEGRAM, CUSTOMS_NOTE } from "@/lib/pricing";
 import { sendTelegramMessage, escapeHtml } from "@/lib/telegram";
 import { REGIONS, RegionKey } from "@/lib/regions";
+import { recordRequest } from "@/lib/requests-store";
+import { tgUserFrom } from "@/lib/tg-auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
@@ -81,6 +83,16 @@ export async function POST(req: NextRequest) {
     .join("\n");
 
   const sent = await sendTelegramMessage(lines);
+  await recordRequest(
+    {
+      type: "calc",
+      title: preview.title ?? `${regionInfo.name}: ${url.hostname}`,
+      username,
+      link: url.toString(),
+      ...(breakdown?.totalRUB ? { price: breakdown.totalRUB } : {})
+    },
+    tgUserFrom(req)
+  );
 
   return NextResponse.json({
     preview,

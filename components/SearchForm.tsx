@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTgUsername } from "@/lib/tg-webapp";
+import { tgInitHeaders, useTgUsername } from "@/lib/tg-webapp";
 import { downscaleImage } from "@/lib/image";
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
@@ -46,7 +46,7 @@ export default function SearchForm() {
       body.append("itemName", itemName);
       body.append("description", description);
       body.append("photo", photo);
-      const res = await fetch("/api/search", { method: "POST", body });
+      const res = await fetch("/api/search", { method: "POST", body, headers: tgInitHeaders() });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Что-то пошло не так");
