@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { downscaleImage } from "@/lib/image";
 import type { ItemInfo } from "@/lib/item-info";
-import { LISTING_CATEGORIES, LISTING_CONDITIONS, MAX_LISTING_PHOTOS, type ListingKind } from "@/lib/listing-constants";
+import { guessCategory, LISTING_CATEGORIES, LISTING_CONDITIONS, MAX_LISTING_PHOTOS, type ListingKind } from "@/lib/listing-constants";
 import {
   CHINA_DELIVERY_TIERS,
   CURRENCIES,
@@ -62,6 +62,8 @@ export default function ListingForm({
   const [price, setPrice] = useState("");
   const [condition, setCondition] = useState(LISTING_CONDITIONS[2]);
   const [category, setCategory] = useState("");
+  // Тип подставляется сам по названию, пока его не выбрали вручную.
+  const [categoryTouched, setCategoryTouched] = useState(false);
   const [description, setDescription] = useState(kind === "preorder" ? PREORDER_DESCRIPTION : "");
   const [seller, setSeller] = useState("");
   useTgUsername(setSeller);
@@ -87,6 +89,9 @@ export default function ListingForm({
   };
 
   useEffect(() => setRate(defaultRate(currency)), [currency]);
+  useEffect(() => {
+    if (!categoryTouched) setCategory(guessCategory(title) ?? "");
+  }, [title, categoryTouched]);
   // Иена: курс по ступеням от цены вещи (lib/pricing.ts → JPY_RATE_TIERS).
   useEffect(() => {
     const lp = num(localPrice);
@@ -213,6 +218,7 @@ export default function ListingForm({
       setPrice("");
       setDescription(kind === "preorder" ? PREORDER_DESCRIPTION : "");
       setCategory("");
+      setCategoryTouched(false);
       setSourceUrl("");
       setLocalPrice("");
       setWeight("");
@@ -425,8 +431,20 @@ export default function ListingForm({
 
       {own && (
         <div>
-          <label className={label}>Тип вещи <span className="normal-case tracking-normal text-white/30">(для фильтров)</span></label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className={field}>
+          <label className={label}>
+            Тип вещи{" "}
+            <span className="normal-case tracking-normal text-white/30">
+              {!categoryTouched && category ? "(определён по названию — можно поменять)" : "(для фильтров)"}
+            </span>
+          </label>
+          <select
+            value={category}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setCategoryTouched(true);
+            }}
+            className={field}
+          >
             <option value="">— не выбран —</option>
             {LISTING_CATEGORIES.map((c) => (
               <option key={c}>{c}</option>
