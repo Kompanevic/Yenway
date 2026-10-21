@@ -8,7 +8,7 @@ import { tgUserFrom } from "@/lib/tg-auth";
 
 export const maxDuration = 30;
 
-// Объявление «под заказ» от продавца из мини-аппа — сразу на сайт и в канал.
+// Объявление «под заказ» от продавца из мини-аппа — сначала на проверку админу.
 export async function POST(req: NextRequest) {
   const user = tgUserFrom(req);
   if (!user) return NextResponse.json({ error: "Откройте в приложении YenWay в Telegram" }, { status: 401 });
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   const parsed = await parseSellerListing(form, user);
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
   try {
-    const listing = await addListing(parsed.value, parsed.photos, "published");
+    const listing = await addListing(parsed.value, parsed.photos, "pending");
     await notifySellerListing(listing, parsed.blobs, SITE_URL, parsed.calc);
     return NextResponse.json({ ok: true, id: listing.id });
   } catch (e) {

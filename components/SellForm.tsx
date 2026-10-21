@@ -123,11 +123,11 @@ export default function SellForm() {
   if (doneId) {
     return (
       <div className="rounded-3xl border border-emerald-400/30 bg-emerald-400/5 p-6 text-center">
-        <div className="font-display text-xl font-bold">Вещь опубликована</div>
-        <p className="mt-2 text-sm text-white/60">Она уже на сайте и в канале. Когда её выкупят, заработок появится в профиле.</p>
+        <div className="font-display text-xl font-bold">Заявка отправлена</div>
+        <p className="mt-2 text-sm text-white/60">Мы проверим вещь и опубликуем её на сайте и в канале. Статус — в профиле, в «Мои вещи».</p>
         <div className="mt-5 flex justify-center gap-3">
-          <Link href={`/preorder/${doneId}`} className="font-display rounded-full btn-fx bg-accent text-ink px-5 py-2.5 text-sm font-semibold">
-            Смотреть
+          <Link href="/profile" className="font-display rounded-full btn-fx bg-accent text-ink px-5 py-2.5 text-sm font-semibold">
+            В профиль
           </Link>
           <button onClick={() => location.reload()} className="font-display rounded-full border border-line px-5 py-2.5 text-sm">
             Ещё одну
@@ -263,7 +263,7 @@ export default function SellForm() {
 
       {error && <p className="text-sm text-red-400">{error}</p>}
       <button disabled={loading || (earning != null && earning < 0)} className="w-full font-display rounded-full btn-fx bg-accent text-ink py-3.5 font-semibold disabled:opacity-50">
-        {loading ? "Публикуем…" : "Опубликовать"}
+        {loading ? "Отправляем…" : "Отправить на проверку"}
       </button>
       <p className="text-xs text-white/35 text-center">
         Заявки на покупку приходят в YenWay — мы выкупаем вещь и доставляем покупателю, а разницу выплачиваем вам.

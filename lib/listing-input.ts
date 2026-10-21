@@ -1,4 +1,4 @@
-import { kindOf, type Listing, type ListingInput, type ListingKind } from "./listings-store";
+import { getListingPhoto, kindOf, type Listing, type ListingInput, type ListingKind } from "./listings-store";
 import type { ReviewPhoto } from "./reviews-store";
 import { CHANNEL_ID, CHANNEL_TOKENS, ITEM_BOT, LISTING_BOT, sendPhotoResult, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
 import { CURRENCIES, calculatePrice, isManualRegion, type Currency } from "./pricing";
@@ -251,17 +251,17 @@ export async function parseSellerListing(form: FormData, user: TgUser): Promise<
   };
 }
 
-// Вещь продавца сразу уходит в канал, админу — пост, расчёт и заработок продавца.
+// Вещь продавца ждёт проверки: админу — пост, ссылка, расчёт и заработок продавца.
+// В канал уходит только после «Опубликовать» в админке (publishSellerListing).
 export async function notifySellerListing(listing: Listing, blobs: Blob[], origin: string, calc?: PreorderCalc): Promise<void> {
-  const channelError = await postToChannel(listing, blobs[0], origin);
   const bot = ITEM_BOT.token ? ITEM_BOT : LISTING_BOT;
   await sendTelegramPhoto(blobs[0], "photo.jpg", listingPost(listing), bot, postButton(listing, origin));
   const margin = listing.price - (listing.basePrice ?? listing.price);
   await sendTelegramMessage(
     [
-      `👤 <b>Вещь от продавца</b> @${escapeHtml(listing.seller)} (id ${listing.sellerTgId})`,
+      `🆕 <b>Заявка на публикацию</b> от @${escapeHtml(listing.seller)} (id ${listing.sellerTgId})`,
       `Выкуп под ключ: ${(listing.basePrice ?? 0).toLocaleString("ru-RU")} ₽ · заработок продавца: <b>${margin.toLocaleString("ru-RU")} ₽</b>`,
-      channelError ? `⚠️ В канал не опубликовано: ${escapeHtml(channelError)}` : `Опубликовано в канале. Снять — /admin → «Под заказ».`,
+      `Проверьте ссылку и подтвердите: ${origin}/admin → «Под заказ» → «На модерации». После подтверждения вещь уйдёт на сайт и в канал.`,
       ``,
       calcMessage(listing, calc)
     ].join("\n"),
@@ -308,4 +308,12 @@ export async function notifyListing(
     );
   }
   return true;
+}
+
+// Админ подтвердил вещь продавца — публикуем пост в канал (один раз).
+export async function publishSellerListing(listing: Listing, origin: string): Promise<string | null> {
+  const photo = await getListingPhoto(listing.id, 0);
+  if (!photo) return "нет фото";
+  const blob = new Blob([new Uint8Array(Buffer.from(photo.data, "base64"))], { type: photo.type });
+  return postToChannel(listing, blob, origin);
 }

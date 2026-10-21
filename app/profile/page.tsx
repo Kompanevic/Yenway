@@ -122,7 +122,7 @@ export default function ProfilePage() {
           </div>
           <div className="space-y-2">
             {items.map((it) => (
-              <Link key={it.id} href={`/${it.kind}/${it.id}`} className="flex items-center gap-3 rounded-2xl border border-line bg-panel/80 p-3">
+              <Link key={it.id} href={it.status === "pending" ? "/profile" : `/${it.kind}/${it.id}`} className="flex items-center gap-3 rounded-2xl border border-line bg-panel/80 p-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/api/stock-photo/${it.id}/0`} alt="" className="w-12 h-12 rounded-xl object-cover" />
                 <div className="min-w-0 flex-1">
@@ -132,7 +132,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <span className="shrink-0 rounded-full border border-line px-2.5 py-0.5 text-[11px] text-white/60">
-                  {it.payout === "paid" ? "Выплачено" : it.payout === "due" ? "К выплате" : it.status === "sold" ? "Снята" : "В продаже"}
+                  {it.payout === "paid" ? "Выплачено" : it.payout === "due" ? "К выплате" : it.status === "pending" ? "На проверке" : it.status === "sold" ? "Снята" : "В продаже"}
                 </span>
               </Link>
             ))}

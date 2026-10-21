@@ -115,7 +115,8 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
       setError(data.error ?? "Действие не выполнено");
       return;
     }
-    setError(null);
+    // Например, вещь продавца на сайте, но пост в канал не вышел.
+    setError((await res.json().catch(() => ({}))).warning ?? null);
     load();
   }
 
@@ -128,6 +129,7 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
       ]
     : preorder
     ? [
+        { title: "На модерации — вещи продавцов", status: "pending" },
         { title: "В ленте", status: "published" },
         { title: "Снятые", status: "sold" }
       ]
@@ -192,7 +194,7 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
               <div className="space-y-3">
                 {items.map((l) => (
                   <div key={l.id} className="rounded-2xl bg-panel border border-line p-3">
-                  <div className="flex gap-3 items-center">
+                  <div className="flex flex-wrap sm:flex-nowrap gap-3 items-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={`/api/stock-photo/${l.id}/0`} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
                     <div className="min-w-0 flex-1">
@@ -215,7 +217,7 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
                         </a>
                       )}
                     </div>
-                    <div className="flex flex-wrap justify-end gap-2 shrink-0">
+                    <div className="flex flex-wrap sm:justify-end gap-2 w-full sm:w-auto sm:shrink-0">
                       {l.status === "pending" && (
                         <button onClick={() => act(l.id, "PATCH", "published")} className={btnMain}>
                           Опубликовать
@@ -226,7 +228,7 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
                           {bought ? "Скрыть" : preorder ? "Снять" : "Продано"}
                         </button>
                       )}
-                      {preorder && (
+                      {preorder && l.status !== "pending" && (
                         <button onClick={() => act(l.id, "PATCH", undefined, "bought")} className={btnMain}>
                           Выкуплено
                         </button>

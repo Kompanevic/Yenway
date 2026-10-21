@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthed } from "@/lib/admin-auth";
-import { editListing, removeListing, setListingKind, setListingStatus, setPayoutPaid } from "@/lib/listings-store";
-import { parseListingEdit } from "@/lib/listing-input";
+import { editListing, getListing, markChannelPosted, removeListing, setListingKind, setListingStatus, setPayoutPaid } from "@/lib/listings-store";
+import { parseListingEdit, publishSellerListing } from "@/lib/listing-input";
+import { SITE_URL } from "@/lib/site";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   if (!isAuthed(req)) return NextResponse.json({ error: "Не авторизовано" }, { status: 401 });
@@ -39,7 +40,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Неизвестное действие" }, { status: 400 });
   }
   try {
-    await setListingStatus(params.id, status);
+    const before = await getListing(params.id);
+    const listing = await setListingStatus(params.id, status);
+    // Подтвердили вещь продавца — теперь и в канал.
+    if (status === "published" && before?.status === "pending" && listing.sellerTgId && !listing.channelPosted) {
+      const channelError = await publishSellerListing(listing, SITE_URL);
+      if (channelError) return NextResponse.json({ ok: true, warning: `На сайте опубликовано, в канал — нет: ${channelError}` });
+      await markChannelPosted(listing.id);
+    }
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Ошибка" }, { status: 400 });

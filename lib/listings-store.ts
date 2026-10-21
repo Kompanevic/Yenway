@@ -32,6 +32,8 @@ export interface Listing {
   basePrice?: number;
   // Выплата продавцу: due — к выплате (вещь выкуплена), paid — выплачено.
   payout?: "due" | "paid";
+  // Пост в канале уже вышел — повторно при «Вернуть» не публикуем.
+  channelPosted?: boolean;
   // Тип вещи (LISTING_CATEGORIES) — для фильтров.
   category?: string;
   // Когда вещь попала в «Выкупленные» — по этой дате сортируем витрину.
@@ -109,6 +111,10 @@ export async function setListingKind(id: string, kind: "preorder" | "bought"): P
 
 export function sellerEarning(l: Pick<Listing, "price" | "basePrice">): number {
   return l.basePrice ? Math.max(0, l.price - l.basePrice) : 0;
+}
+
+export function markChannelPosted(id: string): Promise<Listing> {
+  return store.patch(id, { channelPosted: true }, "Объявление не найдено");
 }
 
 export function setPayoutPaid(id: string): Promise<Listing> {
