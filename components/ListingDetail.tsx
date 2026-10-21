@@ -102,6 +102,22 @@ export default async function ListingDetail({ id, kind }: { id: string; kind: Li
             </span>
           )}
           <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight break-words">{l.title}</h1>
+          {kind !== "stock" && (
+            <div className="mt-4 flex items-center gap-2.5 text-sm text-white/60">
+              {l.sellerTgId && l.sellerPhoto ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={l.sellerPhoto} alt="" referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover ring-1 ring-white/20" />
+              ) : (
+                <span className="w-8 h-8 rounded-full bg-accent text-ink flex items-center justify-center font-display text-xs font-bold">
+                  {l.sellerTgId ? (l.sellerName || l.seller).slice(0, 1).toUpperCase() : "Y"}
+                </span>
+              )}
+              <span>
+                <span className="text-white/40">Продавец </span>
+                {l.sellerTgId ? `@${l.seller}` : "YenWay"}
+              </span>
+            </div>
+          )}
           <div className="mt-6 space-y-2.5 text-white/70">
             <div className="flex justify-between border-b border-line pb-2.5">
               <span className="text-white/40">Размер</span>

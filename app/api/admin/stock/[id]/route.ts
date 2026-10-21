@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthed } from "@/lib/admin-auth";
-import { editListing, removeListing, setListingKind, setListingStatus } from "@/lib/listings-store";
+import { editListing, removeListing, setListingKind, setListingStatus, setPayoutPaid } from "@/lib/listings-store";
 import { parseListingEdit } from "@/lib/listing-input";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -12,6 +12,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
     try {
       return NextResponse.json({ listing: await editListing(params.id, parsed.value) });
+    } catch (e) {
+      return NextResponse.json({ error: e instanceof Error ? e.message : "Ошибка" }, { status: 400 });
+    }
+  }
+  // Продавцу выплатили заработок
+  if (body?.payout === "paid") {
+    try {
+      await setPayoutPaid(params.id);
+      return NextResponse.json({ ok: true });
     } catch (e) {
       return NextResponse.json({ error: e instanceof Error ? e.message : "Ошибка" }, { status: 400 });
     }

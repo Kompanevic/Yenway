@@ -1,7 +1,8 @@
-import { LISTING_PATH, kindOf, type Listing, type ListingInput, type ListingKind } from "./listings-store";
+import { type Listing, type ListingInput, type ListingKind } from "./listings-store";
 import type { ReviewPhoto } from "./reviews-store";
 import { CHANNEL_ID, CHANNEL_TOKENS, ITEM_BOT, LISTING_BOT, sendPhotoResult, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
-import { CURRENCIES, calculatePrice, type Currency } from "./pricing";
+import { CURRENCIES, calculatePrice, isManualRegion, type Currency } from "./pricing";
+import type { TgUser } from "./tg-auth";
 import { REGIONS, type RegionKey } from "./regions";
 import { LISTING_CATEGORIES, LISTING_CONDITIONS, MAX_LISTING_PHOTOS } from "./listing-constants";
 import type { ListingEdit } from "./listings-store";
@@ -203,11 +204,9 @@ function appButton(origin: string) {
   return { text: "Приложение", url: MINIAPP_URL ?? origin };
 }
 
-// «Под заказ» — кнопка приложения; «В наличии» (пост в бота) — ссылка на вещь.
-function postButton(l: Listing, origin: string) {
-  const kind = kindOf(l);
-  if (kind === "preorder") return appButton(origin);
-  return { text: "🌐 Перейти на сайт", url: `${origin}${LISTING_PATH[kind]}/${l.id}` };
+// Под любым постом — одна кнопка мини-аппа.
+function postButton(_l: Listing, origin: string) {
+  return appButton(origin);
 }
 
 // Тот же пост с кнопкой — прямо в канал (при пересылке кнопка теряется).
@@ -224,6 +223,58 @@ async function sendToChannel(photo: Blob, caption: string, button?: { text: stri
 
 function postToChannel(listing: Listing, photo: Blob, origin: string): Promise<string | null> {
   return sendToChannel(photo, listingPost(listing), postButton(listing, origin));
+}
+
+// Объявление «под заказ» от продавца из мини-аппа. Цену выкупа под ключ
+// считаем на сервере по ссылке и весу; продавец ставит свою цену не ниже —
+// разница его заработок.
+export async function parseSellerListing(form: FormData, user: TgUser): Promise<ParsedListing & { base?: number }> {
+  form.set("kind", "preorder");
+  const parsed = await parseListingForm(form, true);
+  if (!parsed.ok) return parsed;
+  const { value, calc } = parsed;
+  if (!calc || isManualRegion(calc.region)) return { ok: false, error: "Вставьте ссылку на товар из Японии, Китая или Кореи и укажите цену на площадке" };
+  if (!value.weightKg) return { ok: false, error: "Укажите примерный вес" };
+  const b = calculatePrice(calc.localPrice, calc.region, value.sourceUrl ?? "", value.weightKg, calc.chinaTier);
+  if (b.totalRUB == null) return { ok: false, error: "Не удалось посчитать стоимость выкупа" };
+  if (value.price < b.totalRUB) {
+    return { ok: false, error: `Цена не может быть ниже стоимости выкупа — ${b.totalRUB.toLocaleString("ru-RU")} ₽` };
+  }
+  const name = [user.first_name, user.last_name].filter(Boolean).join(" ").slice(0, 60);
+  return {
+    ...parsed,
+    // Ручной курс и доставка — только у админа.
+    calc: { region: calc.region, localPrice: calc.localPrice, chinaTier: calc.chinaTier },
+    value: {
+      ...value,
+      own: false,
+      seller: user.username ?? "",
+      sellerTgId: user.id,
+      ...(name ? { sellerName: name } : {}),
+      ...(user.photo_url?.startsWith("https://") ? { sellerPhoto: user.photo_url } : {}),
+      basePrice: b.totalRUB
+    },
+    base: b.totalRUB
+  };
+}
+
+// Вещь продавца сразу уходит в канал, админу — пост, расчёт и заработок продавца.
+export async function notifySellerListing(listing: Listing, blobs: Blob[], origin: string, calc?: PreorderCalc): Promise<void> {
+  const channelError = await postToChannel(listing, blobs[0], origin);
+  const bot = ITEM_BOT.token ? ITEM_BOT : LISTING_BOT;
+  await sendTelegramPhoto(blobs[0], "photo.jpg", listingPost(listing), bot, postButton(listing, origin));
+  const margin = listing.price - (listing.basePrice ?? listing.price);
+  await sendTelegramMessage(
+    [
+      `👤 <b>Вещь от продавца</b> @${escapeHtml(listing.seller)} (id ${listing.sellerTgId})`,
+      `Выкуп под ключ: ${(listing.basePrice ?? 0).toLocaleString("ru-RU")} ₽ · заработок продавца: <b>${margin.toLocaleString("ru-RU")} ₽</b>`,
+      channelError ? `⚠️ В канал не опубликовано: ${escapeHtml(channelError)}` : `Опубликовано в канале. Снять — /admin → «Под заказ».`,
+      ``,
+      calcMessage(listing, calc)
+    ].join("\n"),
+    bot,
+    true
+  );
 }
 
 

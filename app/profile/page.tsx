@@ -7,7 +7,8 @@ import { plural } from "@/lib/plural";
 import { tgInitHeaders, tgWebApp, useList, useMiniApp } from "@/lib/tg-webapp";
 import { REQUEST_STATUS_LABEL, REQUEST_TYPE_LABEL, type CustomerRequestView as CustomerRequest } from "@/lib/request-constants";
 
-type Me = { user: { id: number; username?: string; first_name?: string; last_name?: string; photo_url?: string }; requests: CustomerRequest[] };
+type Me = { user: { id: number; username?: string; first_name?: string; last_name?: string; photo_url?: string }; requests: CustomerRequest[]; items?: SellerItem[] };
+type SellerItem = { id: string; title: string; size: string; price: number; kind: string; status: string; earning: number; payout: "due" | "paid" | null };
 
 const STATUS_STYLE: Record<string, string> = {
   new: "border-white/20 text-white/70",
@@ -54,6 +55,9 @@ export default function ProfilePage() {
   const u = me?.user ?? tgWebApp()?.initDataUnsafe.user;
   const name = [me?.user.first_name, me?.user.last_name].filter(Boolean).join(" ") || u?.first_name || "Профиль";
   const requests = me?.requests ?? [];
+  const items = me?.items ?? [];
+  const due = items.filter((i) => i.payout === "due").reduce((s, i) => s + i.earning, 0);
+  const paid = items.filter((i) => i.payout === "paid").reduce((s, i) => s + i.earning, 0);
   const activeCount = requests.filter((r) => r.status !== "delivered" && r.status !== "canceled").length;
   const row = "flex items-center justify-between px-5 py-4 border-b border-line/60 last:border-b-0 hover:bg-white/[0.03] transition-colors";
 
@@ -89,6 +93,7 @@ export default function ProfilePage() {
       </section>
 
       <section className="rounded-3xl border border-line bg-panel/80 overflow-hidden font-display text-sm">
+        <Link href="/sell" className={row}>Выложить свою вещь <span className="text-accent">+</span></Link>
         <Link href="/favorites" className={row}>Избранное <span className="text-white/30">→</span></Link>
         <Link href="/cart" className={row}>Корзина <span className="text-white/30">→</span></Link>
         <Link href="/search" className={row}>Найти вещь по фото <span className="text-white/30">→</span></Link>
@@ -96,6 +101,39 @@ export default function ProfilePage() {
         <Link href="/reviews" className={row}>Отзывы <span className="text-white/30">→</span></Link>
         <a href={`https://t.me/${MANAGER_TELEGRAM}`} className={row}>Написать менеджеру <span className="text-white/30">→</span></a>
       </section>
+
+      {items.length > 0 && (
+        <section>
+          <h2 className="font-display text-lg font-bold mt-6 mb-3">Мои вещи</h2>
+          <div className="grid grid-cols-2 gap-2 mb-3 text-center">
+            <div className="rounded-2xl border border-amber-300/30 bg-panel/80 py-3">
+              <div className="font-display text-xl font-bold">{due.toLocaleString("ru-RU")} ₽</div>
+              <div className="text-[10px] text-white/45 mt-0.5">к выплате</div>
+            </div>
+            <div className="rounded-2xl border border-emerald-300/30 bg-panel/80 py-3">
+              <div className="font-display text-xl font-bold">{paid.toLocaleString("ru-RU")} ₽</div>
+              <div className="text-[10px] text-white/45 mt-0.5">выплачено</div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {items.map((it) => (
+              <Link key={it.id} href={`/${it.kind}/${it.id}`} className="flex items-center gap-3 rounded-2xl border border-line bg-panel/80 p-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/api/stock-photo/${it.id}/0`} alt="" className="w-12 h-12 rounded-xl object-cover" />
+                <div className="min-w-0 flex-1">
+                  <div className="font-display text-sm font-semibold truncate">{it.title}</div>
+                  <div className="text-xs text-white/40">
+                    {it.price.toLocaleString("ru-RU")} ₽ · ваш заработок {it.earning.toLocaleString("ru-RU")} ₽
+                  </div>
+                </div>
+                <span className="shrink-0 rounded-full border border-line px-2.5 py-0.5 text-[11px] text-white/60">
+                  {it.payout === "paid" ? "Выплачено" : it.payout === "due" ? "К выплате" : it.status === "sold" ? "Снята" : "В продаже"}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="font-display text-lg font-bold mt-6 mb-3">Мои заявки</h2>

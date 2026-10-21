@@ -24,6 +24,14 @@ export interface Listing {
   sourceUrl?: string;
   // Примерный вес «под заказ», по нему считалась цена под ключ.
   weightKg?: number;
+  // Продавец из мини-аппа (не YenWay): аккаунт Telegram, аватарка и
+  // стоимость выкупа под ключ на момент публикации — разница с ценой его заработок.
+  sellerTgId?: number;
+  sellerName?: string;
+  sellerPhoto?: string;
+  basePrice?: number;
+  // Выплата продавцу: due — к выплате (вещь выкуплена), paid — выплачено.
+  payout?: "due" | "paid";
   // Тип вещи (LISTING_CATEGORIES) — для фильтров.
   category?: string;
   // Когда вещь попала в «Выкупленные» — по этой дате сортируем витрину.
@@ -83,12 +91,28 @@ export async function setListingsCategory(ids: string[], category: string | unde
 }
 
 // «Под заказ» ↔ «Выкупленные»: вещь переезжает в раздел и сразу видна в нём.
-export function setListingKind(id: string, kind: "preorder" | "bought"): Promise<Listing> {
+export async function setListingKind(id: string, kind: "preorder" | "bought"): Promise<Listing> {
+  const current = await store.get(id);
+  // Выкупили вещь продавца — его заработок становится «к выплате».
+  const earns = !!current?.sellerTgId && sellerEarning(current) > 0 && current.payout !== "paid";
   return store.patch(
     id,
-    { kind, status: "published", ...(kind === "bought" ? { boughtAt: new Date().toISOString() } : {}) },
+    {
+      kind,
+      status: "published",
+      ...(kind === "bought" ? { boughtAt: new Date().toISOString(), ...(earns ? { payout: "due" as const } : {}) } : {}),
+      ...(kind === "preorder" && current?.payout === "due" ? { payout: undefined } : {})
+    },
     "Объявление не найдено"
   );
+}
+
+export function sellerEarning(l: Pick<Listing, "price" | "basePrice">): number {
+  return l.basePrice ? Math.max(0, l.price - l.basePrice) : 0;
+}
+
+export function setPayoutPaid(id: string): Promise<Listing> {
+  return store.patch(id, { payout: "paid" }, "Объявление не найдено");
 }
 
 export async function removeListing(id: string): Promise<void> {

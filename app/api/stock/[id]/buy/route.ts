@@ -36,7 +36,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       `Вещь: ${escapeHtml(listing.title)} • ${escapeHtml(listing.size)}`,
       `Цена: ${listing.price.toLocaleString("ru-RU")} ₽`,
       `Покупатель: @${username}`,
-      preorder ? null : `Продавец: ${listing.own ? "YenWay (ваша вещь)" : `@${listing.seller}`}`,
+      preorder && !listing.sellerTgId ? null : `Продавец: ${listing.own ? "YenWay (ваша вещь)" : `@${listing.seller}`}`,
+      listing.basePrice != null
+        ? `Выкуп под ключ: ${listing.basePrice.toLocaleString("ru-RU")} ₽ · продавцу: ${Math.max(0, listing.price - listing.basePrice).toLocaleString("ru-RU")} ₽`
+        : null,
       listing.sourceUrl ? `Ссылка на товар: ${escapeHtml(listing.sourceUrl)}` : null,
       ``,
       `${SITE_URL}${LISTING_PATH[kindOf(listing)]}/${listing.id}`

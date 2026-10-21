@@ -100,10 +100,11 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
     load();
   }, []);
 
-  async function act(id: string, method: "PATCH" | "DELETE", status?: ListingStatus, moveTo?: "bought" | "preorder") {
+  async function act(id: string, method: "PATCH" | "DELETE", status?: ListingStatus, moveTo?: "bought" | "preorder", paid?: boolean) {
+    if (paid && !confirm("Отметить, что продавцу выплачено?")) return;
     if (method === "DELETE" && !confirm("Удалить объявление вместе с фото?")) return;
     if (moveTo === "bought" && !confirm("Отметить вещь выкупленной? Она уйдёт из «Под заказ» в «Выкупленные».")) return;
-    const payload = moveTo ? { kind: moveTo } : status ? { status } : null;
+    const payload = paid ? { payout: "paid" } : moveTo ? { kind: moveTo } : status ? { status } : null;
     const res = await fetch(`/api/admin/stock/${id}`, {
       method,
       headers: payload ? { "Content-Type": "application/json" } : undefined,
@@ -202,6 +203,12 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
                         {l.price.toLocaleString("ru-RU")} ₽ · {l.condition} · {l.category ?? "тип не выбран"} · {l.own ? "ваша вещь" : `@${l.seller}`} ·{" "}
                         {l.photoCount} фото
                       </div>
+                      {l.basePrice != null && (
+                        <div className="text-xs text-amber-200/80">
+                          Продавец @{l.seller}: выкуп {l.basePrice.toLocaleString("ru-RU")} ₽ · заработок {Math.max(0, l.price - l.basePrice).toLocaleString("ru-RU")} ₽
+                          {l.payout === "due" ? " · к выплате" : l.payout === "paid" ? " · выплачено" : ""}
+                        </div>
+                      )}
                       {l.sourceUrl && (
                         <a href={l.sourceUrl} target="_blank" rel="noopener noreferrer" className="block truncate text-xs text-white/40 underline underline-offset-2 hover:text-white/70">
                           {l.sourceUrl}
@@ -222,6 +229,11 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
                       {preorder && (
                         <button onClick={() => act(l.id, "PATCH", undefined, "bought")} className={btnMain}>
                           Выкуплено
+                        </button>
+                      )}
+                      {l.payout === "due" && (
+                        <button onClick={() => act(l.id, "PATCH", undefined, undefined, true)} className={btnMain}>
+                          Выплачено
                         </button>
                       )}
                       {bought && (

@@ -36,7 +36,7 @@ const field = "w-full rounded-2xl bg-ink border border-line px-4 py-3 outline-no
 const label = "block font-display text-xs uppercase tracking-wide text-white/50 mb-2";
 
 // Состояние со страницы площадки → ближайший вариант из списка формы.
-function mapCondition(c: string | null): string | null {
+export function mapCondition(c: string | null): string | null {
   if (!c) return null;
   const s = c.toLowerCase();
   if (/новое|new/.test(s) && !/почти/.test(s)) return /бирк|tag/.test(s) ? "Новое с биркой" : "Новое без бирки";
