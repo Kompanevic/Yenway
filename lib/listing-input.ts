@@ -190,18 +190,15 @@ function calcMessage(listing: Listing, calc: PreorderCalc | undefined): string {
   return lines.join("\n");
 }
 
-// Две кнопки: сайт и мини-апп в Telegram. Ссылка на мини-апп —
-// TELEGRAM_MINIAPP_URL (t.me/<бот>/<приложение> из BotFather → /newapp).
-// Без переменной — только сайт.
-// Берём только ссылку вида https://t.me/<бот>/<приложение>: если туда по ошибке
-// вставить адрес сайта, обе кнопки вели бы на сайт.
-const MINIAPP_URL = /^https:\/\/t\.me\/\w+\/\w+$/.test(process.env.TELEGRAM_MINIAPP_URL?.trim() ?? "")
-  ? process.env.TELEGRAM_MINIAPP_URL!.trim()
-  : undefined;
+// Ссылка на мини-апп под постами. TELEGRAM_MINIAPP_URL может её переопределить,
+// но только ссылкой вида https://t.me/<бот>/<приложение> — адрес сайта там игнорируем.
+const MINIAPP_DEFAULT = "https://t.me/Yenwaywearbot/YenWay";
+const envMiniApp = process.env.TELEGRAM_MINIAPP_URL?.trim().replace(/^(t\.me)/, "https://$1") ?? "";
+const MINIAPP_URL = /^https:\/\/t\.me\/\w+\/\w+$/.test(envMiniApp) ? envMiniApp : MINIAPP_DEFAULT;
 
-// Одна кнопка «Приложение» — мини-апп на главной (без мини-аппа — главная сайта).
-function appButton(origin: string) {
-  return { text: "Приложение", url: MINIAPP_URL ?? origin };
+// Одна кнопка «Приложение» — всегда мини-апп.
+function appButton(_origin: string) {
+  return { text: "Приложение", url: MINIAPP_URL };
 }
 
 // Под любым постом — одна кнопка мини-аппа.

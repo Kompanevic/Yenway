@@ -56,6 +56,7 @@ export default function ProfilePage() {
   const name = [me?.user.first_name, me?.user.last_name].filter(Boolean).join(" ") || u?.first_name || "Профиль";
   const requests = me?.requests ?? [];
   const items = me?.items ?? [];
+  const sales = items.filter((i) => i.kind === "bought").length;
   const due = items.filter((i) => i.payout === "due").reduce((s, i) => s + i.earning, 0);
   const paid = items.filter((i) => i.payout === "paid").reduce((s, i) => s + i.earning, 0);
   const activeCount = requests.filter((r) => r.status !== "delivered" && r.status !== "canceled").length;
@@ -105,7 +106,11 @@ export default function ProfilePage() {
       {items.length > 0 && (
         <section>
           <h2 className="font-display text-lg font-bold mt-6 mb-3">Мои вещи</h2>
-          <div className="grid grid-cols-2 gap-2 mb-3 text-center">
+          <div className="grid grid-cols-3 gap-2 mb-3 text-center">
+            <div className="rounded-2xl border border-line bg-panel/80 py-3">
+              <div className="font-display text-xl font-bold">{sales}</div>
+              <div className="text-[10px] text-white/45 mt-0.5">{plural(sales, ["продажа", "продажи", "продаж"])}</div>
+            </div>
             <div className="rounded-2xl border border-amber-300/30 bg-panel/80 py-3">
               <div className="font-display text-xl font-bold">{due.toLocaleString("ru-RU")} ₽</div>
               <div className="text-[10px] text-white/45 mt-0.5">к выплате</div>

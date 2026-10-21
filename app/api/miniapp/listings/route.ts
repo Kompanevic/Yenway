@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
   if (!user.username) {
     return NextResponse.json({ error: "Задайте имя пользователя (@ник) в настройках Telegram — по нему с вами свяжутся" }, { status: 400 });
   }
-  if (!(await checkRateLimit(req, `seller:${user.id}`, 10, 3600))) {
-    return NextResponse.json({ error: "Слишком много объявлений за час. Попробуйте позже." }, { status: 429 });
+  if (!(await checkRateLimit(req, `seller:${user.id}`, 10, 24 * 3600))) {
+    return NextResponse.json({ error: "Не больше 10 вещей в день. Попробуйте завтра." }, { status: 429 });
   }
   const form = await req.formData().catch(() => null);
   if (!form) return NextResponse.json({ error: "Некорректные данные формы" }, { status: 400 });
