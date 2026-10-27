@@ -91,6 +91,19 @@ export default function ListingGrid({
   const [size, setSize] = useState<string | null>(null);
   const [condition, setCondition] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  // Цена «от — до» в рублях; пустое поле — без ограничения.
+  const [priceFrom, setPriceFrom] = useState("");
+  const [priceTo, setPriceTo] = useState("");
+  const minPrice = Number(priceFrom) || 0;
+  const maxPrice = Number(priceTo) || 0;
+  const priceLabel =
+    minPrice || maxPrice
+      ? minPrice && maxPrice
+        ? `${minPrice.toLocaleString("ru-RU")}–${maxPrice.toLocaleString("ru-RU")} ₽`
+        : minPrice
+          ? `от ${minPrice.toLocaleString("ru-RU")} ₽`
+          : `до ${maxPrice.toLocaleString("ru-RU")} ₽`
+      : null;
   const sizes = useMemo(() => {
     if (!category) return [];
     const set = new Set<string>();
@@ -103,8 +116,10 @@ export default function ListingGrid({
   );
 
   const hasFilters = categories.length > 0 || conditions.length > 1;
-  const active = [category, condition, size].filter((x): x is string => !!x);
+  const active = [category, condition, size, priceLabel].filter((x): x is string => !!x);
   function resetFilters() {
+    setPriceFrom("");
+    setPriceTo("");
     setCategory(null);
     setSize(null);
     setCondition(null);
@@ -116,10 +131,12 @@ export default function ListingGrid({
       if (category && i.category !== category) return false;
       if (size && !isOneSize(i.size) && sizeKey(i.size) !== size) return false;
       if (condition && i.condition !== condition) return false;
+      if (minPrice && i.price < minPrice) return false;
+      if (maxPrice && i.price > maxPrice) return false;
       const title = norm(i.title);
       return words.every((w) => title.includes(w));
     });
-  }, [items, query, category, size, condition]);
+  }, [items, query, category, size, condition, minPrice, maxPrice]);
 
   if (items.length === 0) {
     return <div className="mt-12 rounded-3xl bg-panel border border-line p-10 text-center text-white/50">{emptyText}</div>;
@@ -207,6 +224,51 @@ export default function ListingGrid({
           ) : (
             <p className="text-xs text-white/40">Выберите тип вещи, чтобы выбрать размер.</p>
           )}
+          <div>
+            <div className="font-display text-[11px] uppercase tracking-wide text-white/40 mb-2">Цена, ₽</div>
+            <div className="flex items-center gap-2">
+              {(
+                [
+                  ["от", priceFrom, setPriceFrom],
+                  ["до", priceTo, setPriceTo]
+                ] as const
+              ).map(([ph, v, set]) => (
+                <input
+                  key={ph}
+                  inputMode="numeric"
+                  value={v ? Number(v).toLocaleString("ru-RU") : ""}
+                  onChange={(e) => set(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                  placeholder={ph}
+                  aria-label={`Цена ${ph}`}
+                  className="w-full min-w-0 rounded-full bg-ink border border-line px-4 py-2 text-sm outline-none focus:border-accent transition-colors"
+                />
+              ))}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(
+                [
+                  ["до 10 000", "", "10000"],
+                  ["10–30 тыс.", "10000", "30000"],
+                  ["30–60 тыс.", "30000", "60000"],
+                  ["от 60 000", "60000", ""]
+                ] as const
+              ).map(([label, from, to]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => {
+                    setPriceFrom(from);
+                    setPriceTo(to);
+                  }}
+                  className={`shrink-0 rounded-full border px-3.5 py-1.5 font-display text-xs sm:text-sm transition-colors ${
+                    priceFrom === from && priceTo === to ? "bg-accent text-ink border-accent font-semibold" : "border-line text-white/60 hover:text-white hover:border-white/30"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="flex items-center justify-between pt-1">
             <button type="button" onClick={resetFilters} className="text-sm text-white/50 hover:text-white">
               Сбросить
