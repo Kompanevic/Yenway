@@ -115,14 +115,14 @@ export default function ListingForm({
     }
   }
 
+  const extraRUB = manual ? Math.round(num(extra) ?? 0) : 0;
   const breakdown = useMemo(() => {
     if (kind === "stock") return null;
     const lp = num(localPrice);
     if (lp == null) return null;
-    return calculatePrice(lp, region, sourceUrl, num(weight), chinaTier, num(rate));
-  }, [kind, localPrice, weight, region, sourceUrl, chinaTier, rate]);
-  const extraRUB = manual ? Math.round(num(extra) ?? 0) : 0;
-  const totalRUB = breakdown?.totalRUB != null ? breakdown.totalRUB + extraRUB : null;
+    return calculatePrice(lp, region, sourceUrl, num(weight), chinaTier, num(rate), extraRUB);
+  }, [kind, localPrice, weight, region, sourceUrl, chinaTier, rate, extraRUB]);
+  const totalRUB = breakdown?.totalRUB ?? null;
 
   useEffect(() => {
     if (totalRUB) setPrice(String(totalRUB));
@@ -410,7 +410,8 @@ export default function ListingForm({
                         : "доставка и комиссия — впишите выше"
                       : breakdown.deliveryRUB != null
                         ? `доставка ${breakdown.deliveryRUB.toLocaleString("ru-RU")} ₽`
-                        : "доставка — укажите вес"
+                        : "доставка — укажите вес",
+                    breakdown.markupRUB != null ? `сбор 8% ${breakdown.markupRUB.toLocaleString("ru-RU")} ₽` : null
                   ]
                     .filter(Boolean)
                     .join(" + ") + ` = ${totalRUB?.toLocaleString("ru-RU")} ₽ → подставлено в «Цена, ₽»`}

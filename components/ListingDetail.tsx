@@ -139,7 +139,7 @@ export default async function ListingDetail({ id, kind }: { id: string; kind: Li
           <div className="mt-6 font-display text-3xl font-bold">{l.price.toLocaleString("ru-RU")} ₽</div>
           {kind === "preorder" && (
             <p className="mt-1 text-xs text-white/40">
-              Цена под ключ: товар, комиссия, страховка и доставка. Возможна таможенная пошлина.
+              Цена под ключ: товар, комиссия, страховка, доставка и сбор сервиса 8%. Возможна таможенная пошлина.
             </p>
           )}
           {kind === "bought" && <p className="mt-1 text-xs text-white/40">Итоговая цена для клиента под ключ — с доставкой и страховкой.</p>}

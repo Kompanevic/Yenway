@@ -161,10 +161,10 @@ function calcMessage(listing: Listing, calc: PreorderCalc | undefined): string {
   const lines = [`🧾 <b>Расчёт под ключ</b>`, ``];
   if (calc) {
     const r = REGIONS[calc.region];
-    const b = calculatePrice(calc.localPrice, calc.region, listing.sourceUrl ?? "", listing.weightKg ?? null, calc.chinaTier, calc.rate);
-    const rub = (n: number | null) => (n == null ? "уточняется" : `${n.toLocaleString("ru-RU")} ₽`);
     const extra = Math.round(calc.extraRUB ?? 0);
-    const total = b.totalRUB != null ? b.totalRUB + extra : null;
+    const b = calculatePrice(calc.localPrice, calc.region, listing.sourceUrl ?? "", listing.weightKg ?? null, calc.chinaTier, calc.rate, extra);
+    const rub = (n: number | null) => (n == null ? "уточняется" : `${n.toLocaleString("ru-RU")} ₽`);
+    const total = b.totalRUB;
     lines.push(
       `Страна: ${r.flag} ${r.name}`,
       `Цена товара: ${calc.localPrice.toLocaleString("ru-RU")} ${calc.currency ?? r.currency}` +
@@ -180,6 +180,7 @@ function calcMessage(listing: Listing, calc: PreorderCalc | undefined): string {
             ...(b.serviceFeeRUB != null ? [`Сервис: ${rub(b.serviceFeeRUB)}`] : []),
             `Доставка: ${b.deliveryRUB != null ? `${rub(b.deliveryRUB)} (${listing.weightKg} кг${b.deliveryDays ? `, ${b.deliveryDays}` : ""})` : "укажите вес"}`
           ]),
+      `Сбор сервиса 8%: ${rub(b.markupRUB)}`,
       `<b>Итого по расчёту: ${rub(total)}</b>`
     );
   } else {

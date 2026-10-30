@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { REGIONS, REGION_LIST, RegionKey } from "@/lib/regions";
 import Flag from "./Flag";
 import { tgInitHeaders, useTgUsername } from "@/lib/tg-webapp";
-import { CHINA_DELIVERY_TIERS, isManualRegion } from "@/lib/pricing";
+import { CHINA_DELIVERY_TIERS, calculatePrice, isManualRegion } from "@/lib/pricing";
 
 interface Result {
   preview: { title: string | null; image: string | null; price: number | null };
@@ -18,6 +18,7 @@ interface Result {
     serviceFeeRUB: number | null;
     deliveryRUB: number | null;
     deliveryDays: string | null;
+    markupRUB: number | null;
     totalRUB: number | null;
     hasIndividualParts: boolean;
     isEstimate: boolean;
@@ -45,6 +46,8 @@ export default function OrderForm() {
   const [username, setUsername] = useState("");
   useTgUsername(setUsername);
   const [weight, setWeight] = useState("");
+  // Цена на площадке в её валюте — если сайт не отдаёт цену, клиент вписывает сам.
+  const [price, setPrice] = useState("");
   const [chinaTier, setChinaTier] = useState(CHINA_DELIVERY_TIERS[0].id);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +69,7 @@ export default function OrderForm() {
           username,
           region,
           weightKg: weight ? parseFloat(weight) : null,
+          manualPrice: priceNum,
           chinaTier
         })
       });
@@ -74,6 +78,8 @@ export default function OrderForm() {
         setError(data.error ?? "Что-то пошло не так");
       } else {
         setResult(data);
+        // Цену, которую нашли на странице, показываем в поле — её можно поправить.
+        if (!priceNum && data.breakdown?.itemPriceLocal) setPrice(String(data.breakdown.itemPriceLocal));
       }
     } catch {
       setError("Не удалось отправить заявку. Проверьте соединение.");
@@ -82,7 +88,13 @@ export default function OrderForm() {
     }
   }
 
-  const b = result?.breakdown;
+  const priceNum = parseFloat(price.replace(",", ".").replace(/\s/g, "")) > 0 ? parseFloat(price.replace(",", ".").replace(/\s/g, "")) : null;
+  // После расчёта цену можно поменять — итог пересчитывается сразу, без новой заявки.
+  const b = useMemo(() => {
+    const base = result?.breakdown;
+    if (!base || !result || priceNum == null || priceNum === base.itemPriceLocal) return base;
+    return calculatePrice(priceNum, result.region.key, link, weight ? parseFloat(weight) : null, chinaTier);
+  }, [result, priceNum, link, weight, chinaTier]);
 
   return (
     <div>
@@ -153,6 +165,22 @@ export default function OrderForm() {
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               placeholder="например: 0.5"
+              className="w-full rounded-2xl bg-panel border border-line px-4 py-3.5 outline-none focus:border-accent transition-colors"
+            />
+          </div>
+        )}
+
+        {!manual && (
+          <div>
+            <label className="block font-display text-xs uppercase tracking-wide text-white/50 mb-2">
+              Цена на сайте, {REGIONS[region].currency}{" "}
+              <span className="normal-case tracking-normal text-white/30">(если не подтянется сама)</span>
+            </label>
+            <input
+              inputMode="decimal"
+              value={price}
+              onChange={(e) => setPrice(e.target.value.replace(/[^\d.,\s]/g, ""))}
+              placeholder="например: 12000"
               className="w-full rounded-2xl bg-panel border border-line px-4 py-3.5 outline-none focus:border-accent transition-colors"
             />
           </div>
@@ -241,9 +269,23 @@ export default function OrderForm() {
                 </p>
               ) : b ? (
                 <>
+                  <div className="flex items-center justify-between gap-3 text-white/70">
+                    <span>Цена на сайте</span>
+                    <span className="flex items-center gap-2">
+                      <input
+                        inputMode="decimal"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value.replace(/[^\d.,\s]/g, ""))}
+                        placeholder="впишите"
+                        aria-label={`Цена на сайте, ${result.region.currency}`}
+                        className="w-28 rounded-xl bg-ink border border-line px-3 py-1.5 text-right outline-none focus:border-accent transition-colors"
+                      />
+                      <span className="text-white/40">{result.region.currency}</span>
+                    </span>
+                  </div>
                   <Row
                     label={`Товар (${result.region.currency})`}
-                    value={b.itemPriceRUB != null ? `${b.itemPriceRUB} ₽` : "уточняется вручную"}
+                    value={b.itemPriceRUB != null ? `${b.itemPriceRUB} ₽` : "впишите цену выше"}
                   />
                   <Row
                     label="Комиссия"
@@ -262,6 +304,7 @@ export default function OrderForm() {
                         : "укажите вес"
                     }
                   />
+                  {b.markupRUB != null && <Row label="Сбор сервиса 8%" value={`${b.markupRUB} ₽`} />}
                   <div className="pt-3 mt-3 border-t border-line flex justify-between font-display font-bold text-xl">
                     <span>Итого{b.hasIndividualParts || b.isEstimate ? "*" : ""}</span>
                     <span className="text-accent">

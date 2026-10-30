@@ -21,6 +21,8 @@ export async function POST(req: NextRequest) {
   const weightKg: number | null =
     typeof body?.weightKg === "number" && !Number.isNaN(body.weightKg) ? body.weightKg : null;
   const chinaTier: string | undefined = body?.chinaTier;
+  // Цена на площадке, вписанная клиентом (если сайт не отдал её сам).
+  const manualPrice = typeof body?.manualPrice === "number" && body.manualPrice > 0 && body.manualPrice < 1e9 ? body.manualPrice : null;
 
   if (!link || !usernameRaw || !region || !Object.prototype.hasOwnProperty.call(REGIONS, region)) {
     return NextResponse.json({ error: "Заполните ссылку, ник в Telegram и регион" }, { status: 400 });
@@ -48,13 +50,13 @@ export async function POST(req: NextRequest) {
   const manual = isManualRegion(region);
   const breakdown = manual
     ? null
-    : calculatePrice(preview.price, region, url.toString(), weightKg, chinaTier);
+    : calculatePrice(manualPrice ?? preview.price, region, url.toString(), weightKg, chinaTier);
 
   const priceLines = manual
     ? [`Регион с ручным расчётом — обратитесь к менеджеру @${MANAGER_TELEGRAM}`]
     : [
         breakdown!.itemPriceRUB != null
-          ? `Товар: ${breakdown!.itemPriceLocal} ${regionInfo.currency} (~${breakdown!.itemPriceRUB} ₽)`
+          ? `Товар: ${breakdown!.itemPriceLocal} ${regionInfo.currency} (~${breakdown!.itemPriceRUB} ₽)${manualPrice ? " — цену вписал клиент" : ""}`
           : `Товар: цена не определена автоматически — уточнить вручную`,
         breakdown!.commissionRUB != null ? `Комиссия: ${breakdown!.commissionRUB} ₽` : `Комиссия: уточняется`,
         breakdown!.serviceFeeRUB != null ? `Сервис: ${breakdown!.serviceFeeRUB} ₽` : null,
@@ -62,6 +64,7 @@ export async function POST(req: NextRequest) {
         breakdown!.deliveryRUB != null
           ? `Доставка: ${breakdown!.deliveryRUB} ₽${breakdown!.deliveryDays ? ` (${breakdown!.deliveryDays})` : ""}`
           : `Доставка: укажите вес для расчёта`,
+        breakdown!.markupRUB != null ? `Сбор сервиса 8%: ${breakdown!.markupRUB} ₽` : null,
         breakdown!.totalRUB != null
           ? `<b>Итого${breakdown!.hasIndividualParts ? " (без учёта индивидуальных пунктов)" : ""}: ${breakdown!.totalRUB} ₽</b>`
           : `<b>Итого уточним вручную</b>`,

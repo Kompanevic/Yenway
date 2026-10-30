@@ -18,7 +18,7 @@ export function isManualRegion(region: RegionKey): boolean {
 export const EXCHANGE_RATES: Record<RegionKey, number | null> = {
   japan: 0.69,
   korea: 0.08,
-  china: 14.1,
+  china: 14.8,
   usa: null,
   europe: null
 };
@@ -57,15 +57,18 @@ export function convertToRub(amount: number, currency: Currency): number | null 
 
 // Комиссия сервиса, ₽ — фиксированная сумма (не %)
 export const COMMISSION_RUB: Record<RegionKey, number | null> = {
-  japan: 600, // любая японская площадка кроме Mercari
+  japan: 1200, // любая японская площадка
   korea: 600,
   china: 400,
   usa: null,
   europe: null
 };
 
-// Для Японии комиссия ниже, если ссылка с Mercari
-export const MERCARI_COMMISSION_RUB = 500;
+// Mercari — та же комиссия, что и у остальных японских площадок
+export const MERCARI_COMMISSION_RUB = 1200;
+
+// Сбор сервиса: +8% к итоговой сумме расчёта (во всех странах).
+export const SERVICE_MARKUP = 0.08;
 
 export const INSURANCE_RUB: Record<RegionKey, number | null> = {
   japan: 150,
@@ -148,6 +151,10 @@ export interface PriceBreakdown {
   serviceFeeRUB: number | null;
   deliveryRUB: number | null;
   deliveryDays: string | null;
+  // Доставка и комиссия, вписанные вручную (США, Европа — только в админке).
+  extraRUB: number;
+  // Сбор сервиса SERVICE_MARKUP от суммы всех пунктов.
+  markupRUB: number | null;
   totalRUB: number | null;
   hasIndividualParts: boolean;
   isEstimate: boolean;
@@ -160,7 +167,8 @@ export function calculatePrice(
   weightKg: number | null,
   chinaTierId?: string,
   // Курс вручную (админка: любая валюта, США/Европа без заданного курса).
-  rateOverride?: number | null
+  rateOverride?: number | null,
+  extraRUB = 0
 ): PriceBreakdown {
   const rate = rateOverride ?? exchangeRate(region, itemPriceLocal);
   const commissionRUB = getCommissionRub(region, sourceUrl);
@@ -180,6 +188,8 @@ export function calculatePrice(
       serviceFeeRUB,
       deliveryRUB,
       deliveryDays,
+      extraRUB,
+      markupRUB: null,
       totalRUB: null,
       hasIndividualParts,
       isEstimate: true
@@ -187,9 +197,11 @@ export function calculatePrice(
   }
 
   const itemPriceRUB = Math.round(itemPriceLocal * rate);
-  const totalRUB = [itemPriceRUB, commissionRUB, insuranceRUB, serviceFeeRUB, deliveryRUB]
+  const subtotal = [itemPriceRUB, commissionRUB, insuranceRUB, serviceFeeRUB, deliveryRUB, extraRUB]
     .filter((v): v is number => v != null)
     .reduce((a, b) => a + b, 0);
+  const markupRUB = Math.round(subtotal * SERVICE_MARKUP);
+  const totalRUB = subtotal + markupRUB;
 
   return {
     itemPriceLocal,
@@ -199,6 +211,8 @@ export function calculatePrice(
     serviceFeeRUB,
     deliveryRUB,
     deliveryDays,
+    extraRUB,
+    markupRUB,
     totalRUB,
     hasIndividualParts,
     isEstimate: false

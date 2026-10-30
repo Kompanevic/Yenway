@@ -9,8 +9,19 @@ import {
   INSURANCE_RUB,
   DELIVERY_PER_KG_RUB,
   CHINA_DELIVERY_TIERS,
+  EXCHANGE_RATES,
+  JPY_RATE_TIERS,
+  SERVICE_MARKUP,
   isManualRegion
 } from "@/lib/pricing";
+
+const jpyRates = JPY_RATE_TIERS.map((t) => t.rate);
+// Курс для витрины тарифов: у Японии — диапазон по цене вещи.
+function rateLabel(key: string, currency: string): string | null {
+  if (key === "japan") return `${Math.min(...jpyRates)}–${Math.max(...jpyRates)} ₽ за 1 ${currency}`;
+  const r = EXCHANGE_RATES[key as keyof typeof EXCHANGE_RATES];
+  return r != null ? `${r} ₽ за 1 ${currency}` : null;
+}
 
 const chinaRates = CHINA_DELIVERY_TIERS.map((t) => t.ratePerKg);
 const chinaDeliveryRange = `${Math.min(...chinaRates)}–${Math.max(...chinaRates)} ₽/кг`;
@@ -94,7 +105,7 @@ export default function OrderPage() {
               {REGION_LIST.map((r) => {
                 const manual = isManualRegion(r.key);
                 const commission =
-                  r.key === "japan"
+                  r.key === "japan" && MERCARI_COMMISSION_RUB !== COMMISSION_RUB.japan
                     ? `${MERCARI_COMMISSION_RUB}–${COMMISSION_RUB.japan} ₽`
                     : COMMISSION_RUB[r.key] != null
                       ? `${COMMISSION_RUB[r.key]} ₽`
@@ -113,6 +124,7 @@ export default function OrderPage() {
                     </div>
                     {!manual && (
                       <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-white/50">
+                        {rateLabel(r.key, r.currency) && <span>Курс: {rateLabel(r.key, r.currency)}</span>}
                         <span>Комиссия: {commission}</span>
                         <span>Страховка: {insurance} ₽</span>
                         <span>Доставка: {delivery}</span>
@@ -122,6 +134,9 @@ export default function OrderPage() {
                 );
               })}
             </ul>
+            <p className="mt-3 text-xs text-white/40">
+              К итоговой сумме добавляется сбор сервиса {Math.round(SERVICE_MARKUP * 100)}%. Возможны таможенные пошлины — около 15%.
+            </p>
           </div>
 
           <div>
