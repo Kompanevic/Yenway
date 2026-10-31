@@ -6,11 +6,16 @@ import { RegionKey } from "./regions";
  * "уточняется индивидуально".
  */
 
-export const MANUAL_REGIONS: RegionKey[] = ["usa", "europe"];
+export const MANUAL_REGIONS: RegionKey[] = ["europe"];
 export const MANAGER_TELEGRAM = "yenwayceo";
 
 export function isManualRegion(region: RegionKey): boolean {
   return MANUAL_REGIONS.includes(region);
+}
+
+// Есть ли тариф доставки за кг (США — доставка считается индивидуально).
+export function hasDeliveryTariff(region: RegionKey): boolean {
+  return region === "china" || DELIVERY_PER_KG_RUB[region] != null;
 }
 
 // Курс валюты площадки к рублю (сколько RUB стоит 1 единица валюты)
@@ -18,8 +23,8 @@ export function isManualRegion(region: RegionKey): boolean {
 export const EXCHANGE_RATES: Record<RegionKey, number | null> = {
   japan: 0.69,
   korea: 0.08,
-  china: 14.8,
-  usa: null,
+  china: 14.3,
+  usa: 97,
   europe: null
 };
 
@@ -60,7 +65,7 @@ export const COMMISSION_RUB: Record<RegionKey, number | null> = {
   japan: 1200, // любая японская площадка
   korea: 600,
   china: 400,
-  usa: null,
+  usa: 3200,
   europe: null
 };
 

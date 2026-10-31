@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchLinkPreview } from "@/lib/og";
-import { calculatePrice, isManualRegion, MANAGER_TELEGRAM, CUSTOMS_NOTE } from "@/lib/pricing";
+import { calculatePrice, hasDeliveryTariff, isManualRegion, MANAGER_TELEGRAM, CUSTOMS_NOTE } from "@/lib/pricing";
 import { sendTelegramMessage, escapeHtml } from "@/lib/telegram";
 import { REGIONS, RegionKey } from "@/lib/regions";
 import { recordRequest } from "@/lib/requests-store";
@@ -63,7 +63,9 @@ export async function POST(req: NextRequest) {
         breakdown!.insuranceRUB != null ? `Страховка: ${breakdown!.insuranceRUB} ₽` : `Страховка: уточняется`,
         breakdown!.deliveryRUB != null
           ? `Доставка: ${breakdown!.deliveryRUB} ₽${breakdown!.deliveryDays ? ` (${breakdown!.deliveryDays})` : ""}`
-          : `Доставка: укажите вес для расчёта`,
+          : hasDeliveryTariff(region)
+            ? `Доставка: укажите вес для расчёта`
+            : `Доставка: считается индивидуально`,
         breakdown!.markupRUB != null ? `Сбор сервиса 8%: ${breakdown!.markupRUB} ₽` : null,
         breakdown!.totalRUB != null
           ? `<b>Итого${breakdown!.hasIndividualParts ? " (без учёта индивидуальных пунктов)" : ""}: ${breakdown!.totalRUB} ₽</b>`

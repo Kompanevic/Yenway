@@ -12,6 +12,7 @@ import {
   exchangeRate,
   MANAGER_TELEGRAM,
   calculatePrice,
+  hasDeliveryTariff,
   isManualRegion,
   type Currency
 } from "@/lib/pricing";
@@ -82,7 +83,8 @@ export default function ListingForm({
   const [rate, setRate] = useState("");
   // США и Европа: тарифов нет — доставку и комиссию вписываем сами.
   const [extra, setExtra] = useState("");
-  const manual = isManualRegion(region);
+  // Нет тарифа доставки (США, Европа) — доставку вписываем вручную.
+  const manual = isManualRegion(region) || !hasDeliveryTariff(region);
   const num = (v: string) => {
     const n = parseFloat(v.replace(",", "."));
     return Number.isFinite(n) && n > 0 ? n : null;
@@ -384,7 +386,7 @@ export default function ListingForm({
           </div>
           {manual && (
             <label className="block">
-              <span className="block text-[11px] text-white/40 mb-1">Доставка и комиссия, ₽ (для {REGIONS[region].name} считаем вручную)</span>
+              <span className="block text-[11px] text-white/40 mb-1">{isManualRegion(region) ? "Доставка и комиссия" : "Доставка"}, ₽ (для {REGIONS[region].name} считаем вручную)</span>
               <input
                 value={extra}
                 onChange={(e) => setExtra(e.target.value)}
@@ -406,8 +408,8 @@ export default function ListingForm({
                     breakdown.serviceFeeRUB != null ? `сервис ${breakdown.serviceFeeRUB} ₽` : null,
                     manual
                       ? extraRUB
-                        ? `доставка и комиссия ${extraRUB.toLocaleString("ru-RU")} ₽`
-                        : "доставка и комиссия — впишите выше"
+                        ? `вручную ${extraRUB.toLocaleString("ru-RU")} ₽`
+                        : "доставка — впишите выше"
                       : breakdown.deliveryRUB != null
                         ? `доставка ${breakdown.deliveryRUB.toLocaleString("ru-RU")} ₽`
                         : "доставка — укажите вес",

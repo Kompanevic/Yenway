@@ -9,19 +9,10 @@ import {
   INSURANCE_RUB,
   DELIVERY_PER_KG_RUB,
   CHINA_DELIVERY_TIERS,
-  EXCHANGE_RATES,
-  JPY_RATE_TIERS,
   SERVICE_MARKUP,
   isManualRegion
 } from "@/lib/pricing";
 
-const jpyRates = JPY_RATE_TIERS.map((t) => t.rate);
-// Курс для витрины тарифов: у Японии — диапазон по цене вещи.
-function rateLabel(key: string, currency: string): string | null {
-  if (key === "japan") return `${Math.min(...jpyRates)}–${Math.max(...jpyRates)} ₽ за 1 ${currency}`;
-  const r = EXCHANGE_RATES[key as keyof typeof EXCHANGE_RATES];
-  return r != null ? `${r} ₽ за 1 ${currency}` : null;
-}
 
 const chinaRates = CHINA_DELIVERY_TIERS.map((t) => t.ratePerKg);
 const chinaDeliveryRange = `${Math.min(...chinaRates)}–${Math.max(...chinaRates)} ₽/кг`;
@@ -124,10 +115,9 @@ export default function OrderPage() {
                     </div>
                     {!manual && (
                       <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-white/50">
-                        {rateLabel(r.key, r.currency) && <span>Курс: {rateLabel(r.key, r.currency)}</span>}
                         <span>Комиссия: {commission}</span>
-                        <span>Страховка: {insurance} ₽</span>
-                        <span>Доставка: {delivery}</span>
+                        {insurance != null && <span>Страховка: {insurance} ₽</span>}
+                        <span>Доставка: {delivery ?? "индивидуально"}</span>
                       </div>
                     )}
                   </li>

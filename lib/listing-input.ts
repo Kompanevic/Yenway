@@ -1,7 +1,7 @@
 import { getListingPhoto, kindOf, type Listing, type ListingInput, type ListingKind } from "./listings-store";
 import type { ReviewPhoto } from "./reviews-store";
 import { CHANNEL_ID, CHANNEL_TOKENS, ITEM_BOT, LISTING_BOT, sendPhotoResult, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
-import { CURRENCIES, calculatePrice, isManualRegion, type Currency } from "./pricing";
+import { CURRENCIES, calculatePrice, type Currency } from "./pricing";
 import type { TgUser } from "./tg-auth";
 import { REGIONS, type RegionKey } from "./regions";
 import { LISTING_CATEGORIES, LISTING_CONDITIONS, MAX_LISTING_PHOTOS } from "./listing-constants";
@@ -173,7 +173,7 @@ function calcMessage(listing: Listing, calc: PreorderCalc | undefined): string {
           : ` — курс не задан`),
       // США/Европа: тарифов нет — доставка и комиссия одной строкой из админки.
       ...(extra
-        ? [`Доставка и комиссия (вручную): ${rub(extra)}`]
+        ? [...(b.commissionRUB != null ? [`Комиссия: ${rub(b.commissionRUB)}`] : []), `Доставка${b.commissionRUB != null ? "" : " и комиссия"} (вручную): ${rub(extra)}`]
         : [
             `Комиссия: ${rub(b.commissionRUB)}`,
             `Страховка: ${rub(b.insuranceRUB)}`,
@@ -227,7 +227,7 @@ export async function parseSellerListing(form: FormData, user: TgUser): Promise<
   const parsed = await parseListingForm(form, true);
   if (!parsed.ok) return parsed;
   const { value, calc } = parsed;
-  if (!calc || isManualRegion(calc.region)) return { ok: false, error: "Вставьте ссылку на товар из Японии, Китая или Кореи и укажите цену на площадке" };
+  if (!calc || !["japan", "china", "korea"].includes(calc.region)) return { ok: false, error: "Вставьте ссылку на товар из Японии, Китая или Кореи и укажите цену на площадке" };
   if (!value.weightKg) return { ok: false, error: "Укажите примерный вес" };
   const b = calculatePrice(calc.localPrice, calc.region, value.sourceUrl ?? "", value.weightKg, calc.chinaTier);
   if (b.totalRUB == null) return { ok: false, error: "Не удалось посчитать стоимость выкупа" };

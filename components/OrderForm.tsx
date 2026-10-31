@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { REGIONS, REGION_LIST, RegionKey } from "@/lib/regions";
 import Flag from "./Flag";
 import { tgInitHeaders, useTgUsername } from "@/lib/tg-webapp";
-import { CHINA_DELIVERY_TIERS, calculatePrice, isManualRegion } from "@/lib/pricing";
+import { CHINA_DELIVERY_TIERS, calculatePrice, hasDeliveryTariff, isManualRegion } from "@/lib/pricing";
 
 interface Result {
   preview: { title: string | null; image: string | null; price: number | null };
@@ -152,7 +152,7 @@ export default function OrderForm() {
           />
         </div>
 
-        {!manual && (
+        {!manual && hasDeliveryTariff(region) && (
           <div>
             <label className="block font-display text-xs uppercase tracking-wide text-white/50 mb-2">
               Примерный вес, кг
@@ -301,7 +301,9 @@ export default function OrderForm() {
                     value={
                       b.deliveryRUB != null
                         ? `${b.deliveryRUB} ₽${b.deliveryDays ? ` · ${b.deliveryDays}` : ""}`
-                        : "укажите вес"
+                        : hasDeliveryTariff(result.region.key)
+                          ? "укажите вес"
+                          : "индивидуально"
                     }
                   />
                   {b.markupRUB != null && <Row label="Сбор сервиса 8%" value={`${b.markupRUB} ₽`} />}
