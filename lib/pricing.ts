@@ -13,6 +13,16 @@ export function isManualRegion(region: RegionKey): boolean {
   return MANUAL_REGIONS.includes(region);
 }
 
+// Ставка доставки для подписи «оплачивается отдельно»: «1800 ₽/кг», у Китая — диапазон.
+export function deliveryRateLabel(region: RegionKey): string | null {
+  if (region === "china") {
+    const r = CHINA_DELIVERY_TIERS.map((t) => t.ratePerKg);
+    return `${Math.min(...r)}–${Math.max(...r)} ₽/кг`;
+  }
+  const rate = DELIVERY_PER_KG_RUB[region];
+  return rate != null ? `${rate} ₽/кг` : null;
+}
+
 // Есть ли тариф доставки за кг (США — доставка считается индивидуально).
 export function hasDeliveryTariff(region: RegionKey): boolean {
   return region === "china" || DELIVERY_PER_KG_RUB[region] != null;

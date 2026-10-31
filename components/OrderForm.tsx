@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { REGIONS, REGION_LIST, RegionKey } from "@/lib/regions";
 import Flag from "./Flag";
 import { tgInitHeaders, useTgUsername } from "@/lib/tg-webapp";
-import { CHINA_DELIVERY_TIERS, calculatePrice, hasDeliveryTariff, isManualRegion } from "@/lib/pricing";
+import { calculatePrice, deliveryRateLabel, isManualRegion } from "@/lib/pricing";
 
 interface Result {
   preview: { title: string | null; image: string | null; price: number | null };
@@ -45,10 +45,8 @@ export default function OrderForm() {
   const [link, setLink] = useState("");
   const [username, setUsername] = useState("");
   useTgUsername(setUsername);
-  const [weight, setWeight] = useState("");
   // Цена на площадке в её валюте — если сайт не отдаёт цену, клиент вписывает сам.
   const [price, setPrice] = useState("");
-  const [chinaTier, setChinaTier] = useState(CHINA_DELIVERY_TIERS[0].id);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
@@ -68,9 +66,7 @@ export default function OrderForm() {
           link,
           username,
           region,
-          weightKg: weight ? parseFloat(weight) : null,
-          manualPrice: priceNum,
-          chinaTier
+          manualPrice: priceNum
         })
       });
       const data = await res.json();
@@ -93,8 +89,8 @@ export default function OrderForm() {
   const b = useMemo(() => {
     const base = result?.breakdown;
     if (!base || !result || priceNum == null || priceNum === base.itemPriceLocal) return base;
-    return calculatePrice(priceNum, result.region.key, link, weight ? parseFloat(weight) : null, chinaTier);
-  }, [result, priceNum, link, weight, chinaTier]);
+    return calculatePrice(priceNum, result.region.key, link, null);
+  }, [result, priceNum, link]);
 
   return (
     <div>
@@ -152,24 +148,6 @@ export default function OrderForm() {
           />
         </div>
 
-        {!manual && hasDeliveryTariff(region) && (
-          <div>
-            <label className="block font-display text-xs uppercase tracking-wide text-white/50 mb-2">
-              Примерный вес, кг
-            </label>
-            <input
-              required
-              type="number"
-              min="0.1"
-              step="0.1"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              placeholder="например: 0.5"
-              className="w-full rounded-2xl bg-panel border border-line px-4 py-3.5 outline-none focus:border-accent transition-colors"
-            />
-          </div>
-        )}
-
         {!manual && (
           <div>
             <label className="block font-display text-xs uppercase tracking-wide text-white/50 mb-2">
@@ -183,34 +161,6 @@ export default function OrderForm() {
               placeholder="например: 12000"
               className="w-full rounded-2xl bg-panel border border-line px-4 py-3.5 outline-none focus:border-accent transition-colors"
             />
-          </div>
-        )}
-
-        {region === "china" && !manual && (
-          <div>
-            <label className="block font-display text-xs uppercase tracking-wide text-white/50 mb-2">
-              Скорость доставки
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {CHINA_DELIVERY_TIERS.map((t) => (
-                <motion.button
-                  type="button"
-                  key={t.id}
-                  onClick={() => setChinaTier(t.id)}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`rounded-2xl py-2.5 px-1 text-center border transition-colors ${
-                    chinaTier === t.id
-                      ? "border-accent bg-accent/10 text-accent"
-                      : "border-line bg-panel text-white/60 hover:border-white/30"
-                  }`}
-                >
-                  <div className="font-display text-xs font-semibold">{t.label}</div>
-                  <div className="text-[11px] text-white/40 mt-0.5">{t.ratePerKg} ₽/кг</div>
-                  <div className="text-[11px] text-white/40">{t.days}</div>
-                </motion.button>
-              ))}
-            </div>
           </div>
         )}
 
@@ -298,24 +248,18 @@ export default function OrderForm() {
                   />
                   <Row
                     label="Доставка"
-                    value={
-                      b.deliveryRUB != null
-                        ? `${b.deliveryRUB} ₽${b.deliveryDays ? ` · ${b.deliveryDays}` : ""}`
-                        : hasDeliveryTariff(result.region.key)
-                          ? "укажите вес"
-                          : "индивидуально"
-                    }
+                    value={`отдельно${deliveryRateLabel(result.region.key) ? ` · ${deliveryRateLabel(result.region.key)}` : ""}`}
                   />
                   {b.markupRUB != null && <Row label="Сбор сервиса 8%" value={`${b.markupRUB} ₽`} />}
                   <div className="pt-3 mt-3 border-t border-line flex justify-between font-display font-bold text-xl">
-                    <span>Итого{b.hasIndividualParts || b.isEstimate ? "*" : ""}</span>
+                    <span>Итого*</span>
                     <span className="text-accent">
                       {b.totalRUB != null ? `${b.totalRUB} ₽` : "уточним вручную"}
                     </span>
                   </div>
                   <p className="text-xs text-white/40">
                     {b.isEstimate && "* точную цену товара уточним вручную и напишем вам в Telegram. "}
-                    {!b.isEstimate && b.hasIndividualParts && "* часть пунктов рассчитывается индивидуально. "}
+                    {!b.isEstimate && "* без доставки — она оплачивается отдельно по весу. "}
                     Возможны таможенные пошлины — около 15% от суммы заказа, оплачиваются
                     дополнительно.
                   </p>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchLinkPreview } from "@/lib/og";
-import { calculatePrice, hasDeliveryTariff, isManualRegion, MANAGER_TELEGRAM, CUSTOMS_NOTE } from "@/lib/pricing";
+import { calculatePrice, deliveryRateLabel, isManualRegion, MANAGER_TELEGRAM, CUSTOMS_NOTE } from "@/lib/pricing";
 import { sendTelegramMessage, escapeHtml } from "@/lib/telegram";
 import { REGIONS, RegionKey } from "@/lib/regions";
 import { recordRequest } from "@/lib/requests-store";
@@ -18,9 +18,6 @@ export async function POST(req: NextRequest) {
   const link: string | undefined = body?.link;
   const usernameRaw: string | undefined = body?.username;
   const region: RegionKey | undefined = body?.region;
-  const weightKg: number | null =
-    typeof body?.weightKg === "number" && !Number.isNaN(body.weightKg) ? body.weightKg : null;
-  const chinaTier: string | undefined = body?.chinaTier;
   // Цена на площадке, вписанная клиентом (если сайт не отдал её сам).
   const manualPrice = typeof body?.manualPrice === "number" && body.manualPrice > 0 && body.manualPrice < 1e9 ? body.manualPrice : null;
 
@@ -36,9 +33,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Некорректная ссылка" }, { status: 400 });
   }
 
-  if (weightKg != null && (weightKg <= 0 || weightKg > 100)) {
-    return NextResponse.json({ error: "Укажите вес от 0.1 до 100 кг" }, { status: 400 });
-  }
 
   const username = usernameRaw.trim().replace(/^@/, "");
   if (!/^[a-zA-Z0-9_]{4,32}$/.test(username)) {
@@ -50,7 +44,7 @@ export async function POST(req: NextRequest) {
   const manual = isManualRegion(region);
   const breakdown = manual
     ? null
-    : calculatePrice(manualPrice ?? preview.price, region, url.toString(), weightKg, chinaTier);
+    : calculatePrice(manualPrice ?? preview.price, region, url.toString(), null);
 
   const priceLines = manual
     ? [`Регион с ручным расчётом — обратитесь к менеджеру @${MANAGER_TELEGRAM}`]
@@ -61,14 +55,10 @@ export async function POST(req: NextRequest) {
         breakdown!.commissionRUB != null ? `Комиссия: ${breakdown!.commissionRUB} ₽` : `Комиссия: уточняется`,
         breakdown!.serviceFeeRUB != null ? `Сервис: ${breakdown!.serviceFeeRUB} ₽` : null,
         breakdown!.insuranceRUB != null ? `Страховка: ${breakdown!.insuranceRUB} ₽` : `Страховка: уточняется`,
-        breakdown!.deliveryRUB != null
-          ? `Доставка: ${breakdown!.deliveryRUB} ₽${breakdown!.deliveryDays ? ` (${breakdown!.deliveryDays})` : ""}`
-          : hasDeliveryTariff(region)
-            ? `Доставка: укажите вес для расчёта`
-            : `Доставка: считается индивидуально`,
+        `Доставка: отдельно по весу${deliveryRateLabel(region) ? ` (${deliveryRateLabel(region)})` : ""}`,
         breakdown!.markupRUB != null ? `Сбор сервиса 8%: ${breakdown!.markupRUB} ₽` : null,
         breakdown!.totalRUB != null
-          ? `<b>Итого${breakdown!.hasIndividualParts ? " (без учёта индивидуальных пунктов)" : ""}: ${breakdown!.totalRUB} ₽</b>`
+          ? `<b>Итого без доставки: ${breakdown!.totalRUB} ₽</b>`
           : `<b>Итого уточним вручную</b>`,
         CUSTOMS_NOTE
       ].filter(Boolean);
@@ -80,7 +70,6 @@ export async function POST(req: NextRequest) {
     `Покупатель: @${username}`,
     `Ссылка: ${escapeHtml(url.toString())}`,
     preview.title ? `Товар: ${escapeHtml(preview.title)}` : null,
-    weightKg != null ? `Вес: ${weightKg} кг` : null,
     ``,
     ...priceLines
   ]
