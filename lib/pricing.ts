@@ -23,17 +23,14 @@ export function hasDeliveryTariff(region: RegionKey): boolean {
 export const EXCHANGE_RATES: Record<RegionKey, number | null> = {
   japan: 0.69,
   korea: 0.08,
-  china: 14.3,
+  china: 13.9,
   usa: 97,
   europe: null
 };
 
-// Япония: курс зависит от цены вещи в иенах (дешевле вещь — курс выше).
-export const JPY_RATE_TIERS: { below: number; rate: number }[] = [
-  { below: 5000, rate: 0.71 }, // меньше 5 000 ¥
-  { below: 10000, rate: 0.7 }, // от 5 000 до 9 999 ¥
-  { below: Infinity, rate: 0.69 } // от 10 000 ¥
-];
+// Япония: курс может зависеть от цены вещи в иенах (дешевле вещь — курс выше).
+// Сейчас один курс для любой цены.
+export const JPY_RATE_TIERS: { below: number; rate: number }[] = [{ below: Infinity, rate: 0.69 }];
 
 // Курс для страны с учётом цены вещи (в валюте площадки).
 export function exchangeRate(region: RegionKey, amount?: number | null): number | null {
