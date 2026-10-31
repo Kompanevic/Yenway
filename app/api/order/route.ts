@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchLinkPreview } from "@/lib/og";
+import { fetchPricePreview, isPublicUrl } from "@/lib/price-preview";
 import { calculatePrice, deliveryRateLabel, isManualRegion, MANAGER_TELEGRAM, CUSTOMS_NOTE } from "@/lib/pricing";
 import { sendTelegramMessage, escapeHtml } from "@/lib/telegram";
 import { REGIONS, RegionKey } from "@/lib/regions";
@@ -25,13 +25,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Заполните ссылку, ник в Telegram и регион" }, { status: 400 });
   }
 
-  let url: URL;
-  try {
-    url = new URL(link);
-    if (!/^https?:$/.test(url.protocol)) throw new Error();
-  } catch {
-    return NextResponse.json({ error: "Некорректная ссылка" }, { status: 400 });
-  }
+  const url = isPublicUrl(link);
+  if (!url) return NextResponse.json({ error: "Некорректная ссылка" }, { status: 400 });
 
 
   const username = usernameRaw.trim().replace(/^@/, "");
@@ -39,7 +34,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Некорректный ник в Telegram (например: ivan_petrov)" }, { status: 400 });
   }
 
-  const preview = await fetchLinkPreview(url.toString());
+  // Цену клиент уже видел (подтянули при вставке ссылки или вписал сам) —
+  // повторно страницу не грузим.
+  const preview = manualPrice
+    ? { title: typeof body?.title === "string" ? body.title.slice(0, 200) : null, image: typeof body?.image === "string" && /^https:\/\//.test(body.image) ? body.image.slice(0, 1000) : null, price: manualPrice }
+    : await fetchPricePreview(url.toString());
   const regionInfo = REGIONS[region];
   const manual = isManualRegion(region);
   const breakdown = manual

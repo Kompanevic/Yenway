@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { REGIONS, REGION_LIST, RegionKey } from "@/lib/regions";
 import Flag from "./Flag";
 import { tgInitHeaders, useTgUsername } from "@/lib/tg-webapp";
-import { calculatePrice, deliveryRateLabel, isManualRegion } from "@/lib/pricing";
+import { CURRENCY_REGION, calculatePrice, deliveryRateLabel, isManualRegion, type Currency } from "@/lib/pricing";
 
 interface Result {
   preview: { title: string | null; image: string | null; price: number | null };
@@ -47,6 +47,47 @@ export default function OrderForm() {
   useTgUsername(setUsername);
   // Цена на площадке в её валюте — если сайт не отдаёт цену, клиент вписывает сам.
   const [price, setPrice] = useState("");
+  // Клиент сам поправил цену — автоподстановка её больше не перезаписывает.
+  const priceTouched = useRef(false);
+  const [found, setFound] = useState<{ title: string | null; image: string | null } | null>(null);
+  const [lookup, setLookup] = useState<"idle" | "loading" | "found" | "missing">("idle");
+
+  // Вставили ссылку — сразу подтягиваем название, фото и цену с сайта.
+  useEffect(() => {
+    const url = link.trim();
+    if (!/^https?:\/\/\S+\.\S+/.test(url)) {
+      setLookup("idle");
+      setFound(null);
+      return;
+    }
+    // Новая ссылка — новая вещь: цену снова подставляем сами.
+    priceTouched.current = false;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setLookup("loading");
+      try {
+        const res = await fetch("/api/price-preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url })
+        });
+        const d = (await res.json()) as { title?: string | null; image?: string | null; price?: number | null; currency?: Currency | null };
+        if (cancelled) return;
+        setFound(res.ok && (d.title || d.image) ? { title: d.title ?? null, image: d.image ?? null } : null);
+        if (res.ok && d.currency) setRegion(CURRENCY_REGION[d.currency]);
+        if (res.ok && d.price) {
+          setLookup("found");
+          if (!priceTouched.current) setPrice(String(d.price));
+        } else setLookup("missing");
+      } catch {
+        if (!cancelled) setLookup("missing");
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [link]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
@@ -66,7 +107,9 @@ export default function OrderForm() {
           link,
           username,
           region,
-          manualPrice: priceNum
+          manualPrice: priceNum,
+          title: found?.title ?? undefined,
+          image: found?.image ?? undefined
         })
       });
       const data = await res.json();
@@ -151,16 +194,36 @@ export default function OrderForm() {
         {!manual && (
           <div>
             <label className="block font-display text-xs uppercase tracking-wide text-white/50 mb-2">
-              Цена на сайте, {REGIONS[region].currency}{" "}
-              <span className="normal-case tracking-normal text-white/30">(если не подтянется сама)</span>
+              Цена на сайте, {REGIONS[region].currency}
             </label>
             <input
               inputMode="decimal"
               value={price}
-              onChange={(e) => setPrice(e.target.value.replace(/[^\d.,\s]/g, ""))}
-              placeholder="например: 12000"
+              onChange={(e) => {
+                priceTouched.current = true;
+                setPrice(e.target.value.replace(/[^\d.,\s]/g, ""));
+              }}
+              placeholder={lookup === "loading" ? "ищем цену на сайте…" : "например: 12000"}
               className="w-full rounded-2xl bg-panel border border-line px-4 py-3.5 outline-none focus:border-accent transition-colors"
             />
+            <p className="mt-2 text-xs text-white/40">
+              {lookup === "loading"
+                ? "Смотрим страницу товара…"
+                : lookup === "found"
+                  ? "Цена подставлена с сайта — если неверная, исправьте."
+                  : lookup === "missing"
+                    ? "Сайт не отдал цену — впишите её вручную."
+                    : "Вставьте ссылку — цена подставится сама."}
+            </p>
+            {found && (
+              <div className="mt-3 flex items-center gap-3 rounded-2xl border border-line bg-panel p-2.5">
+                {found.image && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={found.image} alt="" referrerPolicy="no-referrer" className="w-12 h-12 rounded-xl object-cover shrink-0" />
+                )}
+                <span className="text-sm text-white/70 line-clamp-2">{found.title ?? "Товар"}</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -225,7 +288,10 @@ export default function OrderForm() {
                       <input
                         inputMode="decimal"
                         value={price}
-                        onChange={(e) => setPrice(e.target.value.replace(/[^\d.,\s]/g, ""))}
+                        onChange={(e) => {
+                          priceTouched.current = true;
+                          setPrice(e.target.value.replace(/[^\d.,\s]/g, ""));
+                        }}
                         placeholder="впишите"
                         aria-label={`Цена на сайте, ${result.region.currency}`}
                         className="w-28 rounded-xl bg-ink border border-line px-3 py-1.5 text-right outline-none focus:border-accent transition-colors"
