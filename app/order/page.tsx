@@ -4,18 +4,13 @@ import OrderForm from "@/components/OrderForm";
 import { REGION_LIST } from "@/lib/regions";
 import Flag from "@/components/Flag";
 import {
-  COMMISSION_RUB,
-  MERCARI_COMMISSION_RUB,
+  commissionLabel,
+  deliveryRateLabel,
   INSURANCE_RUB,
-  DELIVERY_PER_KG_RUB,
-  CHINA_DELIVERY_TIERS,
   SERVICE_MARKUP,
   isManualRegion
 } from "@/lib/pricing";
 
-
-const chinaRates = CHINA_DELIVERY_TIERS.map((t) => t.ratePerKg);
-const chinaDeliveryRange = `${Math.min(...chinaRates)}–${Math.max(...chinaRates)} ₽/кг`;
 
 export default function OrderPage() {
   return (
@@ -95,15 +90,9 @@ export default function OrderPage() {
             <ul className="space-y-2 text-sm">
               {REGION_LIST.map((r) => {
                 const manual = isManualRegion(r.key);
-                const commission =
-                  r.key === "japan" && MERCARI_COMMISSION_RUB !== COMMISSION_RUB.japan
-                    ? `${MERCARI_COMMISSION_RUB}–${COMMISSION_RUB.japan} ₽`
-                    : COMMISSION_RUB[r.key] != null
-                      ? `${COMMISSION_RUB[r.key]} ₽`
-                      : null;
+                const commission = commissionLabel(r.key);
                 const insurance = INSURANCE_RUB[r.key];
-                const delivery =
-                  r.key === "china" ? chinaDeliveryRange : DELIVERY_PER_KG_RUB[r.key] != null ? `${DELIVERY_PER_KG_RUB[r.key]} ₽/кг` : null;
+                const delivery = deliveryRateLabel(r.key);
 
                 return (
                   <li key={r.key} className="rounded-xl bg-panel border border-line px-4 py-3">

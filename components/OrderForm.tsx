@@ -305,7 +305,7 @@ export default function OrderForm() {
                   />
                   <Row
                     label="Комиссия"
-                    value={b.commissionRUB != null ? `${b.commissionRUB} ₽` : "уточняется"}
+                    value={b.commissionRUB != null ? (result.region.key === "japan" ? `до ${b.commissionRUB} ₽` : `${b.commissionRUB} ₽`) : "уточняется"}
                   />
                   {b.serviceFeeRUB != null && <Row label="Сервис" value={`${b.serviceFeeRUB} ₽`} />}
                   <Row

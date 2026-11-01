@@ -20,6 +20,7 @@ export function deliveryRateLabel(region: RegionKey): string | null {
     return `${Math.min(...r)}–${Math.max(...r)} ₽/кг`;
   }
   const rate = DELIVERY_PER_KG_RUB[region];
+  if (rate != null && region === "japan") return `${rate} ₽/кг, экспресс ${JAPAN_EXPRESS_PER_KG_RUB} ₽/кг`;
   return rate != null ? `${rate} ₽/кг` : null;
 }
 
@@ -69,7 +70,7 @@ export function convertToRub(amount: number, currency: Currency): number | null 
 
 // Комиссия сервиса, ₽ — фиксированная сумма (не %)
 export const COMMISSION_RUB: Record<RegionKey, number | null> = {
-  japan: 1200, // любая японская площадка
+  japan: 800, // любая японская площадка — в расчёт берём верхнюю границу
   korea: 600,
   china: 400,
   usa: 3200,
@@ -77,7 +78,18 @@ export const COMMISSION_RUB: Record<RegionKey, number | null> = {
 };
 
 // Mercari — та же комиссия, что и у остальных японских площадок
-export const MERCARI_COMMISSION_RUB = 1200;
+export const MERCARI_COMMISSION_RUB = 800;
+
+// Япония: комиссия 400–800 ₽ — на сайте показываем диапазон, в расчёте
+// максимум, точную сумму уточняет менеджер.
+export const JAPAN_COMMISSION_MIN_RUB = 400;
+
+// Комиссия для подписи на сайте: у Японии — диапазон.
+export function commissionLabel(region: RegionKey): string | null {
+  if (region === "japan") return `${JAPAN_COMMISSION_MIN_RUB}–${COMMISSION_RUB.japan} ₽`;
+  const c = COMMISSION_RUB[region];
+  return c != null ? `${c} ₽` : null;
+}
 
 // Сбор сервиса: +8% к итоговой сумме расчёта (во всех странах).
 export const SERVICE_MARKUP = 0.08;
@@ -100,9 +112,12 @@ export const SERVICE_FEE_RUB: Record<RegionKey, number | null> = {
 
 // Доставка — фиксированная ставка за кг (Япония, Корея)
 export const DELIVERY_PER_KG_RUB: Partial<Record<RegionKey, number>> = {
-  japan: 1800,
+  japan: 1700,
   korea: 1500
 };
+
+// Япония: экспресс-доставка (только в тарифах, в расчёт не входит).
+export const JAPAN_EXPRESS_PER_KG_RUB = 3000;
 
 export const DELIVERY_DAYS: Partial<Record<RegionKey, string>> = {
   japan: "25–30 дней, со склада",
