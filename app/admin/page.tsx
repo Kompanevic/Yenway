@@ -7,6 +7,7 @@ import ItemCardTool from "@/components/ItemCardTool";
 import AdminLegit from "@/components/AdminLegit";
 import AdminRequests from "@/components/AdminRequests";
 import AdminStock from "@/components/AdminStock";
+import AdminMercariSearch from "@/components/AdminMercariSearch";
 
 interface StoredReview {
   id: string;
@@ -40,7 +41,7 @@ export default function AdminPage() {
   const [newPhoto, setNewPhoto] = useState<File | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"requests" | "cards" | "stock" | "preorder" | "bought" | "legit" | "reviews">("requests");
+  const [tab, setTab] = useState<"requests" | "mercari" | "cards" | "stock" | "preorder" | "bought" | "legit" | "reviews">("requests");
 
   async function load() {
     setLoading(true);
@@ -177,6 +178,7 @@ export default function AdminPage() {
         {(
           [
             ["requests", "Заявки"],
+            ["mercari", "Поиск Mercari"],
             ["cards", "Карточки"],
             ["stock", "В наличии"],
             ["preorder", "Под заказ"],
@@ -198,6 +200,7 @@ export default function AdminPage() {
       </div>
 
       {tab === "requests" && <AdminRequests />}
+      {tab === "mercari" && <AdminMercariSearch />}
       {tab === "cards" && <ItemCardTool />}
       {tab === "stock" && <AdminStock key="stock" kind="stock" />}
       {tab === "preorder" && <AdminStock key="preorder" kind="preorder" />}
