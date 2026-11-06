@@ -11,7 +11,7 @@ const btnMain = `${btn} btn-fx bg-accent text-ink font-semibold hover:bg-accent2
 const btnGhost = `${btn} border border-line hover:border-red-400 hover:text-red-400`;
 
 const HEADINGS: Record<ListingKind, { title: string; note: string }> = {
-  stock: { title: "Выложить свою вещь", note: "Публикуется сразу, пост для канала придёт в бота объявлений." },
+  stock: { title: "Выложить вещь в наличии", note: "Публикуется сразу: пост уходит в канал «в наличии» и в бота объявлений." },
   preorder: { title: "Выложить вещь под заказ", note: "Публикуется сразу, пост уходит в канал и в бота карточек." },
   bought: { title: "Добавить выкупленную вещь", note: "Появится в разделе «Выкупленные» на сайте. В боты и канал не отправляется." }
 };

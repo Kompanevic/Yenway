@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthed } from "@/lib/admin-auth";
-import { editListing, getListing, markChannelPosted, removeListing, setListingKind, setListingStatus, setPayoutPaid } from "@/lib/listings-store";
+import { editListing, getListing, kindOf, markChannelPosted, removeListing, setListingKind, setListingStatus, setPayoutPaid } from "@/lib/listings-store";
 import { parseListingEdit, publishSellerListing } from "@/lib/listing-input";
 import { SITE_URL } from "@/lib/site";
 
@@ -42,8 +42,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   try {
     const before = await getListing(params.id);
     const listing = await setListingStatus(params.id, status);
-    // Подтвердили вещь продавца — теперь и в канал.
-    if (status === "published" && before?.status === "pending" && listing.sellerTgId && !listing.channelPosted) {
+    // Подтвердили вещь продавца или «в наличии» от пользователя — теперь и в канал.
+    if (status === "published" && before?.status === "pending" && (listing.sellerTgId || kindOf(listing) === "stock") && !listing.channelPosted) {
       const channelError = await publishSellerListing(listing, SITE_URL);
       if (channelError) return NextResponse.json({ ok: true, warning: `На сайте опубликовано, в канал — нет: ${channelError}` });
       await markChannelPosted(listing.id);

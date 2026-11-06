@@ -105,6 +105,8 @@ export const LISTING_BOT: BotConfig = {
 // Канал для вещей «под заказ» (по умолчанию @yenwayjapan). Публикует любой
 // из ботов, который назначен администратором канала с правом публикации.
 export const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID ?? "@yenwayjapan";
+// Отдельный канал для вещей «в наличии». Не задан — в канал они не уходят.
+export const STOCK_CHANNEL_ID = process.env.TELEGRAM_STOCK_CHANNEL_ID?.trim() || null;
 export const CHANNEL_TOKENS = Array.from(
   new Set([process.env.LISTING_BOT_TOKEN, process.env.ITEM_BOT_TOKEN, process.env.TELEGRAM_BOT_TOKEN])
 ).filter((t): t is string => !!t);

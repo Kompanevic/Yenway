@@ -200,8 +200,8 @@ export default function ListingForm({
       body.append("description", description);
       if (!own) body.append("seller", seller);
       body.append("kind", kind);
+      if (own) body.append("sourceUrl", sourceUrl);
       if (kind !== "stock") {
-        body.append("sourceUrl", sourceUrl);
         body.append("weightKg", weight);
         body.append("calcRegion", region);
         body.append("calcLocalPrice", localPrice);
@@ -235,7 +235,7 @@ export default function ListingForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
-      {kind !== "stock" && (
+      {(kind !== "stock" || own) && (
         <div>
           <label className={label}>
             Ссылка на товар <span className="normal-case tracking-normal text-white/30">(видите только вы)</span>
@@ -266,7 +266,9 @@ export default function ListingForm({
           {autoNote && <p className="mt-2 text-sm text-amber-300/80">{autoNote}</p>}
           {!autoStatus && !autoNote && (
             <p className="mt-2 text-xs text-white/30">
-              Вставьте ссылку — заполним название, размер, состояние и цену. Фото добавьте сами. Всё можно поправить.
+              {kind === "stock"
+                ? "Необязательно: ссылка, где брали вещь, — чтобы потом быстро найти. Заполним название, размер и состояние."
+                : "Вставьте ссылку — заполним название, размер, состояние и цену. Фото добавьте сами. Всё можно поправить."}
             </p>
           )}
         </div>

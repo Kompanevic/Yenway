@@ -1,6 +1,6 @@
 import { getListingPhoto, kindOf, type Listing, type ListingInput, type ListingKind } from "./listings-store";
 import type { ReviewPhoto } from "./reviews-store";
-import { CHANNEL_ID, CHANNEL_TOKENS, ITEM_BOT, LISTING_BOT, sendPhotoResult, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
+import { CHANNEL_ID, CHANNEL_TOKENS, STOCK_CHANNEL_ID, ITEM_BOT, LISTING_BOT, sendPhotoResult, escapeHtml, sendTelegramMessage, sendTelegramPhoto } from "./telegram";
 import { CURRENCIES, calculatePrice, type Currency } from "./pricing";
 import type { TgUser } from "./tg-auth";
 import { REGIONS, type RegionKey } from "./regions";
@@ -25,7 +25,8 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
   // «Под заказ» и «Выкупленные» выкладывает только админ.
   const rawKind = text("kind", 10);
   const kind: ListingKind = own && (rawKind === "preorder" || rawKind === "bought") ? rawKind : "stock";
-  const sourceUrl = kind !== "stock" ? text("sourceUrl", 1000) : "";
+  // Ссылку на товар хранит только админ (у «в наличии» — по желанию).
+  const sourceUrl = own ? text("sourceUrl", 1000) : "";
   const weight = kind !== "stock" ? parseFloat(text("weightKg", 10).replace(",", ".")) : NaN;
   const weightKg = weight > 0 && weight <= 100 ? Math.round(weight * 100) / 100 : undefined;
   const calcRegion = text("calcRegion", 10);
@@ -205,18 +206,30 @@ function postButton(l: Listing, _origin: string) {
 
 // Тот же пост с кнопкой — прямо в канал (при пересылке кнопка теряется).
 // Пробуем ботов по очереди; null — опубликовано, иначе ошибки для админа.
-async function sendToChannel(photo: Blob, caption: string, button?: { text: string; url: string } | { text: string; url: string }[]): Promise<string | null> {
+async function sendToChannel(
+  photo: Blob,
+  caption: string,
+  button?: { text: string; url: string } | { text: string; url: string }[],
+  chatId: string = CHANNEL_ID
+): Promise<string | null> {
   const errors: string[] = [];
   for (const token of CHANNEL_TOKENS) {
-    const err = await sendPhotoResult(photo, "photo.jpg", caption, { token, chatId: CHANNEL_ID }, button);
+    const err = await sendPhotoResult(photo, "photo.jpg", caption, { token, chatId }, button);
     if (!err) return null;
     errors.push(err);
   }
   return Array.from(new Set(errors)).join("; ") || "нет ни одного токена бота";
 }
 
+// Канал по разделу: «под заказ» — основной, «в наличии» — отдельный (если задан).
+function channelFor(listing: Listing): string | null {
+  return kindOf(listing) === "stock" ? STOCK_CHANNEL_ID : CHANNEL_ID;
+}
+
 function postToChannel(listing: Listing, photo: Blob, origin: string): Promise<string | null> {
-  return sendToChannel(photo, listingPost(listing), postButton(listing, origin));
+  const chatId = channelFor(listing);
+  if (!chatId) return Promise.resolve("не задан TELEGRAM_STOCK_CHANNEL_ID");
+  return sendToChannel(photo, listingPost(listing), postButton(listing, origin), chatId);
 }
 
 // Объявление «под заказ» от продавца из мини-аппа. Цену выкупа под ключ
@@ -286,22 +299,26 @@ export async function notifyListing(
   if (listing.kind === "bought") return true;
   const preorder = listing.kind === "preorder";
   const bot = preorder && ITEM_BOT.token ? ITEM_BOT : LISTING_BOT;
-  // В канал уходит только «под заказ»; вещи «в наличии» — нет.
-  const channelError = preorder ? await postToChannel(listing, blobs[0], origin) : null;
+  // В канал — свои вещи: «под заказ» в основной, «в наличии» в отдельный.
+  // Вещи «в наличии» от пользователей уходят туда после модерации.
+  const channelError = listing.own ? await postToChannel(listing, blobs[0], origin) : null;
   const sent = await sendTelegramPhoto(blobs[0], "photo.jpg", listingPost(listing), bot, postButton(listing, origin));
   if (!sent) return false;
-  if (preorder) {
-    await sendTelegramMessage(calcMessage(listing, calc), bot, true);
-    if (channelError) {
-      await sendTelegramMessage(
-        `⚠️ В канал ${escapeHtml(CHANNEL_ID)} не опубликовано: ${escapeHtml(channelError)}\n\n` +
-          `«chat not found» — неверный канал (задайте TELEGRAM_CHANNEL_ID); ` +
-          `«not enough rights» / «not a member» — бот не админ канала с правом публикации.`,
-        bot,
-        true
-      );
-    }
-  } else if (!listing.own) {
+  if (preorder) await sendTelegramMessage(calcMessage(listing, calc), bot, true);
+  else if (listing.own && listing.sourceUrl) {
+    await sendTelegramMessage(`🔗 Ссылка на товар (только для вас):\n${escapeHtml(listing.sourceUrl)}`, bot, true);
+  }
+  if (channelError) {
+    const envName = preorder ? "TELEGRAM_CHANNEL_ID" : "TELEGRAM_STOCK_CHANNEL_ID";
+    await sendTelegramMessage(
+      `⚠️ В канал ${escapeHtml(channelFor(listing) ?? "«в наличии»")} не опубликовано: ${escapeHtml(channelError)}\n\n` +
+        `«chat not found» — неверный канал (задайте ${envName}); ` +
+        `«not enough rights» / «not a member» — бот не админ канала с правом публикации.`,
+      bot,
+      true
+    );
+  }
+  if (!listing.own) {
     await sendTelegramMessage(
       `Продавец: @${listing.seller}\nОбъявление на модерации — опубликовать можно в /admin → «В наличии».`,
       bot,
@@ -311,7 +328,7 @@ export async function notifyListing(
   return true;
 }
 
-// Админ подтвердил вещь продавца — публикуем пост в канал (один раз).
+// Админ подтвердил вещь продавца или «в наличии» от пользователя — публикуем пост в канал (один раз).
 export async function publishSellerListing(listing: Listing, origin: string): Promise<string | null> {
   const photo = await getListingPhoto(listing.id, 0);
   if (!photo) return "нет фото";
