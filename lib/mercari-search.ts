@@ -1,5 +1,6 @@
 import { createSign, generateKeyPairSync, randomUUID, type KeyObject } from "crypto";
 export { MERCARI_TYPES } from "./mercari-types";
+import { normalizeSize } from "./mercari-types";
 
 // Поиск по Mercari через тот же API, что и сайт jp.mercari.com. Каждый запрос
 // подписывается DPoP-токеном (ES256) — ключ генерируем сами, аккаунт не нужен.
@@ -35,13 +36,16 @@ export interface MercariItem {
   price: number;
   image: string | null;
   link: string;
+  size: string | null;
 }
 
 
-export async function searchMercari(keyword: string, maxPriceJPY: number | null, limit: number): Promise<MercariItem[]> {
+// sizes — нужные размеры в общем виде (см. normalizeSize); пусто — любые.
+export async function searchMercari(keyword: string, maxPriceJPY: number | null, limit: number, sizes: string[] = []): Promise<MercariItem[]> {
   const body = {
     userId: "",
-    pageSize: Math.min(120, Math.max(limit, 20)),
+    // С фильтром по размеру берём больше и отсеиваем у себя.
+    pageSize: sizes.length ? 120 : Math.min(120, Math.max(limit, 20)),
     pageToken: "",
     searchSessionId: randomUUID().replace(/-/g, ""),
     indexRouting: "INDEX_ROUTING_UNSPECIFIED",
@@ -71,9 +75,9 @@ export async function searchMercari(keyword: string, maxPriceJPY: number | null,
     defaultDatasets: ["DATASET_TYPE_MERCARI", "DATASET_TYPE_BEYOND"],
     serviceFrom: "suruga",
     withItemBrand: true,
-    withItemSize: false,
+    withItemSize: true,
     withItemPromotions: false,
-    withItemSizes: false,
+    withItemSizes: true,
     withShopname: false
   };
   const res = await fetch(SEARCH_URL, {
@@ -89,11 +93,22 @@ export async function searchMercari(keyword: string, maxPriceJPY: number | null,
     signal: AbortSignal.timeout(15000)
   });
   if (!res.ok) throw new Error(`Mercari ответил ${res.status}`);
-  const data = (await res.json()) as { items?: { id: string; name: string; price: string | number; thumbnails?: string[] }[] };
+  type Size = { name?: string } | undefined;
+  const data = (await res.json()) as {
+    items?: { id: string; name: string; price: string | number; thumbnails?: string[]; itemSize?: Size; itemSizes?: Size[] }[];
+  };
+  const want = new Set(sizes);
   return (data.items ?? [])
     .filter((i) => i.id && i.name)
+    .map((i) => ({ i, size: i.itemSize?.name ?? i.itemSizes?.[0]?.name ?? null }))
+    .filter(({ size }) => {
+      if (!want.size) return true;
+      const n = normalizeSize(size);
+      return n === "free" || (n != null && want.has(n));
+    })
     .slice(0, limit)
-    .map((i) => ({
+    .map(({ i, size }) => ({
+      size,
       id: i.id,
       title: i.name,
       price: Number(i.price) || 0,

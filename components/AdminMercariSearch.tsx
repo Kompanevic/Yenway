@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { EXCHANGE_RATES } from "@/lib/pricing";
-import { MERCARI_TYPES } from "@/lib/mercari-types";
+import { CLOTHING_SIZES, MERCARI_TYPES, SHOE_SIZES, SHOE_TYPES } from "@/lib/mercari-types";
 
-type Item = { id: string; title: string; price: number; image: string | null; link: string };
+type Item = { id: string; title: string; price: number; image: string | null; link: string; size: string | null };
 type Group = { brand: string; type: string; keyword: string; items: Item[]; error?: string };
 
 const STORE = "yenway:mercari-search";
@@ -27,6 +27,8 @@ export default function AdminMercariSearch() {
   const [price, setPrice] = useState("");
   const [cur, setCur] = useState<"JPY" | "USD" | "RUB">("USD");
   const [limit, setLimit] = useState(10);
+  const [sizes, setSizes] = useState<string[]>([]);
+  const [shoeSizes, setShoeSizes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [groups, setGroups] = useState<Group[] | null>(null);
@@ -42,6 +44,8 @@ export default function AdminMercariSearch() {
         setTypes(s.types ?? []);
         setPrice(s.price ?? "");
         setCur(s.cur ?? "USD");
+        setSizes(s.sizes ?? []);
+        setShoeSizes(s.shoeSizes ?? []);
       }
     } catch {
       // без сохранения
@@ -53,6 +57,9 @@ export default function AdminMercariSearch() {
     [brands]
   );
   const count = brandList.length * Math.max(1, types.length);
+  // Размеры одежды — если ищем одежду или «любые»; обуви — если отмечена обувь.
+  const showClothing = types.length === 0 || types.some((t) => !SHOE_TYPES.includes(t));
+  const showShoes = types.some((t) => SHOE_TYPES.includes(t));
   const maxJPY = Number(price) > 0 ? Math.round(toJPY(Number(price), cur)) : null;
 
   async function run() {
@@ -60,7 +67,7 @@ export default function AdminMercariSearch() {
     setLoading(true);
     setPicked(new Set());
     try {
-      localStorage.setItem(STORE, JSON.stringify({ brands, types, price, cur }));
+      localStorage.setItem(STORE, JSON.stringify({ brands, types, price, cur, sizes, shoeSizes }));
     } catch {
       // без сохранения
     }
@@ -68,7 +75,14 @@ export default function AdminMercariSearch() {
       const res = await fetch("/api/admin/mercari-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brands: brandList, types, maxPriceJPY: maxJPY, limit })
+        body: JSON.stringify({
+          brands: brandList,
+          types,
+          maxPriceJPY: maxJPY,
+          limit,
+          sizes: showClothing ? sizes : [],
+          shoeSizes: showShoes ? shoeSizes : []
+        })
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.error ?? "Поиск не удался");
@@ -125,6 +139,9 @@ export default function AdminMercariSearch() {
             ))}
           </div>
         </div>
+
+        {showClothing && <SizeChips label="Размер одежды" options={CLOTHING_SIZES} value={sizes} onChange={setSizes} />}
+        {showShoes && <SizeChips label="Размер обуви, см" options={SHOE_SIZES} value={shoeSizes} onChange={setShoeSizes} />}
 
         <div className="grid grid-cols-[1fr,auto,auto] gap-2 items-end">
           <div>
@@ -202,6 +219,7 @@ export default function AdminMercariSearch() {
                             <div className="w-full aspect-square rounded-xl bg-white/5" />
                           )}
                           <div className="mt-2 text-xs leading-snug line-clamp-2">{i.title}</div>
+                          {i.size && <div className="mt-1 text-[11px] text-white/50">Размер: {i.size}</div>}
                         </a>
                         <div className="mt-1 flex items-center justify-between gap-2">
                           <span className="font-display text-sm font-semibold">
@@ -220,5 +238,30 @@ export default function AdminMercariSearch() {
         </div>
       )}
     </section>
+  );
+}
+
+// Несколько размеров сразу; ничего не выбрано — любой. Свободный размер (FREE) подходит всегда.
+function SizeChips({ label: title, options, value, onChange }: { label: string; options: string[]; value: string[]; onChange: (v: string[]) => void }) {
+  return (
+    <div>
+      <label className={label}>
+        {title} <span className="normal-case tracking-normal text-white/30">{value.length ? "(FREE подходит всегда)" : "(не выбрано — любой)"}</span>
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((o) => (
+          <button
+            key={o}
+            type="button"
+            onClick={() => onChange(value.includes(o) ? value.filter((x) => x !== o) : [...value, o])}
+            className={`min-w-11 rounded-full border px-3 py-1.5 font-display text-xs sm:text-sm transition-colors ${
+              value.includes(o) ? "bg-accent text-ink border-accent font-semibold" : "border-line text-white/60 hover:text-white"
+            }`}
+          >
+            {o}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthed } from "@/lib/admin-auth";
 import { MERCARI_TYPES, searchMercari, type MercariItem } from "@/lib/mercari-search";
+import { CLOTHING_SIZES, SHOE_SIZES, SHOE_TYPES } from "@/lib/mercari-types";
 
 export const maxDuration = 60;
 
@@ -9,13 +10,18 @@ const MAX_QUERIES = 40;
 // Пакетный поиск для админки: каждый бренд × каждый тип вещи — отдельный запрос.
 export async function POST(req: NextRequest) {
   if (!isAuthed(req)) return NextResponse.json({ error: "Не авторизовано" }, { status: 401 });
-  const b = (await req.json().catch(() => null)) as { brands?: unknown; types?: unknown; maxPriceJPY?: unknown; limit?: unknown } | null;
+  const b = (await req.json().catch(() => null)) as { brands?: unknown; types?: unknown; maxPriceJPY?: unknown; limit?: unknown; sizes?: unknown; shoeSizes?: unknown } | null;
   const brands = Array.isArray(b?.brands)
     ? Array.from(new Set(b.brands.map((x) => String(x).trim().slice(0, 60)).filter(Boolean)))
     : [];
   const types = Array.isArray(b?.types) ? b.types.map(String).filter((t) => t in MERCARI_TYPES || t === "Любые") : [];
   const maxPriceJPY = Number(b?.maxPriceJPY) > 0 ? Math.round(Number(b?.maxPriceJPY)) : null;
   const limit = Math.min(30, Math.max(3, Number(b?.limit) || 10));
+  const pick = (v: unknown, allowed: string[]) => (Array.isArray(v) ? v.map(String).filter((x) => allowed.includes(x)) : []);
+  const sizes = pick(b?.sizes, CLOTHING_SIZES);
+  const shoeSizes = pick(b?.shoeSizes, SHOE_SIZES);
+  // Обувь — по сантиметрам, одежда — по буквам; «Любые» — подходит любой из выбранных.
+  const sizesFor = (type: string) => (SHOE_TYPES.includes(type) ? shoeSizes : type === "Любые" ? [...sizes, ...shoeSizes] : sizes);
   if (!brands.length) return NextResponse.json({ error: "Впишите хотя бы один бренд" }, { status: 400 });
   const kinds = types.length ? types : ["Любые"];
   const queries = brands.flatMap((brand) => kinds.map((type) => ({ brand, type, keyword: type === "Любые" ? brand : `${brand} ${MERCARI_TYPES[type]}` })));
@@ -30,7 +36,7 @@ export async function POST(req: NextRequest) {
       ...(await Promise.all(
         queries.slice(i, i + 5).map(async (q) => {
           try {
-            return { ...q, items: await searchMercari(q.keyword, maxPriceJPY, limit) };
+            return { ...q, items: await searchMercari(q.keyword, maxPriceJPY, limit, sizesFor(q.type)) };
           } catch (e) {
             return { ...q, items: [], error: e instanceof Error ? e.message : "ошибка" };
           }
