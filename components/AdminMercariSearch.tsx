@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { downscaleImage } from "@/lib/image";
 import { EXCHANGE_RATES } from "@/lib/pricing";
 import { CLOTHING_SIZES, MERCARI_TYPES, SHOE_SIZES, SHOE_TYPES } from "@/lib/mercari-types";
 
@@ -34,6 +35,9 @@ export default function AdminMercariSearch() {
   const [groups, setGroups] = useState<Group[] | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState<string | null>(null);
+  // Поиск по фото: сама картинка и что про неё сказала нейросеть.
+  const [photo, setPhoto] = useState<{ file: File; url: string } | null>(null);
+  const [photoNote, setPhotoNote] = useState<string | null>(null);
 
   // Прошлый набор брендов и типов — чтобы не вбивать заново.
   useEffect(() => {
@@ -64,6 +68,7 @@ export default function AdminMercariSearch() {
 
   async function run() {
     setError(null);
+    setPhotoNote(null);
     setLoading(true);
     setPicked(new Set());
     try {
@@ -94,6 +99,38 @@ export default function AdminMercariSearch() {
     }
   }
 
+  async function attach(files: FileList | null) {
+    const f = files?.[0];
+    if (!f) return;
+    const file = await downscaleImage(f, 1200, 0.85);
+    setPhoto({ file, url: URL.createObjectURL(file) });
+  }
+
+  async function runPhoto() {
+    if (!photo) return;
+    setError(null);
+    setPhotoNote(null);
+    setLoading(true);
+    setPicked(new Set());
+    try {
+      const body = new FormData();
+      body.append("photo", photo.file);
+      if (maxJPY) body.append("maxPriceJPY", String(maxJPY));
+      body.append("limit", String(limit));
+      body.append("sizes", (showClothing ? sizes : []).join(","));
+      body.append("shoeSizes", (showShoes ? shoeSizes : []).join(","));
+      const res = await fetch("/api/admin/mercari-photo", { method: "POST", body });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error ?? "Поиск по фото не удался");
+      setGroups(d.results);
+      setPhotoNote(d.description ? `Похоже на: ${d.description}` : null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Ошибка");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const all = groups?.flatMap((g) => g.items) ?? [];
   function copy(items: Item[], what: string) {
     const text = items.map((i) => `${i.title} — ¥${i.price.toLocaleString("ru-RU")}\n${i.link}`).join("\n\n");
@@ -117,6 +154,42 @@ export default function AdminMercariSearch() {
       <p className="text-sm text-white/40 mb-5">Бренды × типы вещей одним поиском: свежие объявления в продаже, не дороже указанной цены.</p>
 
       <div className="space-y-5">
+        <div className="rounded-2xl border border-line p-4">
+          <label className={label}>По фото</label>
+          <div className="flex items-center gap-3">
+            {photo ? (
+              <div className="relative w-20 h-20 shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo.url} alt="" className="w-full h-full rounded-xl object-cover border border-line" />
+                <button
+                  type="button"
+                  onClick={() => setPhoto(null)}
+                  aria-label="Убрать фото"
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-ink border border-line text-white/70 text-sm hover:text-red-400"
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              <label className="w-20 h-20 shrink-0 rounded-xl border border-dashed border-line flex items-center justify-center text-center text-[11px] leading-tight text-white/40 cursor-pointer hover:border-accent px-1">
+                Прикрепить фото
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => { attach(e.target.files); e.target.value = ""; }} />
+              </label>
+            )}
+            <div className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={runPhoto}
+                disabled={!photo || loading}
+                className="w-full font-display rounded-full border border-accent text-accent py-2.5 text-sm font-semibold disabled:opacity-40"
+              >
+                {loading && photo ? "Ищем по фото…" : "Найти по фото"}
+              </button>
+              <p className="mt-1.5 text-[11px] text-white/35">Нейросеть определит вещь и поищет её на Mercari. Цена и размер — из фильтров ниже.</p>
+            </div>
+          </div>
+        </div>
+
         <div>
           <label className={label}>Бренды — каждый с новой строки или через запятую</label>
           <textarea value={brands} onChange={(e) => setBrands(e.target.value)} rows={4} placeholder={"Rick Owens\nJulius\nUndercover"} className={field} />
@@ -178,7 +251,10 @@ export default function AdminMercariSearch() {
       {groups && (
         <div className="mt-8">
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="text-sm text-white/50 mr-auto">Найдено: {all.length}</span>
+            <span className="text-sm text-white/50 mr-auto">
+              Найдено: {all.length}
+              {photoNote && <span className="block text-xs text-white/40 mt-0.5">{photoNote}</span>}
+            </span>
             {picked.size > 0 && (
               <button type="button" onClick={() => copy(all.filter((i) => picked.has(i.id)), "picked")} className="rounded-full bg-accent text-ink px-4 py-2 font-display text-sm font-semibold">
                 {copied === "picked" ? "Скопировано ✓" : `Скопировать выбранные (${picked.size})`}
@@ -195,14 +271,14 @@ export default function AdminMercariSearch() {
               <div key={g.keyword}>
                 <h3 className="font-display text-sm font-semibold mb-3">
                   {g.brand} · {g.type} <span className="text-white/40 font-normal">({g.items.length})</span>
-                  <a
+                  {g.keyword !== "lens" && <a
                     href={`https://jp.mercari.com/search?keyword=${encodeURIComponent(g.keyword)}&status=on_sale${maxJPY ? `&price_max=${maxJPY}` : ""}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ml-2 text-xs font-normal text-white/40 underline underline-offset-2 hover:text-white"
                   >
                     открыть на Mercari
-                  </a>
+                  </a>}
                 </h3>
                 {g.error ? (
                   <p className="text-sm text-red-400">{g.error}</p>

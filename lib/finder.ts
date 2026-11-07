@@ -38,6 +38,7 @@ export interface Found {
   market: string;
   flag: string;
   price?: string;
+  image?: string;
 }
 
 function market(link: string): (typeof MARKETS)[number] | null {
@@ -50,10 +51,17 @@ function market(link: string): (typeof MARKETS)[number] | null {
   }
 }
 
-function toFound(r: { title?: string; link?: string; price?: { value?: string } }): Found | null {
+function toFound(r: { title?: string; link?: string; price?: { value?: string }; thumbnail?: string }): Found | null {
   const m = r.link ? market(r.link) : null;
   if (!m || !r.link) return null;
-  return { title: (r.title ?? m.name).slice(0, 90), link: r.link, market: m.name, flag: m.flag, price: r.price?.value };
+  return {
+    title: (r.title ?? m.name).slice(0, 90),
+    link: r.link,
+    market: m.name,
+    flag: m.flag,
+    price: r.price?.value,
+    ...(r.thumbnail?.startsWith("https://") ? { image: r.thumbnail } : {})
+  };
 }
 
 async function serp(params: Record<string, string>): Promise<Record<string, unknown> | null> {
