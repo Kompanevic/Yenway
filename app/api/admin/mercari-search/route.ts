@@ -16,7 +16,9 @@ export async function POST(req: NextRequest) {
     : [];
   const types = Array.isArray(b?.types) ? b.types.map(String).filter((t) => t in MERCARI_TYPES || t === "Любые") : [];
   const maxPriceJPY = Number(b?.maxPriceJPY) > 0 ? Math.round(Number(b?.maxPriceJPY)) : null;
-  const limit = Math.min(30, Math.max(3, Number(b?.limit) || 10));
+  // 0 — «все»: листаем страницы выдачи, пока они есть (в пределах общего бюджета запросов).
+  const all = Number(b?.limit) === 0;
+  const limit = all ? Infinity : Math.min(100, Math.max(3, Number(b?.limit) || 10));
   const pick = (v: unknown, allowed: string[]) => (Array.isArray(v) ? v.map(String).filter((x) => allowed.includes(x)) : []);
   const sizes = pick(b?.sizes, CLOTHING_SIZES);
   const shoeSizes = pick(b?.shoeSizes, SHOE_SIZES);
@@ -29,6 +31,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Слишком много сочетаний (${queries.length}). Максимум ${MAX_QUERIES} — уберите часть брендов или типов.` }, { status: 400 });
   }
 
+  // Не больше ~60 обращений к Mercari за поиск: чем больше сочетаний, тем меньше страниц на каждое.
+  const pages = all ? Math.max(1, Math.min(5, Math.floor(60 / queries.length))) : 0;
+  const pagesFor = (type: string) => (all ? pages : sizesFor(type).length ? Math.min(3, Math.ceil(limit / 40)) : Math.ceil(limit / 120));
+
   // По 5 запросов одновременно — быстро и без лишней нагрузки на Mercari.
   const results: { brand: string; type: string; keyword: string; items: MercariItem[]; error?: string }[] = [];
   for (let i = 0; i < queries.length; i += 5) {
@@ -36,7 +42,7 @@ export async function POST(req: NextRequest) {
       ...(await Promise.all(
         queries.slice(i, i + 5).map(async (q) => {
           try {
-            return { ...q, items: await searchMercari(q.keyword, maxPriceJPY, limit, sizesFor(q.type)) };
+            return { ...q, items: await searchMercari(q.keyword, maxPriceJPY, limit, sizesFor(q.type), pagesFor(q.type)) };
           } catch (e) {
             return { ...q, items: [], error: e instanceof Error ? e.message : "ошибка" };
           }

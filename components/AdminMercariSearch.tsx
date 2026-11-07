@@ -154,11 +154,12 @@ export default function AdminMercariSearch() {
             <option value="RUB">₽</option>
           </select>
           <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} className={`${field} w-auto`} aria-label="Сколько вещей на запрос">
-            {[5, 10, 20, 30].map((n) => (
+            {[5, 10, 20, 30, 50, 100].map((n) => (
               <option key={n} value={n}>
                 по {n}
               </option>
             ))}
+            <option value={0}>все</option>
           </select>
         </div>
         {maxJPY && cur !== "JPY" && <p className="-mt-3 text-xs text-white/40">≈ до ¥{maxJPY.toLocaleString("ru-RU")}</p>}

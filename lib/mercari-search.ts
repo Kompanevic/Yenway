@@ -40,14 +40,16 @@ export interface MercariItem {
 }
 
 
-// sizes — нужные размеры в общем виде (см. normalizeSize); пусто — любые.
-export async function searchMercari(keyword: string, maxPriceJPY: number | null, limit: number, sizes: string[] = []): Promise<MercariItem[]> {
+type Size = { name?: string } | undefined;
+type RawItem = { id: string; name: string; price: string | number; thumbnails?: string[]; itemSize?: Size; itemSizes?: Size[] };
+
+// Одна страница выдачи (до 120 вещей) и токен следующей.
+async function searchPage(keyword: string, maxPriceJPY: number | null, pageToken: string, sessionId: string) {
   const body = {
     userId: "",
-    // С фильтром по размеру берём больше и отсеиваем у себя.
-    pageSize: sizes.length ? 120 : Math.min(120, Math.max(limit, 20)),
-    pageToken: "",
-    searchSessionId: randomUUID().replace(/-/g, ""),
+    pageSize: 120,
+    pageToken,
+    searchSessionId: sessionId,
     indexRouting: "INDEX_ROUTING_UNSPECIFIED",
     thumbnailTypes: [],
     searchCondition: {
@@ -93,19 +95,47 @@ export async function searchMercari(keyword: string, maxPriceJPY: number | null,
     signal: AbortSignal.timeout(15000)
   });
   if (!res.ok) throw new Error(`Mercari ответил ${res.status}`);
-  type Size = { name?: string } | undefined;
-  const data = (await res.json()) as {
-    items?: { id: string; name: string; price: string | number; thumbnails?: string[]; itemSize?: Size; itemSizes?: Size[] }[];
-  };
+  const data = (await res.json()) as { items?: RawItem[]; meta?: { nextPageToken?: string } };
+  return { items: data.items ?? [], next: data.meta?.nextPageToken || "" };
+}
+
+// sizes — нужные размеры в общем виде (см. normalizeSize); пусто — любые.
+// limit — сколько вещей нужно (Infinity — все); maxPages — сколько страниц по 120 можно пролистать.
+export async function searchMercari(
+  keyword: string,
+  maxPriceJPY: number | null,
+  limit: number,
+  sizes: string[] = [],
+  maxPages = 1
+): Promise<MercariItem[]> {
   const want = new Set(sizes);
-  return (data.items ?? [])
-    .filter((i) => i.id && i.name)
-    .map((i) => ({ i, size: i.itemSize?.name ?? i.itemSizes?.[0]?.name ?? null }))
-    .filter(({ size }) => {
-      if (!want.size) return true;
-      const n = normalizeSize(size);
-      return n === "free" || (n != null && want.has(n));
-    })
+  const sessionId = randomUUID().replace(/-/g, "");
+  const found: { i: RawItem; size: string | null }[] = [];
+  const seen = new Set<string>();
+  let token = "";
+  for (let page = 0; page < maxPages && found.length < limit; page++) {
+    // Ошибку первой страницы показываем; на следующих — отдаём то, что уже нашли.
+    let res;
+    try {
+      res = await searchPage(keyword, maxPriceJPY, token, sessionId);
+    } catch (e) {
+      if (page === 0) throw e;
+      break;
+    }
+    for (const i of res.items) {
+      if (!i.id || !i.name || seen.has(i.id)) continue;
+      seen.add(i.id);
+      const size = i.itemSize?.name ?? i.itemSizes?.[0]?.name ?? null;
+      if (want.size) {
+        const n = normalizeSize(size);
+        if (!(n === "free" || (n != null && want.has(n)))) continue;
+      }
+      found.push({ i, size });
+    }
+    if (!res.next) break;
+    token = res.next;
+  }
+  return found
     .slice(0, limit)
     .map(({ i, size }) => ({
       size,
