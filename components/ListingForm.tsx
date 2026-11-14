@@ -19,7 +19,7 @@ import {
 import { useTgUsername } from "@/lib/tg-webapp";
 import { REGIONS, REGION_LIST, type RegionKey } from "@/lib/regions";
 
-const PREORDER_DESCRIPTION = "Подробнее в личные сообщения к менеджеру.";
+const PREORDER_DESCRIPTION = `Подробнее в личные сообщения к менеджеру @${MANAGER_TELEGRAM}`;
 // Курс по умолчанию: заданный в pricing.ts, иначе последний введённый вручную.
 const RATE_KEY = (c: Currency) => `yenway:rate:${c}`;
 function defaultRate(c: Currency): string {
