@@ -22,6 +22,8 @@ export const LISTING_CATEGORIES = [
   "Джинсы",
   "Шорты",
   "Обувь",
+  "Шапки",
+  "Кепки",
   "Сумки",
   "Аксессуары",
   "Другое"
@@ -36,6 +38,9 @@ export const kindOf = (l: { kind?: ListingKind }): ListingKind => l.kind ?? "sto
 // более точные слова раньше (t-shirt раньше shirt, hoodie раньше sweat).
 const CATEGORY_HINTS: [string, RegExp][] = [
   ["Обувь", /geobasket|ramones|abstract|bozo|tractor|creeper|jumbo lace|sneaker|кроссов|кед|boot|ботин|сапог|loafer|лофер|sandal|сандал|slide|derby|dunk|jordan|yeezy|tabi|vans|converse|new balance|asics|shoe|обув|スニーカー|ブーツ|シューズ|靴|サンダル|ローファー/i],
+  // Шапки раньше свитеров: «knit cap» — шапка, а не свитер.
+  ["Шапки", /beanie|knit ?cap|knit ?hat|\bhat\b|bucket|balaclava|шапк|панам|балаклав|ニット帽|ニットキャップ|ビーニー|バケハ|バケットハット|バラクラバ|帽子/i],
+  ["Кепки", /\bcap\b|snapback|trucker|baseball|кепк|бейсболк|キャップ|ベースボール/i],
   ["Худи", /hood|худи|толстовк.*капюш|パーカー|フーディ/i],
   ["Футболки", /(^|[^a-z])t-?shirt|\btee\b|футболк|Tシャツ|ティーシャツ/i],
   ["Лонгсливы", /long ?sleeve|лонгслив|ロンT|ロングスリーブ|長袖/i],
@@ -48,7 +53,7 @@ const CATEGORY_HINTS: [string, RegExp][] = [
   ["Штаны", /pants|trousers|cargo|jogger|брюк|штан|карго|パンツ|スラックス|ズボン/i],
   ["Рубашки", /shirt|рубаш|シャツ|ブラウス/i],
   ["Сумки", /bag|backpack|tote|сумк|рюкзак|шоппер|バッグ|リュック|トート/i],
-  ["Аксессуары", /belt|ремень|cap\b|кепк|шапк|beanie|hat|scarf|шарф|ring|кольц|necklace|цепоч|wallet|кошел|бумажник|glasses|очки|ベルト|キャップ|帽子|ネックレス|リング|財布|マフラー/i]
+  ["Аксессуары", /belt|ремень|scarf|шарф|ring|кольц|necklace|цепоч|wallet|кошел|бумажник|glasses|очки|ベルト|ネックレス|リング|財布|マフラー/i]
 ];
 
 export function guessCategory(title: string): string | undefined {
