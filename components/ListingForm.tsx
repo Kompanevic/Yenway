@@ -20,6 +20,8 @@ import { useTgUsername } from "@/lib/tg-webapp";
 import { REGIONS, REGION_LIST, type RegionKey } from "@/lib/regions";
 
 const PREORDER_DESCRIPTION = `Подробнее в личные сообщения к менеджеру @${MANAGER_TELEGRAM}`;
+// Своя вещь «в наличии» — по умолчанию просто ник менеджера.
+const STOCK_DESCRIPTION = `@${MANAGER_TELEGRAM}`;
 // Курс по умолчанию: заданный в pricing.ts, иначе последний введённый вручную.
 const RATE_KEY = (c: Currency) => `yenway:rate:${c}`;
 function defaultRate(c: Currency): string {
@@ -64,7 +66,7 @@ export default function ListingForm({
   const [category, setCategory] = useState("");
   // Тип подставляется сам по названию, пока его не выбрали вручную.
   const [categoryTouched, setCategoryTouched] = useState(false);
-  const [description, setDescription] = useState(kind === "preorder" ? PREORDER_DESCRIPTION : "");
+  const [description, setDescription] = useState(kind === "preorder" ? PREORDER_DESCRIPTION : kind === "stock" && own ? STOCK_DESCRIPTION : "");
   const [seller, setSeller] = useState("");
   useTgUsername(setSeller);
   const [loading, setLoading] = useState(false);
@@ -217,7 +219,7 @@ export default function ListingForm({
       setTitle("");
       setSize("");
       setPrice("");
-      setDescription(kind === "preorder" ? PREORDER_DESCRIPTION : "");
+      setDescription(kind === "preorder" ? PREORDER_DESCRIPTION : kind === "stock" && own ? STOCK_DESCRIPTION : "");
       setCategory("");
       setCategoryTouched(false);
       setSourceUrl("");
