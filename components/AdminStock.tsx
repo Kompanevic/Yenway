@@ -59,6 +59,7 @@ function EditListing({ listing, onSaved, onCancel }: { listing: Listing; onSaved
         ))}
       </select>
       <select value={v.condition} onChange={set("condition")} className={field}>
+        <option value="">Без состояния</option>
         {LISTING_CONDITIONS.map((c) => (
           <option key={c}>{c}</option>
         ))}
@@ -202,7 +203,7 @@ export default function AdminStock({ kind }: { kind: ListingKind }) {
                         {l.title} • {l.size}
                       </a>
                       <div className="text-sm text-white/50">
-                        {l.price.toLocaleString("ru-RU")} ₽ · {l.condition} · {l.category ?? "тип не выбран"} · {l.own ? "ваша вещь" : `@${l.seller}`} ·{" "}
+                        {l.price.toLocaleString("ru-RU")} ₽ · {l.condition || "без состояния"} · {l.category ?? "тип не выбран"} · {l.own ? "ваша вещь" : `@${l.seller}`} ·{" "}
                         {l.photoCount} фото
                       </div>
                       {l.basePrice != null && (

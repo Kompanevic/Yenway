@@ -196,7 +196,7 @@ export default function ListingForm({
       body.append("title", title);
       body.append("size", size);
       body.append("price", price);
-      body.append("condition", condition);
+      if (!(own && kind === "stock")) body.append("condition", condition);
       if (category) body.append("category", category);
       body.append("description", description);
       if (!own) body.append("seller", seller);
@@ -459,14 +459,14 @@ export default function ListingForm({
         </div>
       )}
 
-      <div>
+      {!(own && kind === "stock") && <div>
         <label className={label}>Состояние</label>
         <select value={condition} onChange={(e) => setCondition(e.target.value)} className={field}>
           {LISTING_CONDITIONS.map((c) => (
             <option key={c}>{c}</option>
           ))}
         </select>
-      </div>
+      </div>}
 
       <div>
         <label className={label}>Описание <span className="normal-case tracking-normal text-white/30">(по желанию)</span></label>

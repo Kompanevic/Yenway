@@ -51,7 +51,9 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
   if (title.length < 2) return { ok: false, error: "Укажите название модели" };
   if (!size) return { ok: false, error: "Укажите размер" };
   if (!Number.isFinite(price) || price < 1) return { ok: false, error: "Укажите цену в рублях" };
-  if (!LISTING_CONDITIONS.includes(condition)) return { ok: false, error: "Выберите состояние" };
+  // Свои вещи «в наличии» — без состояния.
+  const noCondition = own && kind === "stock";
+  if (!noCondition && !LISTING_CONDITIONS.includes(condition)) return { ok: false, error: "Выберите состояние" };
   if ((kind === "preorder" || sourceUrl) && !/^https?:\/\/\S+$/.test(sourceUrl)) {
     return { ok: false, error: "Укажите ссылку на товар (https://...)" };
   }
@@ -76,7 +78,7 @@ export async function parseListingForm(form: FormData, own: boolean): Promise<Pa
       title,
       size,
       price,
-      condition,
+      condition: noCondition ? "" : condition,
       description,
       seller,
       own,
@@ -114,7 +116,8 @@ export function parseListingEdit(body: unknown): { ok: true; value: ListingEdit 
   }
   const condition = str("condition", 40);
   if (condition !== undefined) {
-    if (!LISTING_CONDITIONS.includes(condition)) return { ok: false, error: "Выберите состояние" };
+    // Пусто — без состояния (свои вещи «в наличии»).
+    if (condition && !LISTING_CONDITIONS.includes(condition)) return { ok: false, error: "Выберите состояние" };
     out.condition = condition;
   }
   const description = str("description", 800);
@@ -132,6 +135,18 @@ export function parseListingEdit(body: unknown): { ok: true; value: ListingEdit 
 export function listingPost(l: ListingInput): string {
   const desc = l.description.length > 500 ? l.description.slice(0, 500) + "…" : l.description;
   const line = (text: string) => `<b>✦ ${text}</b>`;
+  // «В наличии»: название, размер, описание, небольшой отступ и цена — всё жирным.
+  if (kindOf(l) === "stock") {
+    return [
+      line(escapeHtml(l.title)),
+      line(`Размер: ${escapeHtml(l.size)}`),
+      desc ? `<b>${escapeHtml(desc)}</b>` : null,
+      ``,
+      line(`Цена: ${l.price.toLocaleString("ru-RU")} ₽`)
+    ]
+      .filter((x) => x !== null)
+      .join("\n");
+  }
   return [
     line(escapeHtml(l.title)),
     line(`Размер: ${escapeHtml(l.size)}`),

@@ -72,7 +72,7 @@ export async function listingMetadata(id: string, kind: ListingKind): Promise<Me
   if (!l) return {};
   return {
     title: `${l.title} • ${l.size} — YenWay`,
-    description: `${l.condition}, ${l.price.toLocaleString("ru-RU")} ₽. ${COPY[kind].meta}`,
+    description: `${l.condition ? `${l.condition}, ` : ""}${l.price.toLocaleString("ru-RU")} ₽. ${COPY[kind].meta}`,
     openGraph: { images: [`/api/stock-photo/${l.id}/0`] }
   };
 }
@@ -131,10 +131,12 @@ export default async function ListingDetail({ id, kind }: { id: string; kind: Li
                 <span>≈ {l.weightKg} кг</span>
               </div>
             )}
-            <div className="flex justify-between border-b border-line pb-2.5">
-              <span className="text-white/40">Состояние</span>
-              <span>{l.condition}</span>
-            </div>
+            {l.condition && (
+              <div className="flex justify-between border-b border-line pb-2.5">
+                <span className="text-white/40">Состояние</span>
+                <span>{l.condition}</span>
+              </div>
+            )}
           </div>
           <div className="mt-6 font-display text-3xl font-bold">{l.price.toLocaleString("ru-RU")} ₽</div>
           {kind === "preorder" && (
