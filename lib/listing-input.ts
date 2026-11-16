@@ -135,14 +135,16 @@ export function parseListingEdit(body: unknown): { ok: true; value: ListingEdit 
 export function listingPost(l: ListingInput): string {
   const desc = l.description.length > 500 ? l.description.slice(0, 500) + "…" : l.description;
   const line = (text: string) => `<b>✦ ${text}</b>`;
-  // «В наличии»: название, размер, описание, небольшой отступ и цена — всё жирным.
+  // «В наличии»: название, размеры, цена и в конце описание (ник менеджера) — всё жирным.
   if (kindOf(l) === "stock") {
     return [
       line(escapeHtml(l.title)),
-      line(`Размер: ${escapeHtml(l.size)}`),
-      desc ? `<b>${escapeHtml(desc)}</b>` : null,
       ``,
-      line(`Цена: ${l.price.toLocaleString("ru-RU")} ₽`)
+      line(`Размеры: ${escapeHtml(l.size)}`),
+      ``,
+      ``,
+      line(`Цена: ${l.price.toLocaleString("ru-RU")} ₽`),
+      ...(desc ? [``, `<b>${escapeHtml(desc)}</b>`] : [])
     ]
       .filter((x) => x !== null)
       .join("\n");
