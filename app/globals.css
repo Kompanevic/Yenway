@@ -124,3 +124,8 @@ body {
 .tg-app .tg-hide {
   display: none;
 }
+
+/* В мини-аппе плашка cookie — над нижним меню. */
+.tg-app .cookie-bar {
+  bottom: calc(64px + env(safe-area-inset-bottom));
+}
