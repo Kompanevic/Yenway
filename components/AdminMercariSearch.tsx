@@ -29,6 +29,7 @@ export default function AdminMercariSearch() {
   const [price, setPrice] = useState("");
   const [cur, setCur] = useState<"JPY" | "USD" | "RUB">("USD");
   const [limit, setLimit] = useState(10);
+  const [sort, setSort] = useState<"new" | "price_asc" | "price_desc">("new");
   const [sizes, setSizes] = useState<string[]>([]);
   const [shoeSizes, setShoeSizes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,6 +90,7 @@ export default function AdminMercariSearch() {
           minPriceJPY: minJPY,
           maxPriceJPY: maxJPY,
           limit,
+          sort,
           sizes: showClothing ? sizes : [],
           shoeSizes: showShoes ? shoeSizes : []
         })
@@ -122,6 +124,7 @@ export default function AdminMercariSearch() {
       if (minJPY) body.append("minPriceJPY", String(minJPY));
       if (maxJPY) body.append("maxPriceJPY", String(maxJPY));
       body.append("limit", String(limit));
+      body.append("sort", sort);
       body.append("sizes", (showClothing ? sizes : []).join(","));
       body.append("shoeSizes", (showShoes ? shoeSizes : []).join(","));
       const res = await fetch("/api/admin/mercari-photo", { method: "POST", body });
@@ -253,6 +256,30 @@ export default function AdminMercariSearch() {
           </select>
         </div>
 
+        <div>
+          <label className={label}>Сортировка</label>
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                ["new", "Сначала новые"],
+                ["price_asc", "Сначала дешёвые"],
+                ["price_desc", "Сначала дорогие"]
+              ] as const
+            ).map(([key, name]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setSort(key)}
+                className={`rounded-full border px-3.5 py-1.5 font-display text-xs sm:text-sm transition-colors ${
+                  sort === key ? "bg-accent text-ink border-accent font-semibold" : "border-line text-white/60 hover:text-white"
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {error && <p className="text-sm text-red-400">{error}</p>}
         <button
           type="button"
@@ -288,7 +315,7 @@ export default function AdminMercariSearch() {
                 <h3 className="font-display text-sm font-semibold mb-3">
                   {g.brand} · {g.type} <span className="text-white/40 font-normal">({g.items.length})</span>
                   {g.keyword !== "lens" && <a
-                    href={`https://jp.mercari.com/search?keyword=${encodeURIComponent(g.keyword)}&status=on_sale${minJPY ? `&price_min=${minJPY}` : ""}${maxJPY ? `&price_max=${maxJPY}` : ""}`}
+                    href={`https://jp.mercari.com/search?keyword=${encodeURIComponent(g.keyword)}&status=on_sale${sort !== "new" ? `&sort=price&order=${sort === "price_asc" ? "asc" : "desc"}` : ""}${minJPY ? `&price_min=${minJPY}` : ""}${maxJPY ? `&price_max=${maxJPY}` : ""}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ml-2 text-xs font-normal text-white/40 underline underline-offset-2 hover:text-white"

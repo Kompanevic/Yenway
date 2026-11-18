@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthed } from "@/lib/admin-auth";
-import { MERCARI_TYPES, searchMercari, type MercariItem } from "@/lib/mercari-search";
+import { MERCARI_SORTS, MERCARI_TYPES, searchMercari, type MercariItem, type MercariSort } from "@/lib/mercari-search";
 import { CLOTHING_SIZES, SHOE_SIZES, SHOE_TYPES } from "@/lib/mercari-types";
 
 export const maxDuration = 60;
@@ -10,13 +10,14 @@ const MAX_QUERIES = 40;
 // Пакетный поиск для админки: каждый бренд × каждый тип вещи — отдельный запрос.
 export async function POST(req: NextRequest) {
   if (!isAuthed(req)) return NextResponse.json({ error: "Не авторизовано" }, { status: 401 });
-  const b = (await req.json().catch(() => null)) as { brands?: unknown; types?: unknown; minPriceJPY?: unknown; maxPriceJPY?: unknown; limit?: unknown; sizes?: unknown; shoeSizes?: unknown } | null;
+  const b = (await req.json().catch(() => null)) as { brands?: unknown; types?: unknown; minPriceJPY?: unknown; maxPriceJPY?: unknown; sort?: unknown; limit?: unknown; sizes?: unknown; shoeSizes?: unknown } | null;
   const brands = Array.isArray(b?.brands)
     ? Array.from(new Set(b.brands.map((x) => String(x).trim().slice(0, 60)).filter(Boolean)))
     : [];
   const types = Array.isArray(b?.types) ? b.types.map(String).filter((t) => t in MERCARI_TYPES || t === "Любые") : [];
   const yen = (v: unknown) => (Number(v) > 0 ? Math.round(Number(v)) : null);
-  const price = { min: yen(b?.minPriceJPY), max: yen(b?.maxPriceJPY) };
+  const sort = MERCARI_SORTS.includes(b?.sort as MercariSort) ? (b?.sort as MercariSort) : "new";
+  const price = { min: yen(b?.minPriceJPY), max: yen(b?.maxPriceJPY), sort };
   // 0 — «все»: листаем страницы выдачи, пока они есть (в пределах общего бюджета запросов).
   const all = Number(b?.limit) === 0;
   const limit = all ? Infinity : Math.min(100, Math.max(3, Number(b?.limit) || 10));

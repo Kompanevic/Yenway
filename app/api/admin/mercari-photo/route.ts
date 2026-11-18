@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthed } from "@/lib/admin-auth";
 import { hasSerpApi, identify, lensSearch, stashImage } from "@/lib/finder";
-import { searchMercari, type MercariItem } from "@/lib/mercari-search";
+import { MERCARI_SORTS, searchMercari, type MercariItem, type MercariSort } from "@/lib/mercari-search";
 import { CLOTHING_SIZES, SHOE_SIZES } from "@/lib/mercari-types";
 import { SITE_URL } from "@/lib/site";
 
@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
   if (photo.size > MAX_PHOTO) return NextResponse.json({ error: "Фото слишком большое" }, { status: 400 });
   const data = Buffer.from(await photo.arrayBuffer());
   const yen = (k: string) => (Number(form?.get(k)) > 0 ? Math.round(Number(form?.get(k))) : null);
-  const price = { min: yen("minPriceJPY"), max: yen("maxPriceJPY") };
+  const sortRaw = String(form?.get("sort") ?? "") as MercariSort;
+  const price = { min: yen("minPriceJPY"), max: yen("maxPriceJPY"), sort: MERCARI_SORTS.includes(sortRaw) ? sortRaw : "new" };
   const all = Number(form?.get("limit")) === 0;
   const limit = all ? Infinity : Math.min(100, Math.max(3, Number(form?.get("limit")) || 20));
   const list = (k: string, allowed: string[]) => String(form?.get(k) ?? "").split(",").filter((x) => allowed.includes(x));

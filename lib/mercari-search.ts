@@ -44,10 +44,21 @@ type Size = { name?: string } | undefined;
 type RawItem = { id: string; name: string; price: string | number; thumbnails?: string[]; itemSize?: Size; itemSizes?: Size[] };
 
 // Одна страница выдачи (до 120 вещей) и токен следующей.
+export type MercariSort = "new" | "price_asc" | "price_desc";
+export const MERCARI_SORTS: MercariSort[] = ["new", "price_asc", "price_desc"];
+
+// Цена «от — до» в иенах и порядок выдачи (сортирует сам Mercari по всем объявлениям).
 export interface PriceRange {
   min: number | null;
   max: number | null;
+  sort?: MercariSort;
 }
+
+const SORT_PARAMS: Record<MercariSort, { sort: string; order: string }> = {
+  new: { sort: "SORT_CREATED_TIME", order: "ORDER_DESC" },
+  price_asc: { sort: "SORT_PRICE", order: "ORDER_ASC" },
+  price_desc: { sort: "SORT_PRICE", order: "ORDER_DESC" }
+};
 
 async function searchPage(keyword: string, price: PriceRange, pageToken: string, sessionId: string) {
   const body = {
@@ -60,8 +71,7 @@ async function searchPage(keyword: string, price: PriceRange, pageToken: string,
     searchCondition: {
       keyword,
       excludeKeyword: "",
-      sort: "SORT_CREATED_TIME",
-      order: "ORDER_DESC",
+      ...SORT_PARAMS[price.sort ?? "new"],
       status: ["STATUS_ON_SALE"],
       sizeId: [],
       categoryId: [],
