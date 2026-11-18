@@ -44,7 +44,12 @@ type Size = { name?: string } | undefined;
 type RawItem = { id: string; name: string; price: string | number; thumbnails?: string[]; itemSize?: Size; itemSizes?: Size[] };
 
 // Одна страница выдачи (до 120 вещей) и токен следующей.
-async function searchPage(keyword: string, maxPriceJPY: number | null, pageToken: string, sessionId: string) {
+export interface PriceRange {
+  min: number | null;
+  max: number | null;
+}
+
+async function searchPage(keyword: string, price: PriceRange, pageToken: string, sessionId: string) {
   const body = {
     userId: "",
     pageSize: 120,
@@ -62,8 +67,8 @@ async function searchPage(keyword: string, maxPriceJPY: number | null, pageToken
       categoryId: [],
       brandId: [],
       sellerId: [],
-      priceMin: 0,
-      priceMax: maxPriceJPY ?? 0,
+      priceMin: price.min ?? 0,
+      priceMax: price.max ?? 0,
       itemConditionId: [],
       shippingPayerId: [],
       shippingFromArea: [],
@@ -103,7 +108,7 @@ async function searchPage(keyword: string, maxPriceJPY: number | null, pageToken
 // limit — сколько вещей нужно (Infinity — все); maxPages — сколько страниц по 120 можно пролистать.
 export async function searchMercari(
   keyword: string,
-  maxPriceJPY: number | null,
+  price: PriceRange,
   limit: number,
   sizes: string[] = [],
   maxPages = 1
@@ -117,7 +122,7 @@ export async function searchMercari(
     // Ошибку первой страницы показываем; на следующих — отдаём то, что уже нашли.
     let res;
     try {
-      res = await searchPage(keyword, maxPriceJPY, token, sessionId);
+      res = await searchPage(keyword, price, token, sessionId);
     } catch (e) {
       if (page === 0) throw e;
       break;

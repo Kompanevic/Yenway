@@ -25,6 +25,7 @@ function toJPY(amount: number, cur: "JPY" | "USD" | "RUB"): number {
 export default function AdminMercariSearch() {
   const [brands, setBrands] = useState("");
   const [types, setTypes] = useState<string[]>([]);
+  const [priceFrom, setPriceFrom] = useState("");
   const [price, setPrice] = useState("");
   const [cur, setCur] = useState<"JPY" | "USD" | "RUB">("USD");
   const [limit, setLimit] = useState(10);
@@ -46,6 +47,7 @@ export default function AdminMercariSearch() {
       if (s) {
         setBrands(s.brands ?? "");
         setTypes(s.types ?? []);
+        setPriceFrom(s.priceFrom ?? "");
         setPrice(s.price ?? "");
         setCur(s.cur ?? "USD");
         setSizes(s.sizes ?? []);
@@ -64,6 +66,7 @@ export default function AdminMercariSearch() {
   // Размеры одежды — если ищем одежду или «любые»; обуви — если отмечена обувь.
   const showClothing = types.length === 0 || types.some((t) => !SHOE_TYPES.includes(t));
   const showShoes = types.some((t) => SHOE_TYPES.includes(t));
+  const minJPY = Number(priceFrom) > 0 ? Math.round(toJPY(Number(priceFrom), cur)) : null;
   const maxJPY = Number(price) > 0 ? Math.round(toJPY(Number(price), cur)) : null;
 
   async function run() {
@@ -72,7 +75,7 @@ export default function AdminMercariSearch() {
     setLoading(true);
     setPicked(new Set());
     try {
-      localStorage.setItem(STORE, JSON.stringify({ brands, types, price, cur, sizes, shoeSizes }));
+      localStorage.setItem(STORE, JSON.stringify({ brands, types, priceFrom, price, cur, sizes, shoeSizes }));
     } catch {
       // без сохранения
     }
@@ -83,6 +86,7 @@ export default function AdminMercariSearch() {
         body: JSON.stringify({
           brands: brandList,
           types,
+          minPriceJPY: minJPY,
           maxPriceJPY: maxJPY,
           limit,
           sizes: showClothing ? sizes : [],
@@ -115,6 +119,7 @@ export default function AdminMercariSearch() {
     try {
       const body = new FormData();
       body.append("photo", photo.file);
+      if (minJPY) body.append("minPriceJPY", String(minJPY));
       if (maxJPY) body.append("maxPriceJPY", String(maxJPY));
       body.append("limit", String(limit));
       body.append("sizes", (showClothing ? sizes : []).join(","));
@@ -216,16 +221,28 @@ export default function AdminMercariSearch() {
         {showClothing && <SizeChips label="Размер одежды" options={CLOTHING_SIZES} value={sizes} onChange={setSizes} />}
         {showShoes && <SizeChips label="Размер обуви, см" options={SHOE_SIZES} value={shoeSizes} onChange={setShoeSizes} />}
 
-        <div className="grid grid-cols-[1fr,auto,auto] gap-2 items-end">
-          <div>
-            <label className={label}>Цена до</label>
-            <input inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ""))} placeholder="100" className={field} />
+        <div>
+          <label className={label}>Цена</label>
+          <div className="grid grid-cols-[1fr,1fr,auto] gap-2">
+            <input inputMode="numeric" value={priceFrom} onChange={(e) => setPriceFrom(e.target.value.replace(/\D/g, ""))} placeholder="от" aria-label="Цена от" className={field} />
+            <input inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ""))} placeholder="до" aria-label="Цена до" className={field} />
+            <select value={cur} onChange={(e) => setCur(e.target.value as typeof cur)} className={`${field} w-auto`} aria-label="Валюта">
+              <option value="USD">$</option>
+              <option value="JPY">¥</option>
+              <option value="RUB">₽</option>
+            </select>
           </div>
-          <select value={cur} onChange={(e) => setCur(e.target.value as typeof cur)} className={`${field} w-auto`}>
-            <option value="USD">$</option>
-            <option value="JPY">¥</option>
-            <option value="RUB">₽</option>
-          </select>
+          {(minJPY || maxJPY) && cur !== "JPY" && (
+            <p className="mt-2 text-xs text-white/40">
+              ≈ {minJPY ? `от ¥${minJPY.toLocaleString("ru-RU")} ` : ""}
+              {maxJPY ? `до ¥${maxJPY.toLocaleString("ru-RU")}` : ""}
+            </p>
+          )}
+          {minJPY && maxJPY && minJPY > maxJPY && <p className="mt-2 text-xs text-amber-300/80">«От» больше, чем «до» — поменяйте местами.</p>}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <label className={`${label} mb-0`}>Сколько вещей</label>
           <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} className={`${field} w-auto`} aria-label="Сколько вещей на запрос">
             {[5, 10, 20, 30, 50, 100].map((n) => (
               <option key={n} value={n}>
@@ -235,7 +252,6 @@ export default function AdminMercariSearch() {
             <option value={0}>все</option>
           </select>
         </div>
-        {maxJPY && cur !== "JPY" && <p className="-mt-3 text-xs text-white/40">≈ до ¥{maxJPY.toLocaleString("ru-RU")}</p>}
 
         {error && <p className="text-sm text-red-400">{error}</p>}
         <button
@@ -272,7 +288,7 @@ export default function AdminMercariSearch() {
                 <h3 className="font-display text-sm font-semibold mb-3">
                   {g.brand} · {g.type} <span className="text-white/40 font-normal">({g.items.length})</span>
                   {g.keyword !== "lens" && <a
-                    href={`https://jp.mercari.com/search?keyword=${encodeURIComponent(g.keyword)}&status=on_sale${maxJPY ? `&price_max=${maxJPY}` : ""}`}
+                    href={`https://jp.mercari.com/search?keyword=${encodeURIComponent(g.keyword)}&status=on_sale${minJPY ? `&price_min=${minJPY}` : ""}${maxJPY ? `&price_max=${maxJPY}` : ""}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ml-2 text-xs font-normal text-white/40 underline underline-offset-2 hover:text-white"

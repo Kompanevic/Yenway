@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Analytics } from "@vercel/analytics/react";
 
 const KEY = "yenway:cookie-consent";
@@ -20,6 +21,8 @@ function readConsent(): Consent | null {
 export default function CookieConsent() {
   const [consent, setConsent] = useState<Consent | null>(null);
   const [ready, setReady] = useState(false);
+  // В админке спрашивать не нужно — там только владелец сайта.
+  const admin = usePathname()?.startsWith("/admin");
 
   useEffect(() => {
     setConsent(readConsent());
@@ -38,7 +41,7 @@ export default function CookieConsent() {
   return (
     <>
       {consent === "all" && <Analytics />}
-      {ready && !consent && (
+      {ready && !consent && !admin && (
         <div
           role="dialog"
           aria-label="Согласие на использование cookie"

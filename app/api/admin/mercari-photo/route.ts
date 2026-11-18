@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
   }
   if (photo.size > MAX_PHOTO) return NextResponse.json({ error: "Фото слишком большое" }, { status: 400 });
   const data = Buffer.from(await photo.arrayBuffer());
-  const maxPriceJPY = Number(form?.get("maxPriceJPY")) > 0 ? Math.round(Number(form?.get("maxPriceJPY"))) : null;
+  const yen = (k: string) => (Number(form?.get(k)) > 0 ? Math.round(Number(form?.get(k))) : null);
+  const price = { min: yen("minPriceJPY"), max: yen("maxPriceJPY") };
   const all = Number(form?.get("limit")) === 0;
   const limit = all ? Infinity : Math.min(100, Math.max(3, Number(form?.get("limit")) || 20));
   const list = (k: string, allowed: string[]) => String(form?.get(k) ?? "").split(",").filter((x) => allowed.includes(x));
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
     ...(await Promise.all(
       queries.map(async (keyword) => {
         try {
-          return { brand: "По фото", type: keyword, keyword, items: await searchMercari(keyword, maxPriceJPY, limit, sizes, all ? 3 : Math.ceil(Math.min(limit, 360) / 120)) };
+          return { brand: "По фото", type: keyword, keyword, items: await searchMercari(keyword, price, limit, sizes, all ? 3 : Math.ceil(Math.min(limit, 360) / 120)) };
         } catch (e) {
           return { brand: "По фото", type: keyword, keyword, items: [], error: e instanceof Error ? e.message : "ошибка" };
         }
